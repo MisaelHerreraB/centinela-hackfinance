@@ -30,6 +30,14 @@ const {
 const { runBenchmark30 } = require('./evals/run_evals');
 
 const PORT = Number(process.env.PORT) || 3000;
+// Por defecto solo se escucha en esta máquina. Docker fija HOST=0.0.0.0 dentro del contenedor.
+const HOST = process.env.HOST || '127.0.0.1';
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+const LOOPBACK_ADDRESSES = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+const ALLOWED_HOSTNAMES = new Set([
+  ...LOOPBACK_HOSTNAMES,
+  ...(process.env.ALLOWED_HOSTS || '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean)
+]);
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 const MIME_TYPES = {
@@ -43,12 +51,40 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon'
 };
 
+function hostnameOf(hostHeader) {
+  try {
+    return new URL(`http://${hostHeader}`).hostname.toLowerCase();
+  } catch (e) {
+    return '';
+  }
+}
+
+// Evita que una web externa alcance el servidor local apuntando su dominio a esta máquina.
+function isAllowedHost(req) {
+  return ALLOWED_HOSTNAMES.has(hostnameOf(req.headers.host || ''));
+}
+
+// Los navegadores envían Origin en los POST entre sitios; los clientes MCP y curl no lo envían.
+function isSameOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try {
+    return new URL(origin).host.toLowerCase() === String(req.headers.host || '').toLowerCase();
+  } catch (e) {
+    return false;
+  }
+}
+
+function canSetApiKeys(req) {
+  const fromThisMachine = LOOPBACK_ADDRESSES.has(req.socket.remoteAddress)
+    || process.env.CENTINELA_KEYS_FROM_DOCKER_HOST === '1';
+  const isJson = String(req.headers['content-type'] || '').toLowerCase().startsWith('application/json');
+  return fromThisMachine && isJson && LOOPBACK_HOSTNAMES.has(hostnameOf(req.headers.host || ''));
+}
+
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
+    'Content-Type': 'application/json; charset=utf-8'
   });
   res.end(JSON.stringify(payload));
 }
@@ -78,13 +114,17 @@ const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
 
+  if (!isAllowedHost(req)) {
+    return sendJson(res, 403, { ok: false, error: 'Host no permitido' });
+  }
+
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    });
+    res.writeHead(204);
     return res.end();
+  }
+
+  if (req.method !== 'GET' && !isSameOrigin(req)) {
+    return sendJson(res, 403, { ok: false, error: 'Origen no permitido' });
   }
 
   try {
@@ -302,6 +342,9 @@ const server = http.createServer(async (req, res) => {
 
     // 7. Configurar API Keys en caliente (Claude / ElevenLabs)
     if (pathname === '/api/keys' && req.method === 'POST') {
+      if (!canSetApiKeys(req)) {
+        return sendJson(res, 403, { ok: false, error: 'Las claves solo se pueden configurar desde esta máquina' });
+      }
       const body = await readJsonBody(req);
       setRuntimeKeys({
         anthropicKey: body.anthropicKey,
@@ -329,8 +372,7 @@ const server = http.createServer(async (req, res) => {
       const ttsRes = await synthesizeSpeechElevenLabs(body.text || '');
       if (ttsRes.ok) {
         res.writeHead(200, {
-          'Content-Type': 'audio/mpeg',
-          'Access-Control-Allow-Origin': '*'
+          'Content-Type': 'audio/mpeg'
         });
         return res.end(ttsRes.audioBuffer);
       }
@@ -455,7 +497,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (require.main === module) {
-  server.listen(PORT, () => {
+  server.listen(PORT, HOST, () => {
     console.log(`\n🛡️  Centinela (MyInvestor In-App Module) ejecutándose en: http://localhost:${PORT}`);
     console.log(`🔌 Conectado al MCP oficial de MyInvestor: ${DEFAULT_MCP_URL}`);
     console.log(`🛠️  Servidor MCP propio de Centinela activo en: http://localhost:${PORT}/mcp\n`);
