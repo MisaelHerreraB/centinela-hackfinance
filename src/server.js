@@ -22,7 +22,9 @@ const {
 const {
   setRuntimeKeys,
   getAiStatus,
+  CLAUDE_CENTINELA_TOOLS,
   extractFinancialOfferWithClaude,
+  transcribeAudioWithElevenLabsScribe,
   synthesizeSpeechElevenLabs
 } = require('./services/aiService');
 const { runBenchmark30 } = require('./evals/run_evals');
@@ -311,7 +313,17 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // 8. Síntesis de Voz con ElevenLabs (con fallback automático en cliente si no hay key)
+    // 8. Transcripción de Audio con ElevenLabs Scribe (scribe_v1) + fallback Web Speech API
+    if (pathname === '/api/stt' && req.method === 'POST') {
+      const body = await readJsonBody(req);
+      const sttRes = await transcribeAudioWithElevenLabsScribe({
+        audioBase64: body.audioBase64,
+        mimeType: body.mimeType || 'audio/webm'
+      });
+      return sendJson(res, 200, sttRes);
+    }
+
+    // 8B. Síntesis de Voz con ElevenLabs (con fallback automático en cliente si no hay key)
     if (pathname === '/api/tts' && req.method === 'POST') {
       const body = await readJsonBody(req);
       const ttsRes = await synthesizeSpeechElevenLabs(body.text || '');

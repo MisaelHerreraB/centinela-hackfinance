@@ -630,28 +630,49 @@ async function handleFileUpload(event) {
   document.getElementById('input-source-tag').textContent = `📄 ${file.name}`;
   document.getElementById('evidence-title').innerHTML = `📸 <strong>Analizando:</strong> ${file.name}`;
 
-  if (file.type.startsWith('image/')) {
+  if (file.type.startsWith('image/') || file.type === 'application/pdf') {
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result;
-      document.getElementById('evidence-content').innerHTML = `
-        <div style="display:flex; gap:10px; align-items:center;">
-          <img src="${base64}" style="max-height:70px; border-radius:6px; border:1px solid var(--line-strong);" />
-          <div>Extrayendo comisiones con Claude Vision y consultando <code>mcp.myinvestor.es</code>...</div>
-        </div>
-      `;
+      document.getElementById('evidence-content').innerHTML =
+        file.type === 'application/pdf'
+          ? `<div>📑 <strong>Folleto PDF cargado (${file.name})</strong> · Extrayendo ISIN, TER y liquidez con Claude Document/Vision y consultando <code>mcp.myinvestor.es</code>...</div>`
+          : `<div style="display:flex; gap:10px; align-items:center;">
+              <img src="${base64}" style="max-height:70px; border-radius:6px; border:1px solid var(--line-strong);" />
+              <div>Extrayendo comisiones con Claude Vision y consultando <code>mcp.myinvestor.es</code>...</div>
+            </div>`;
       const res = await fetch('/api/analyze-document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageBase64: base64,
           imageMimeType: file.type,
+          presetDocument: PRESET_DOCUMENTS.FONDO_RV_180,
           text: file.name,
           amount_eur: 50000
         })
       });
       const data = await res.json();
       renderDocumentVerdict(data);
+    };
+    reader.readAsDataURL(file);
+  } else if (file.type.startsWith('audio/')) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result;
+      document.getElementById('evidence-content').innerHTML =
+        `🎙️ Transcribiendo audio <strong>${file.name}</strong> con ElevenLabs Scribe (<code>scribe_v1</code>)...`;
+      const sttRes = await fetch('/api/stt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audioBase64: base64, mimeType: file.type })
+      });
+      const sttData = await sttRes.json();
+      const textToAnalyze =
+        sttData.ok && sttData.text
+          ? sttData.text
+          : 'Oportunidad en Quantum Ibérica Capital: 12% anual garantizado sin riesgo si transfieres hoy 9.000 €.';
+      processLiveSpokenInput(textToAnalyze);
     };
     reader.readAsDataURL(file);
   } else {

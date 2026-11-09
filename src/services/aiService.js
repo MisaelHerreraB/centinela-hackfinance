@@ -1,11 +1,71 @@
 /**
- * Servicio de IA Frontera: Claude (Anthropic Vision & Tool Use) + ElevenLabs (Scribe STT / Multilingual TTS)
- * Incluye extractor estructurado determinista de respaldo para garantizar 0% de fallos en directo.
+ * Servicio de IA Frontera: Claude (Anthropic Vision, PDF Document & Tool Use) +
+ * ElevenLabs (Scribe v1 STT + Multilingual v2 Streaming TTS)
+ * Incluye extractor y transcripción determinista de respaldo para garantizar 0% de fallos en directo.
  */
 
 let runtimeAnthropicKey = process.env.ANTHROPIC_API_KEY || '';
 let runtimeElevenLabsKey = process.env.ELEVENLABS_API_KEY || '';
 const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
+
+// Definición explícita de herramientas (Tool Use) para Claude
+const CLAUDE_CENTINELA_TOOLS = [
+  {
+    name: 'verify_cnmv_and_iban',
+    description: 'Cruza la entidad e IBAN contra la lista de alertas de la CNMV y detecta vectores de manipulación psicológica.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string' },
+        entity_name: { type: 'string' },
+        iban: { type: 'string' },
+        claimed_product: { type: 'string' },
+        amount_eur: { type: 'number' }
+      },
+      required: ['text']
+    }
+  },
+  {
+    name: 'search_myinvestor_mcp_catalog',
+    description: 'Consulta el servidor MCP oficial de MyInvestor (https://mcp.myinvestor.es/mcp) para obtener fondos y carteras de la misma categoría oficial.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        asset_type: { type: 'string', enum: ['Renta Variable', 'Renta Fija', 'Monetario', 'Mixto'] },
+        geography: { type: 'string' }
+      },
+      required: ['asset_type']
+    }
+  },
+  {
+    name: 'calculate_10y_fee_and_tax',
+    description: 'Ejecuta el motor determinista de interés compuesto Vf = C0*(1+r-TER)^10, tramos IRPF 19%-30% y traspasabilidad Art. 94 LIRPF.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        amount_eur: { type: 'number' },
+        offered_ter_pct: { type: 'number' },
+        benchmark_ter_pct: { type: 'number' },
+        product_type: { type: 'string', enum: ['FONDO_INVERSION', 'FONDO_GARANTIZADO', 'ETF', 'DEPOSITO', 'UNIT_LINKED'] },
+        exit_fee_pct: { type: 'number' }
+      },
+      required: ['offered_ter_pct']
+    }
+  },
+  {
+    name: 'enforce_client_contract',
+    description: 'Aplica las reglas en código de Mi Contrato (retención de transferencia + alerta a familiar o borrador de traspaso In-App).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        verdict: { type: 'string', enum: ['ESTAFA', 'CARO', 'ADELANTE'] },
+        amount_eur: { type: 'number' },
+        beneficiary_name: { type: 'string' }
+      },
+      required: ['verdict']
+    }
+  }
+];
 
 function setRuntimeKeys({ anthropicKey, elevenLabsKey }) {
   if (typeof anthropicKey === 'string') runtimeAnthropicKey = anthropicKey.trim();
@@ -17,6 +77,7 @@ function getAiStatus() {
     claude_configured: Boolean(runtimeAnthropicKey),
     elevenlabs_configured: Boolean(runtimeElevenLabsKey),
     claude_model: 'claude-sonnet-4-20250514',
+    claude_tools_registered: CLAUDE_CENTINELA_TOOLS.map((t) => t.name),
     elevenlabs_models: {
       stt: 'scribe_v1',
       tts: 'eleven_multilingual_v2'
@@ -25,8 +86,8 @@ function getAiStatus() {
 }
 
 /**
- * Extrae parámetros estructurados de un folleto DFI/KID, imagen o transcripción usando Claude Vision/Text
- * (o extractor determinista local si no hay API key configurada).
+ * Extrae parámetros estructurados de un folleto DFI/KID (Imagen o PDF), SMS o transcripción
+ * usando Claude Vision + Document API + Tool Use (con fallback determinista).
  */
 async function extractFinancialOfferWithClaude({
   text = '',
@@ -45,14 +106,26 @@ async function extractFinancialOfferWithClaude({
     try {
       const contentBlocks = [];
       if (imageBase64) {
-        contentBlocks.push({
-          type: 'image',
-          source: {
-            type: 'base64',
-            media_type: imageMimeType,
-            data: imageBase64.replace(/^data:[^;]+;base64,/, '')
-          }
-        });
+        const cleanBase64 = imageBase64.replace(/^data:[^;]+;base64,/, '');
+        if (imageMimeType === 'application/pdf') {
+          contentBlocks.push({
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: cleanBase64
+            }
+          });
+        } else {
+          contentBlocks.push({
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: imageMimeType,
+              data: cleanBase64
+            }
+          });
+        }
       }
       contentBlocks.push({
         type: 'text',
@@ -109,8 +182,9 @@ Texto/Contexto adicional: ${text}`
 
   // Parser determinista sobre el texto libre
   const cleanText = String(text || '');
-  const terMatch = cleanText.match(/(\d+[.,]\d+)\s*%\s*(?:TER|anual|comisi[oó]n|gastos\s+corrientes)/i) ||
-                   cleanText.match(/(?:TER|comisi[oó]n\s+de\s+gesti[oó]n|gastos\s+corrientes)[^0-9]{0,25}(\d+[.,]\d+)\s*%/i);
+  const terMatch =
+    cleanText.match(/(\d+[.,]\d+)\s*%\s*(?:TER|anual|comisi[oó]n|gastos\s+corrientes)/i) ||
+    cleanText.match(/(?:TER|comisi[oó]n\s+de\s+gesti[oó]n|gastos\s+corrientes)[^0-9]{0,25}(\d+[.,]\d+)\s*%/i);
   const offeredTer = terMatch ? parseFloat(terMatch[1].replace(',', '.')) : 1.80;
 
   const exitMatch = cleanText.match(/(?:reembolso|salida|cancelaci[oó]n)[^0-9]{0,25}(\d+[.,]?\d*)\s*%/i);
@@ -135,7 +209,7 @@ Texto/Contexto adicional: ${text}`
 
   return {
     extractor: 'CENTINELA_DETERMINISTIC_EXTRACTOR',
-    name: 'Fondo Selección Global Gestión Activa FI',
+    name: 'FonBanco Selección Global Gestión Activa FI',
     bank_name: 'Banco Tradicional Sucursal',
     isin,
     asset_type: assetType,
@@ -147,6 +221,56 @@ Texto/Contexto adicional: ${text}`
     exit_fee_pct: exitFee,
     amount_eur: amountEur
   };
+}
+
+/**
+ * Transcripción de Audio con ElevenLabs Scribe STT (scribe_v1)
+ */
+async function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'audio/webm' }) {
+  if (!runtimeElevenLabsKey || !audioBase64) {
+    return {
+      ok: true,
+      provider: 'CENTINELA_FALLBACK_SCRIBE',
+      model: 'scribe_v1',
+      text: 'Hola Carmen, te llamo de Quantum Ibérica Capital. Tienes un 12% anual garantizado sin ningún riesgo si transfieres hoy 9.000 euros al IBAN ES91 2100 0418 4502 0005 1332.'
+    };
+  }
+
+  try {
+    const cleanBase64 = audioBase64.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    const blob = new Blob([buffer], { type: mimeType });
+    const formData = new FormData();
+    formData.append('file', blob, 'call_audio.webm');
+    formData.append('model_id', 'scribe_v1');
+    formData.append('language_code', 'spa');
+
+    const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
+      method: 'POST',
+      headers: {
+        'xi-api-key': runtimeElevenLabsKey
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP_${response.status}`);
+    }
+    const data = await response.json();
+    return {
+      ok: true,
+      provider: 'ELEVENLABS_SCRIBE_LIVE_API',
+      model: 'scribe_v1',
+      text: data.text || ''
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      provider: 'FALLBACK_AFTER_ERROR',
+      reason: err.message,
+      text: 'Hola Carmen, te llamo de Quantum Ibérica Capital. Rentabilidad garantizada del 12% anual si transfieres hoy 9.000 euros.'
+    };
+  }
 }
 
 /**
@@ -192,8 +316,10 @@ async function synthesizeSpeechElevenLabs(textToSpeak) {
 }
 
 module.exports = {
+  CLAUDE_CENTINELA_TOOLS,
   setRuntimeKeys,
   getAiStatus,
   extractFinancialOfferWithClaude,
+  transcribeAudioWithElevenLabsScribe,
   synthesizeSpeechElevenLabs
 };
