@@ -68,7 +68,7 @@ const MANIPULATION_PATTERNS = [
   {
     id: 'PROMESA_GARANTIZADA',
     label: 'Promesa de rentabilidad alta garantizada',
-    weight: 35,
+    weight: 55,
     regex: /(\b1[0-9]\s*%\s*garantizad|\b[89]\s*%\s*garantizad|rentabilidad\s+garantizada|sin\s+ning[uú]n\s+riesgo|beneficio\s+asegurado|duplicar\s+tu\s+dinero|12\s*%\s*anual\s+fijo)/i,
     explanation: 'En los mercados regulados no existe el 8%–12% garantizado sin riesgo. Es el gancho clásico de los falsos brókers.'
   },
@@ -95,12 +95,19 @@ const MANIPULATION_PATTERNS = [
   }
 ];
 
+function normalizeText(str = '') {
+  return String(str)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 function checkCnmvWarning(textOrEntity = '') {
-  const haystack = String(textOrEntity).toLowerCase();
+  const haystack = normalizeText(textOrEntity);
   for (const item of CNMV_WARNING_ENTITIES) {
     if (
-      haystack.includes(item.name.toLowerCase()) ||
-      item.aliases.some((alias) => haystack.includes(alias.toLowerCase()))
+      haystack.includes(normalizeText(item.name)) ||
+      item.aliases.some((alias) => haystack.includes(normalizeText(alias)))
     ) {
       return {
         flagged: true,
