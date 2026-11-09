@@ -153,7 +153,8 @@ const server = http.createServer(async (req, res) => {
         entity_name = '',
         iban = '',
         claimed_product = '',
-        amount_eur = 9000
+        amount_eur = 9000,
+        speech_rate_wpm = null
       } = body;
 
       let mcpCheck = {
@@ -173,7 +174,8 @@ const server = http.createServer(async (req, res) => {
         iban,
         claimed_product,
         product_exists_in_mcp: mcpCheck.exists_in_catalog,
-        amount_eur
+        amount_eur,
+        speech_rate_wpm
       });
 
       const contractExecution = evaluateContractAction({

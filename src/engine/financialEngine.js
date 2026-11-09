@@ -185,11 +185,20 @@ function calculateCostComparison({
       ter_spread_pct: terSpreadPct,
       fee_multiplier: Number((offered_ter_pct / Math.max(0.05, benchmark_ter_pct)).toFixed(1)),
       first_year_overcost_eur: annualFeeGapEur,
+      monthly_fee_drain_eur: Math.round(annualFeeGapEur / 12),
+      daily_fee_drain_eur: Number((annualFeeGapEur / 365).toFixed(2)),
       final_capital_offered_eur: finalYear.offered_bank_eur,
       final_capital_myinvestor_portfolio_eur: finalYear.myinvestor_portfolio_eur,
       final_capital_myinvestor_direct_eur: finalYear.myinvestor_direct_index_eur,
       loss_10y_vs_portfolio_eur: lossVsPortfolio10y,
       loss_10y_vs_direct_index_eur: lossVsDirect10y
+    },
+    behavioral_salience: {
+      daily_pain_of_paying_eur: Number((annualFeeGapEur / 365).toFixed(2)),
+      monthly_pain_of_paying_eur: Math.round(annualFeeGapEur / 12),
+      compound_10y_loss_eur: lossVsPortfolio10y,
+      academic_basis:
+        'Fee Salience & Percentage Veil (Barber, Odean & Zheng, 2005; ESMA Cost Disclosures) + Exponential Growth Bias (Stango & Zinman)'
     },
     transferability,
     yearly_series: yearlySeries,

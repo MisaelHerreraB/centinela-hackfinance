@@ -257,11 +257,21 @@ async function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'au
       throw new Error(`HTTP_${response.status}`);
     }
     const data = await response.json();
+    const words = Array.isArray(data.words) ? data.words.filter((w) => w.type === 'word' || w.text) : [];
+    let speechRateWpm = null;
+    if (words.length >= 2) {
+      const startSec = Number(words[0].start ?? 0);
+      const endSec = Number(words[words.length - 1].end ?? 0);
+      const durationMin = Math.max(0.05, (endSec - startSec) / 60);
+      speechRateWpm = Math.round(words.length / durationMin);
+    }
     return {
       ok: true,
       provider: 'ELEVENLABS_SCRIBE_LIVE_API',
       model: 'scribe_v1',
-      text: data.text || ''
+      text: data.text || '',
+      speech_rate_wpm: speechRateWpm,
+      word_count: words.length
     };
   } catch (err) {
     return {

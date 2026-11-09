@@ -303,13 +303,27 @@ function renderCallVerdict(data) {
 
   const detailsBox = document.getElementById('verdict-details-container');
   if (v.verdict === 'ESTAFA') {
+    const vopBadge = v.iban_check?.sepa_vop_status === 'NO_MATCH'
+      ? `<div style="margin-bottom:6px; padding:6px 9px; background:#fff1f2; border:1px solid #fecdd3; border-radius:8px; font-size:0.71rem; color:#9f1239; font-weight:700;">
+          🏦 <strong>SEPA VoP (Reg. UE 2024/886): NO_MATCH</strong> · El IBAN pertenece a <em>"${v.iban_check.registered_holder}"</em>, NO a ${v.iban_check.claimed_holder}.
+        </div>`
+      : '';
+    const prosodyBadge = v.prosody_analysis
+      ? `<div style="margin-bottom:6px; padding:6px 9px; background:#fef3c7; border:1px solid #fde68a; border-radius:8px; font-size:0.70rem; color:#92400e;">
+          🎙️ <strong>Prosodia Scribe (Vishing 2.0):</strong> ${v.prosody_analysis.speech_rate_wpm} WPM · ${v.prosody_analysis.acoustic_pressure_level}<br/>
+          🧠 <strong>Fricción Cognitiva (FCA/PSR):</strong> Ruptura <code>Sistema 1 → Sistema 2</code> activada.
+        </div>`
+      : '';
     detailsBox.innerHTML = `
+      ${vopBadge}
+      ${prosodyBadge}
       <div class="phone-signals">
         ${v.signals
           .map(
             (s) => `
           <div class="phone-signal-row">
             <div style="font-weight:800; color:#991b1b;">⚠️ ${s.label}</div>
+            ${s.cognitive_bias ? `<div style="font-size:0.65rem; font-weight:700; color:#b45309; margin-top:1px;">Sesgo detectado: ${s.cognitive_bias}</div>` : ''}
             <div style="color:#475569; margin-top:2px;">${s.explanation}</div>
           </div>
         `
@@ -333,8 +347,9 @@ function renderCallVerdict(data) {
           🛡️ Transferencia de ${(v.amount_detected_eur || 9000).toLocaleString('es-ES')} € RETENIDA por Mi Contrato
         </div>
         <div style="font-size:0.74rem; color:#7f1d1d; margin-bottom:9px;">
-          • Supera el límite de seguridad (${(currentContract.max_transfer_amount_eur || 3000).toLocaleString('es-ES')} €) y la entidad está alertada por la CNMV.<br/>
-          • Notificación enviada al móvil de <strong>${currentContract.trusted_contact?.name || 'Daniel (Hijo)'}</strong>.
+          • Supera el límite de seguridad (${(currentContract.max_transfer_amount_eur || 3000).toLocaleString('es-ES')} €), discrepancia <strong>SEPA VoP (NO_MATCH)</strong> y alerta CNMV.<br/>
+          • <strong>Escudo PSR/PSD3 MyInvestor:</strong> Protege al cliente y evita responsabilidad patrimonial del banco por suplantación.<br/>
+          • Notificación de co-firma enviada al móvil de <strong>${currentContract.trusted_contact?.name || 'Daniel (Hijo)'}</strong>.
         </div>
         <button class="btn-cta-danger" onclick="toggleKillSwitch(true)">
           🛑 Deshabilitar Operativa Ahora
@@ -350,7 +365,9 @@ function renderCallVerdict(data) {
       verdict: v.verdict,
       risk_score: v.risk_score,
       cnmv_check: v.cnmv_check,
-      iban_check: v.iban_check,
+      iban_sepa_vop_check: v.iban_check,
+      prosody_vishing_analysis: v.prosody_analysis,
+      behavioral_intervention_fca_psr: v.behavioral_intervention,
       mcp_catalog_check: mcpCheck,
       contract_action: act.action_taken
     },
@@ -428,7 +445,7 @@ function renderDocumentVerdict(data) {
         <div class="phone-kpi-val" style="color:var(--scam-red);">
           -${cost.metrics.loss_10y_vs_portfolio_eur.toLocaleString('es-ES')} €
         </div>
-        <div style="font-size:0.64rem; color:var(--muted);">Sobre 50.000 € (5% bruto)</div>
+        <div style="font-size:0.64rem; color:var(--muted);">-${cost.metrics.monthly_fee_drain_eur || 63} €/mes (-${cost.metrics.daily_fee_drain_eur || 2.05} €/día)</div>
       </div>
       <div class="phone-kpi">
         <div class="phone-kpi-label">Peaje Fiscal IRPF</div>
@@ -522,6 +539,7 @@ function renderDocumentVerdict(data) {
       mcp_latency_ms: mcp.mcp_latency_ms,
       mcp_alternatives: mcp.alternatives,
       formula_audit: cost.formula_audit,
+      behavioral_fee_salience_esma: cost.behavioral_salience,
       transferability_art94_lirpf: cost.transferability
     },
     null,
