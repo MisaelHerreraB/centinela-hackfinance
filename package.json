@@ -1,0 +1,25 @@
+{
+  "name": "centinela-myinvestor",
+  "version": "1.0.0",
+  "description": "Centinela: Antes de firmar, pregúntale — Cortafuegos financiero multimodal, auditor de costes conectado al MCP real de MyInvestor y gobernanza programable In-App (HackFinance 2026 - Across the lake)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "eval": "node src/evals/run_evals.js"
+  },
+  "keywords": [
+    "myinvestor",
+    "gptadvisor",
+    "mcp",
+    "claude",
+    "elevenlabs",
+    "fintech",
+    "hackfinance"
+  ],
+  "author": "Across the lake (HackFinance 2026 - BEST UC3M)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

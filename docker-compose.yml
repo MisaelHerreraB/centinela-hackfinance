@@ -1,0 +1,12 @@
+services:
+  centinela:
+    build: .
+    container_name: centinela-myinvestor
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MYINVESTOR_MCP_URL=${MYINVESTOR_MCP_URL:-https://mcp.myinvestor.es/mcp}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+    restart: unless-stopped

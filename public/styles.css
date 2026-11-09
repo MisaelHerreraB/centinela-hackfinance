@@ -1,0 +1,959 @@
+/* ==========================================================================
+   CENTINELA · Design System inspirado en MyInvestor & GPTadvisor (mcp.myinvestor.es)
+   Tipografía: Inter & Inter Tight | Paleta: Editorial Paper (#FAFAF7), Ink (#0B0F19),
+   MyInvestor Royal Blue (#0046DE), MyInvestor Mint (#26BEA7) y Gradiente Oficial
+   ========================================================================== */
+
+:root {
+  --accent: #0046de;
+  --accent-hover: #0037b3;
+  --accent-soft: #ecf5ff;
+  --accent-border: #bfdbfe;
+  --mi-teal: #159e8a;
+  --mi-teal-bg: #e6f7f4;
+  --mi-teal-border: #99e6da;
+  --ink: #0b0f19;
+  --ink-soft: #3f4451;
+  --muted: #64748b;
+  --paper: #fafaf7;
+  --paper-warm: #f3f1ec;
+  --surface: #ffffff;
+  --line: rgba(11, 15, 25, 0.09);
+  --line-strong: rgba(11, 15, 25, 0.15);
+
+  /* Veredictos */
+  --scam-red: #dc2626;
+  --scam-bg: #fef2f2;
+  --scam-border: #fecaca;
+  --scam-ink: #991b1b;
+
+  --caro-amber: #d97706;
+  --caro-bg: #fffbeb;
+  --caro-border: #fde68a;
+  --caro-ink: #92400e;
+
+  --ok-green: #0d9488;
+  --ok-bg: #f0fdfa;
+  --ok-border: #99f6e4;
+  --ok-ink: #115e59;
+
+  --shadow-sm: 0 1px 3px rgba(11, 15, 25, 0.05);
+  --shadow-card: 0 4px 20px rgba(11, 15, 25, 0.06), 0 1px 3px rgba(11, 15, 25, 0.04);
+  --shadow-phone: 0 24px 60px rgba(11, 15, 25, 0.14), 0 4px 16px rgba(11, 15, 25, 0.06);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   TOP NAVIGATION BAR (Estilo mcp.myinvestor.es)
+   ========================================================================== */
+.navbar {
+  background: rgba(250, 250, 247, 0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 28px;
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand-cluster {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--line-strong);
+}
+
+.centinela-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--ink);
+  color: #ffffff;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-family: "Inter Tight", "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 0.84rem;
+  letter-spacing: -0.01em;
+}
+
+.centinela-badge .shield-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #26bea7;
+  box-shadow: 0 0 8px #26bea7;
+}
+
+.gptadvisor-tag {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--paper-warm);
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* Segmented Demo Scenario Bar */
+.demo-switcher {
+  display: inline-flex;
+  background: var(--paper-warm);
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-strong);
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.scenario-pill {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 8px 15px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.16s ease;
+}
+
+.scenario-pill:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.scenario-pill.active-scam {
+  background: var(--scam-red);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.28);
+}
+
+.scenario-pill.active-caro {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 70, 222, 0.28);
+}
+
+.scenario-pill.active-access {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-ghost {
+  appearance: none;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 7px 13px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-ghost:hover {
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   MAIN WORKSPACE GRID
+   ========================================================================== */
+.main-stage {
+  max-width: 1460px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 22px 28px 36px;
+  display: grid;
+  grid-template-columns: 500px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 1120px) {
+  .main-stage {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   LEFT COLUMN: REALISTIC MYINVESTOR MOBILE APP (CARMEN'S IPHONE)
+   ========================================================================== */
+.iphone-frame {
+  background: #141413;
+  border-radius: 44px;
+  padding: 11px;
+  box-shadow: var(--shadow-phone);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+}
+
+.iphone-screen {
+  background: #f7f7f5;
+  border-radius: 34px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 780px;
+}
+
+/* iOS Status Bar */
+.ios-statusbar {
+  background: var(--surface);
+  padding: 10px 22px 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.dynamic-island {
+  width: 92px;
+  height: 22px;
+  background: #0b0f19;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.island-led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #26bea7;
+}
+
+/* MyInvestor In-App Header */
+.mi-app-header {
+  background: var(--surface);
+  padding: 10px 18px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mi-app-toprow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.user-greeting {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.avatar-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1c6fc9, #ce28a3, #e62619);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-greeting-text h2 {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.user-greeting-text p {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* Accessibility Mode Bar inside App */
+.access-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--paper-warm);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+.access-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 0.71rem;
+  font-weight: 600;
+  padding: 5px 6px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.access-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+/* App Scroll Content */
+.mi-app-body {
+  padding: 14px 15px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+/* Accessibility Overrides */
+body.mode-low-vision .iphone-frame {
+  outline: 4px solid #eab308;
+}
+body.mode-low-vision .mi-app-body {
+  font-size: 1.08rem;
+}
+body.mode-low-vision .verdict-hero-title {
+  font-size: 1.32rem !important;
+}
+
+.deaf-visual-alert {
+  display: none;
+  background: #1e1b4b;
+  color: #ffffff;
+  border: 2px solid #818cf8;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 0.79rem;
+  line-height: 1.4;
+}
+
+body.mode-deaf .deaf-visual-alert {
+  display: block;
+}
+
+/* App Cards */
+.mi-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 13px 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mi-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 9px;
+}
+
+.mi-step-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.mi-step-meta {
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Input Trigger Row */
+.trigger-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.trigger-btn {
+  appearance: none;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.14s ease;
+}
+
+.trigger-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.preset-select {
+  width: 100%;
+  appearance: none;
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  margin-bottom: 9px;
+  cursor: pointer;
+}
+
+/* Evidence / Scanner Viewer */
+.scanner-window {
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  padding: 11px 12px;
+  font-size: 0.8rem;
+  line-height: 1.48;
+  color: var(--ink);
+}
+
+.scanner-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hl-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.hl-warn {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+/* Verdict Hero Card */
+.verdict-hero {
+  border-radius: 14px;
+  padding: 13px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.verdict-hero.ESTAFA {
+  background: var(--scam-bg);
+  border: 1.5px solid var(--scam-red);
+  color: var(--scam-ink);
+}
+
+.verdict-hero.CARO {
+  background: var(--caro-bg);
+  border: 1.5px solid var(--caro-amber);
+  color: var(--caro-ink);
+}
+
+.verdict-hero.ADELANTE {
+  background: var(--ok-bg);
+  border: 1.5px solid var(--ok-green);
+  color: var(--ok-ink);
+}
+
+.verdict-eyebrow {
+  font-size: 0.67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.verdict-hero-title {
+  font-family: "Inter Tight", "Inter", sans-serif;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 1px;
+}
+
+.verdict-hero-right {
+  text-align: right;
+}
+
+.verdict-hero-metric {
+  font-family: "Inter Tight", "Inter", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.verdict-hero-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* Voice Bar */
+.voice-player-bar {
+  margin-top: 9px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 11px;
+  padding: 9px 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.voice-text {
+  font-size: 0.76rem;
+  color: var(--ink);
+  line-height: 1.38;
+}
+
+.btn-speak {
+  appearance: none;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 6px 11px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Signals List inside Phone */
+.phone-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.phone-signal-row {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-left: 3.5px solid var(--scam-red);
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 0.74rem;
+}
+
+/* Mini KPI Grid inside Phone */
+.phone-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.phone-kpi {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.phone-kpi-label {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.phone-kpi-val {
+  font-family: "Inter Tight", "Inter", sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+/* Action CTA buttons inside Phone */
+.btn-cta-primary {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: var(--accent);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 11px 16px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(0, 70, 222, 0.28);
+  transition: all 0.16s ease;
+}
+
+.btn-cta-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-cta-danger {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: var(--scam-red);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 11px 16px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+}
+
+/* ==========================================================================
+   RIGHT COLUMN: EXECUTIVE CONTROL CENTER (DANIEL'S PHONE + MCP + CHARTS)
+   ========================================================================== */
+.executive-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.surface-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-card);
+}
+
+.surface-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--line);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.surface-title {
+  font-family: "Inter Tight", "Inter", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--mi-teal-bg);
+  color: #0f6f4b;
+  border: 1px solid var(--mi-teal-border);
+}
+
+/* Dual Top Grid on Right Column: Daniel's Alert + Mi Contrato Rules */
+.governance-grid {
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1320px) {
+  .governance-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.daniel-phone-card {
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.daniel-alert-active {
+  background: #fff1f2;
+  border: 1.5px solid #f43f5e;
+  border-radius: 12px;
+  padding: 13px 14px;
+}
+
+.contract-settings-card {
+  background: var(--paper);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+.field-group {
+  margin-bottom: 10px;
+}
+
+.field-group:last-child {
+  margin-bottom: 0;
+}
+
+.field-group label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+
+.field-group input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* MyInvestor MCP Live Carousel & 10-Year Visual Comparison */
+.mcp-comparison-box {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.bar-chart-row {
+  margin-bottom: 11px;
+}
+.bar-chart-row:last-child {
+  margin-bottom: 0;
+}
+
+.bar-chart-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--ink);
+}
+
+.bar-chart-track {
+  height: 12px;
+  background: rgba(11, 15, 25, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-chart-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.45s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* MCP Fund Cards (Styled like mcp.myinvestor.es carousel cards) */
+.mcp-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.mcp-fund-card {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  padding: 13px 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mcp-fund-card .isin-tag {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+/* Tabs for Technical Inspector */
+.tab-strip {
+  display: inline-flex;
+  background: var(--paper-warm);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  gap: 4px;
+}
+
+.tab-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.inspector-pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 12px;
+  padding: 13px 15px;
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  max-height: 210px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+/* Modals */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal-card {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xl);
+  max-width: 960px;
+  width: 100%;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 24px 26px;
+  box-shadow: 0 24px 60px rgba(11, 15, 25, 0.25);
+}
+
+.eval-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.77rem;
+  margin-top: 12px;
+}
+
+.eval-table th, .eval-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.eval-table th {
+  background: var(--paper-warm);
+  font-weight: 700;
+  color: var(--ink);
+}
