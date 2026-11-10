@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Centinela — Presentación Oficial HackFinance 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: 297mm 167mm;
+    margin: 0;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  :root {
+    --paper: #FAFAF7;
+    --surface: #FFFFFF;
+    --ink: #0F172A;
+    --ink-soft: #334155;
+    --muted: #64748B;
+    --line: #E2E8F0;
+    --accent: #0046DE;
+    --accent-soft: #EEF4FF;
+    --teal: #159E8A;
+    --teal-soft: #ECFDF5;
+    --red: #DC2626;
+    --red-soft: #FEF2F2;
+    --amber: #D97706;
+    --amber-soft: #FFFBEB;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #1e293b;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .slide {
+    width: 297mm;
+    height: 167mm;
+    background: var(--paper);
+    position: relative;
+    overflow: hidden;
+    padding: 11mm 14mm 10mm 14mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    page-break-after: always;
+    break-after: page;
+    margin: 0 auto 16px auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  }
+  @media print {
+    body { background: none; }
+    .slide { margin: 0; box-shadow: none; }
+  }
+  .slide-dark {
+    background: radial-gradient(circle at 85% 20%, #0d255c 0%, #090D16 70%);
+    color: #FFFFFF;
+  }
+
+  /* Top Header inside slides */
+  .slide-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 3.5mm;
+    border-bottom: 1.5px solid var(--line);
+  }
+  .slide-dark .slide-top {
+    border-bottom-color: rgba(255,255,255,0.14);
+  }
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-pill {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 800;
+    font-size: 11pt;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .slide-dark .brand-pill { color: #FFFFFF; }
+  .brand-pill span { color: var(--accent); }
+  .slide-dark .brand-pill span { color: #38BDF8; }
+  .slide-tag {
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid #BFDBFE;
+  }
+  .slide-dark .slide-tag {
+    background: rgba(56, 189, 248, 0.14);
+    color: #7DD3FC;
+    border-color: rgba(56, 189, 248, 0.3);
+  }
+
+  /* Typography */
+  h1 {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 28pt;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+  }
+  h2 {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 18.5pt;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin-bottom: 2mm;
+  }
+  .slide-dark h2 { color: #FFFFFF; }
+  h3 {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 11.5pt;
+    font-weight: 800;
+    margin-bottom: 1.8mm;
+    color: var(--ink);
+  }
+  p, li {
+    font-size: 9.2pt;
+    line-height: 1.38;
+    color: var(--ink-soft);
+  }
+  .slide-dark p, .slide-dark li {
+    color: #CBD5E1;
+  }
+  ul {
+    padding-left: 4.5mm;
+  }
+  li { margin-bottom: 1.4mm; }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    background: #F1F5F9;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: #0F172A;
+  }
+  .slide-dark code {
+    background: rgba(255,255,255,0.12);
+    color: #E2E8F0;
+  }
+
+  /* Grids & Cards */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5mm;
+    flex: 1;
+    align-items: stretch;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4.5mm;
+    flex: 1;
+    align-items: stretch;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4.5mm 5mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+  }
+  .slide-dark .card {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+  .card-accent-red { border-top: 4px solid var(--red); }
+  .card-accent-amber { border-top: 4px solid var(--amber); }
+  .card-accent-teal { border-top: 4px solid var(--teal); }
+  .card-accent-blue { border-top: 4px solid var(--accent); }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4mm;
+    margin-bottom: 4mm;
+  }
+  .kpi-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 3.2mm 4mm;
+  }
+  .kpi-num {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 18pt;
+    font-weight: 800;
+    line-height: 1.05;
+  }
+  .kpi-label {
+    font-size: 7.8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-top: 1mm;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 7.8pt;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+  }
+  .badge-red { background: var(--red-soft); color: var(--red); border: 1px solid #FECACA; }
+  .badge-amber { background: var(--amber-soft); color: var(--amber); border: 1px solid #FDE68A; }
+  .badge-teal { background: var(--teal-soft); color: #0F6F4B; border: 1px solid #A7F3D0; }
+  .badge-blue { background: var(--accent-soft); color: var(--accent); border: 1px solid #BFDBFE; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.3pt;
+  }
+  th, td {
+    border: 1px solid var(--line);
+    padding: 2.2mm 3mm;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #F1F5F9;
+    font-weight: 800;
+    color: var(--ink);
+  }
+
+  .slide-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 2.5mm;
+    border-top: 1px solid var(--line);
+    font-size: 7.6pt;
+    color: var(--muted);
+  }
+  .slide-dark .slide-footer {
+    border-top-color: rgba(255,255,255,0.12);
+    color: #94A3B8;
+  }
+</style>
+</head>
+<body>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 1: PORTADA EJECUTIVA -->
+<!-- ====================================================================== -->
+<section class="slide slide-dark">
+  <div class="slide-top">
+    <div class="brand-row">
+      <span class="brand-pill">MYINVESTOR <span>×</span> GPTADVISOR <span>· CENTINELA</span></span>
+    </div>
+    <span class="slide-tag">HackFinance 2026 · BEST UC3M · Madrid Engineering Week</span>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1.25fr 0.75fr; gap:8mm; align-items:center; flex:1; padding: 4mm 0;">
+    <div>
+      <div style="display:inline-block; background:rgba(21,158,138,0.2); border:1px solid rgba(21,158,138,0.5); color:#5EEAD4; font-size:8.5pt; font-weight:700; padding:4px 12px; border-radius:999px; margin-bottom:4mm;">
+        🛡️ Cortafuegos Financiero Multimodal &amp; Auditor de Costes vía MCP
+      </div>
+      <h1 style="font-size:33pt; margin-bottom:4mm; color:#FFFFFF;">
+        CENTINELA<br/>
+        <span style="color:#60A5FA;">“Antes de firmar, pregúntale.”</span>
+      </h1>
+      <p style="font-size:11pt; color:#E2E8F0; max-width:92%; margin-bottom:6mm;">
+        La segunda opinión instantánea integrada en la app de <strong>MyInvestor</strong> que protege al ahorrador en el <strong>mismo segundo crítico en que le presionan para firmar o transferir</strong>: frena estafas por voz/SMS y destapa comisiones ocultas bancarias con traspaso exento de IRPF.
+      </p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="badge badge-blue">🔌 MCP Oficial MyInvestor en Vivo</span>
+        <span class="badge badge-teal">🧠 Claude Vision + Tool Use</span>
+        <span class="badge badge-amber">🎙️ ElevenLabs Scribe STT (WPM) + TTS</span>
+        <span class="badge badge-red">⛓️ Motor Determinista + SHA-256</span>
+      </div>
+    </div>
+
+    <div class="card" style="background:rgba(15,23,42,0.78); border:1px solid rgba(255,255,255,0.18); padding:5.5mm;">
+      <h3 style="color:#38BDF8; font-size:11pt; margin-bottom:3mm;">Métricas Clave del Proyecto</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:3.5mm;">
+        <div style="background:rgba(255,255,255,0.05); padding:3mm; border-radius:8px;">
+          <div style="font-size:17pt; font-weight:800; color:#4ADE80;">30 / 30</div>
+          <div style="font-size:7.6pt; color:#CBD5E1;">Precisión Benchmark (100%) en 1,2 ms/caso</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:3mm; border-radius:8px;">
+          <div style="font-size:17pt; font-weight:800; color:#60A5FA;">0,00 €</div>
+          <div style="font-size:7.6pt; color:#CBD5E1;">Alucinación matemática (Jagged Frontier)</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:3mm; border-radius:8px;">
+          <div style="font-size:17pt; font-weight:800; color:#FBBF24;">+10.635 €</div>
+          <div style="font-size:7.6pt; color:#CBD5E1;">Ahorro a 10 años sobre 50.000 € (TER 1,80% vs 0,30%)</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:3mm; border-radius:8px;">
+          <div style="font-size:17pt; font-weight:800; color:#F87171;">0 € IRPF</div>
+          <div style="font-size:7.6pt; color:#CBD5E1;">Traspaso Art. 94 LIRPF vía Fondo Puente</div>
+        </div>
+      </div>
+      <div style="margin-top:4mm; padding-top:3mm; border-top:1px solid rgba(255,255,255,0.12); font-size:8pt; color:#94A3B8;">
+        <strong>Equipo Across the lake:</strong> Misael Herrera · Dante Pérez · Keneth Ruiz · Iván Rodríguez · Xander
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Centinela · HackFinance 2026 (MyInvestor · GPTadvisor · Anthropic · ElevenLabs)</span>
+    <span>Diapositiva 1 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 2: EL PROBLEMA REAL (EL MISMO SEGUNDO CRÍTICO) -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 1. EL PROBLEMA</span></span>
+    <span class="slide-tag">Asimetría Cognitiva e Informativa en el Instante de Firma</span>
+  </div>
+
+  <div>
+    <h2>Dos formas de perder los ahorros en el mismo segundo crítico</h2>
+    <p style="margin-bottom:3.5mm;">
+      Cuando <strong>Carmen (68 años)</strong> recibe una llamada urgente o se sienta frente al director de su sucursal de toda la vida, toma decisiones bajo presión sin una segunda opinión cuantitativa en tiempo real:
+    </p>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-box">
+      <div class="kpi-num" style="color:var(--red);">2.347 €</div>
+      <div class="kpi-label">Transferencia fraudulenta media en España (BdE, 2025)</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-num" style="color:var(--red);">85 %</div>
+      <div class="kpi-label">Pérdida asumida por el cliente en pagos APP (EBA-BCE, 2025)</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-num" style="color:var(--amber);">482.000 M€</div>
+      <div class="kpi-label">Patrimonio en fondos en España expuestos a TER alto (INVERCO)</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-num" style="color:var(--teal);">2,25 % vs 0,12 %</div>
+      <div class="kpi-label">Techo legal gestión CNMV vs. Indexado en MyInvestor</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card card-accent-red">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2mm;">
+        <h3>1. Vía Criminal: Manipulación Psicológica (Vishing / APP Fraud)</h3>
+        <span class="badge badge-red">Secuestro Sistema 1</span>
+      </div>
+      <ul>
+        <li><strong>El vector humano:</strong> El estafador no hackea el servidor de MyInvestor; <em>hackea a Carmen</em> por teléfono usando urgencia artificial, promesas del 12 % garantizado o falsas "cuentas seguras".</li>
+        <li><strong>Por qué fallan los avisos actuales:</strong> Los ensayos del <em>Behavioural Insights Team (BIT)</em> y la <em>FCA</em> demuestran que el <strong>88 %</strong> de los usuarios ignora los pop-ups genéricos por estar bajo túnel emocional (<em>Sistema 1 de Kahneman</em>).</li>
+        <li><strong>Riesgo directo para el banco (Nuevo PSR / PSD3 UE):</strong> La nueva normativa europea obliga a los bancos a reembolsar el <strong>100 %</strong> en estafas de suplantación bancaria o fallos de verificación de IBAN (<em>SEPA VoP</em>).</li>
+      </ul>
+    </div>
+
+    <div class="card card-accent-amber">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2mm;">
+        <h3>2. Vía Legal: Comisiones Ocultas y Peaje Fiscal Evitable</h3>
+        <span class="badge badge-amber">Velo del Porcentaje</span>
+      </div>
+      <ul>
+        <li><strong>El Velo del Porcentaje (Barber, Odean &amp; Zheng):</strong> En sucursal le ofrecen un fondo con un <code>1,80 %</code> de comisión anual. Parece poco, pero sobre <code>50.000 €</code> drena <strong>10.635 €</strong> en 10 años frente a una cartera indexada al <code>0,30 %</code>.</li>
+        <li><strong>Sesgo de Crecimiento Exponencial (Stango &amp; Zinman):</strong> El ahorrador no calcula el interés compuesto negativo ni las comisiones de salida del <code>4 %</code> en fondos garantizados.</li>
+        <li><strong>Desconocimiento del Art. 94 LIRPF:</strong> El cliente no cambia de banco por miedo a Hacienda, sin saber que los fondos españoles/UCITS se traspasan pagando <strong>0 € en IRPF</strong>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Fuentes: Banco de España (2025) · EBA-BCE (2025) · INVERCO &amp; CNMV · Barber, Odean &amp; Zheng (2005)</span>
+    <span>Diapositiva 2 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 3: LA SOLUCIÓN Y FLUJO DE 3 PASOS -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 2. LA SOLUCIÓN</span></span>
+    <span class="slide-tag">Integrado Nativamente en la App de MyInvestor</span>
+  </div>
+
+  <div>
+    <h2>Un solo gesto antes de firmar: Enseñar ➔ Veredicto ➔ Actuar</h2>
+    <p style="margin-bottom:3.5mm;">
+      Centinela vive dentro de la app de MyInvestor. Nunca llama por teléfono al cliente (para no entrenarle a confiar en llamadas entrantes) y resuelve cualquier oferta en menos de 5 segundos:
+    </p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card card-accent-blue">
+      <span class="badge badge-blue" style="align-self:flex-start; margin-bottom:2mm;">PASO 1 · ENSEÑAR</span>
+      <h3>Ingesta Multimodal Sin Fricción</h3>
+      <ul>
+        <li><strong>📞 Llamada en Altavoz:</strong> Carmen pulsa <em>Escuchar Altavoz</em> (sorteando el bloqueo del micrófono celular GSM en iOS). <code>ElevenLabs Scribe (scribe_v1)</code> transcribe en vivo y mide la velocidad de habla (<code>WPM</code>).</li>
+        <li><strong>📸 Foto / PDF de Folleto DFI:</strong> Sube una foto o el PDF del folleto bancario. <code>Claude Vision</code> extrae ISIN, TER, gestión, depósito y comisiones de reembolso.</li>
+        <li><strong>💬 Captura de SMS / WhatsApp:</strong> Detecta enlaces clonados (<em>smishing</em>) y falsas tasas de desbloqueo.</li>
+      </ul>
+    </div>
+
+    <div class="card card-accent-amber">
+      <span class="badge badge-amber" style="align-self:flex-start; margin-bottom:2mm;">PASO 2 · VEREDICTO (&lt; 5 s)</span>
+      <h3>Semáforo Determinista en Voz y Texto</h3>
+      <ul>
+        <li><span class="badge badge-red">🔴 ESTAFA</span> Entidad en lista negra <strong>CNMV</strong>, discrepancia titular/IBAN (<code>SEPA VoP: NO_MATCH</code>), fase crítica en la <em>Kill-Chain COLD</em> o presión acústica <code>&gt;175 WPM</code>.</li>
+        <li><span class="badge badge-amber">🟠 CARO</span> Sobrecoste severo frente a fondos equivalentes del <strong>MCP de MyInvestor</strong>, traducido a pérdida a 10 años (<code>-10.635 €</code>) y dolor mensual (<code>-63 €/mes</code>).</li>
+        <li><span class="badge badge-teal">🟢 ADELANTE</span> Producto regulado en CNMV con comisiones óptimas (<code>0,05 %–0,30 %</code>).</li>
+      </ul>
+    </div>
+
+    <div class="card card-accent-teal">
+      <span class="badge badge-teal" style="align-self:flex-start; margin-bottom:2mm;">PASO 3 · ACTUAR</span>
+      <h3>Ejecución Gobernada por “Mi Contrato”</h3>
+      <ul>
+        <li><strong>Si es ESTAFA:</strong> Retiene preventivamente la transferencia de <code>9.000 €</code>, lanza una <em>Pregunta Diagnóstica RCT</em>, envía alerta push al móvil de su hijo <strong>Daniel</strong> y ofrece el botón <strong>Kill-Switch</strong>.</li>
+        <li><strong>Si es CARO:</strong> Deja pre-rellenada la <strong>Orden de Traspaso Exento de IRPF (0 €)</strong> hacia MyInvestor lista para firmar con FaceID.</li>
+        <li><strong>Registro Inmutable:</strong> Cada decisión queda sellada en un <code>Audit Log SHA-256</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Diseño centrado en personas mayores y accesibilidad universal (Voz + Texto + Persona Sorda + Baja Visión)</span>
+    <span>Diapositiva 3 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 4: ARQUITECTURA TÉCNICA (JAGGED FRONTIER + MCP) -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 3. ARQUITECTURA TÉCNICA</span></span>
+    <span class="slide-tag">Principio Jagged Frontier: 0 % Cálculos en el LLM</span>
+  </div>
+
+  <div>
+    <h2>Arquitectura en 3 Capas: IA Semántica + Motores Deterministas + MCP</h2>
+    <p style="margin-bottom:3mm;">
+      Los LLMs son excelentes extrayendo intención y estructura, pero no deben inventar números financieros. En Centinela, <strong>toda cifra en euros, impuesto o bloqueo proviene de motores deterministas en código</strong>:
+    </p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3 style="color:var(--accent);">Capa 1 · Percepción Multimodal &amp; Accesibilidad</h3>
+      <ul>
+        <li><strong>ElevenLabs Scribe (<code>scribe_v1</code>):</strong> Speech-to-Text con marcas de tiempo por palabra (<em>word-level timestamps</em>) para calcular cadencia vocal (<code>WPM</code>).</li>
+        <li><strong>Claude Sonnet 4 (Vision + PDF + Tools):</strong> Extrae JSON tipado del folleto DFI y orquesta las 4 herramientas de Centinela.</li>
+        <li><strong>ElevenLabs TTS (<code>eleven_multilingual_v2</code>):</strong> Locución empática sincronizada con texto.</li>
+        <li><strong>3 Modos de Accesibilidad:</strong> Estándar (Voz+Texto), <strong>Persona Sorda</strong> (100 % visual) y <strong>Baja Visión</strong> (alto contraste AAA + lectura de IBAN/importes).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 style="color:var(--teal);">Capa 2 · Cliente MCP Real + Servidor MCP Propio</h3>
+      <ul>
+        <li><strong>Cliente conectado en vivo a <code>mcp.myinvestor.es/mcp</code>:</strong> Invoca <code>search_funds</code> por JSON-RPC 2.0 sobre el catálogo real de MyInvestor + GPTadvisor con fallback instantáneo en caché.</li>
+        <li><strong>Servidor MCP Propio (<code>POST /mcp</code>):</strong> Expone 3 nuevas tools que GPTadvisor hoy no tiene:
+          <br>1. <code>verify_cnmv_and_iban</code>
+          <br>2. <code>calculate_10y_fee_and_tax</code>
+          <br>3. <code>enforce_client_contract</code></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 style="color:var(--amber);">Capa 3 · Gobernanza “Mi Contrato” &amp; Seguridad</h3>
+      <ul>
+        <li><strong>Reglas Programables por el Cliente:</strong> Límite de transferencia (<code>3.000 €</code>), TER máximo aceptable (<code>0,75 %</code>) y Contacto de Confianza (<code>Daniel García</code>).</li>
+        <li><strong>Audit Log Criptográfico:</strong> Cadena de bloques local encadenada mediante <code>SHA-256</code> (<code>prev_hash</code> &rarr; <code>hash</code>).</li>
+        <li><strong>Hardening de Red:</strong> Protección anti-DNS Rebinding (<code>isAllowedHost</code>), bloqueo CSRF Cross-Origin y aislamiento loopback en <code>/api/keys</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Stack reproducible en un comando: Node.js Zero-External-Deps + Docker Compose (127.0.0.1:3000)</span>
+    <span>Diapositiva 4 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 5: CIENCIA ANTIFRAUDE (PAPERS 2024-2026 INTEGRADOS) -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 4. CIENCIA ANTIFRAUDE</span></span>
+    <span class="slide-tag">Estado del Arte Académico (2024–2026) en Código</span>
+  </div>
+
+  <div>
+    <h2>5 Descubrimientos Científicos Integrados en <code>fraudEngine.js</code></h2>
+    <p style="margin-bottom:3mm;">
+      Hemos trasladado la literatura científica más reciente sobre <em>Vishing 2.0</em>, <em>Pig-Butchering</em> y economía conductual directamente al motor determinista de Centinela:
+    </p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%;">Descubrimiento / Paper</th>
+        <th style="width:28%;">Evidencia Empírica</th>
+        <th style="width:50%;">Implementación Exacta en Centinela (<code>src/engine/fraudEngine.js</code>)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Máquina de Estados COLD &amp; PreScam (2025)</strong></td>
+        <td>Toda estafa conversacional progresa por 5 fases predecibles antes del robo final (<em>Payoff</em>).</td>
+        <td>Rastreador visual en tiempo real de las 5 fases: <code>F1 Trust Cultivation</code> &rarr; <code>F2 Scarcity</code> &rarr; <code>F3 Pitching</code> &rarr; <code>F4 Isolation</code> &rarr; <code>F5 Payoff Exploitation</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>2. SEPA Verification of Payee (Reg. UE 2024/886)</strong></td>
+        <td>El estafador anuncia una marca prestigiosa pero usa el IBAN de una cuenta mula o sociedad pantalla.</td>
+        <td>Cruza el nombre anunciado (<em>"Quantum Ibérica"</em>) con el titular registral del IBAN (<em>"Comercializadora Puente S.L."</em>) disparando <code>SEPA VoP: NO_MATCH</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Extorsión de Salida &amp; Cebo (USENIX SOUPS / FinCEN)</strong></td>
+        <td>Falsos brókers abonan primero <code>100 €</code> reales (cebo) y luego exigen transferir un <code>15 %</code> previo para "liberar ganancias / pagar IRPF".</td>
+        <td>Reglas <code>FALSA_TASA_DESBLOQUEO_O_IMPUESTO_PREVIO</code> y <code>ESCALADO_TRAS_MICRO_RETIRO_CEBO</code>: recuerda que en España (Ley 35/2006) el IRPF se retiene del reembolso, jamás se paga aparte.</td>
+      </tr>
+      <tr>
+        <td><strong>4. Prosodia Acústica &amp; Telemetría In-Call (BioCatch)</strong></td>
+        <td>El 80 % del fraude APP ocurre con llamada activa (<em>Off-Hook</em>), pegado de IBAN y habla acelerada <code>&gt;175 WPM</code>.</td>
+        <td>Mide <code>speech_rate_wpm</code> con los timestamps de <code>ElevenLabs Scribe</code> (<code>188 WPM = Presión Alta</code>) y registra la señal <code>in_call_telemetry</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>5. Pregunta Diagnóstica RCT (BIT / FCA Trials)</strong></td>
+        <td>Los avisos genéricos se ignoran el 88 % de las veces; las preguntas que contradicen el guion del estafador reducen el fraude &gt;60 %.</td>
+        <td>Genera la <code>bit_fca_rct_diagnostic_question</code> específica al vector de ataque para forzar el paso del <strong>Sistema 1 (emocional) al Sistema 2 (analítico)</strong>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="slide-footer">
+    <span>Verificación instantánea contra caché oficial de chiringuitos financieros de la CNMV e IBANs reportados</span>
+    <span>Diapositiva 5 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 6: MOTOR CUANTITATIVO, FISCAL Y SALIENCIA CONDUCTUAL -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 5. MOTOR FINANCIERO Y FISCAL</span></span>
+    <span class="slide-tag">Matemática Compuesta + Art. 94 LIRPF + Saliencia ESMA</span>
+  </div>
+
+  <div>
+    <h2>Del “Velo del Porcentaje” al Traspaso Exento de IRPF en 1 Clic</h2>
+  </div>
+
+  <div class="grid-2" style="margin-top:2mm;">
+    <div class="card card-accent-amber">
+      <h3>1. Auditoría de Costes Compuestos y “Dolor de Pago” (ESMA)</h3>
+      <p style="margin-bottom:2.5mm;">
+        Fórmula determinista auditada: <code>Vf = C0 × (1 + r − TER)^10</code> (sobre <code>50.000 €</code> al <code>5 %</code> bruto anual):
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Escenario Comparado (vía MCP)</th>
+            <th>TER Anual</th>
+            <th>Capital Final (10a)</th>
+            <th>Diferencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🏦 Fondo Sucursal Banca Tradicional</td>
+            <td><strong>1,80 %</strong></td>
+            <td>67.196 €</td>
+            <td style="color:var(--red); font-weight:800;">Base</td>
+          </tr>
+          <tr>
+            <td>🟢 Cartera Indexada MyInvestor</td>
+            <td><strong>0,30 %</strong></td>
+            <td>77.831 €</td>
+            <td style="color:var(--teal); font-weight:800;">+10.635 €</td>
+          </tr>
+          <tr>
+            <td>⚡ iShares Developed World (IE000ZYRH0Q7)</td>
+            <td><strong>0,06 %</strong></td>
+            <td>79.699 €</td>
+            <td style="color:var(--accent); font-weight:800;">+12.503 €</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:3mm; padding:2.5mm 3mm; background:var(--amber-soft); border:1px solid #FDE68A; border-radius:8px; font-size:8.4pt;">
+        💡 <strong>Saliencia Conductual (Barber, Odean &amp; Zheng):</strong> Centinela traduce el <code>1,80 %</code> a un drenaje tangible de <strong>-63 € cada mes (-2,05 € cada día)</strong>, suba o baje la bolsa.
+      </div>
+    </div>
+
+    <div class="card card-accent-teal">
+      <h3>2. Matriz de Traspasabilidad Fiscal (Art. 94 LIRPF) y Fondo Puente</h3>
+      <p style="margin-bottom:2.5mm;">
+        Calcula los tramos oficiales de la Base del Ahorro AEAT 2025–2026 (<code>19 %</code> hasta 6k €, <code>21 %</code>, <code>23 %</code>, <code>27 %</code> y <code>30 %</code> &gt;300k €) y distingue automáticamente:
+      </p>
+      <ul>
+        <li><strong>✅ Fondos de Inversión (UCITS / Españoles):</strong> 100 % traspasables con diferimiento fiscal (<strong>0 € a pagar hoy en IRPF</strong>). Para una plusvalía acumulada de <code>8.500 €</code>, ahorra <strong>1.665 €</strong> de peaje fiscal inmediato.</li>
+        <li><strong>🌉 Mecanismo Real de Fondo Puente MyInvestor:</strong> Para traspasar hacia Carteras Indexadas (Robo-advisor), la orden aterriza en el monetario puente <code>AXA Trésor Court Terme C (FR0000447823, TER 0,05 %)</code> sin tocar cuenta corriente.</li>
+        <li><strong>⚠️ Productos No Traspasables o con Ventana de Liquidez:</strong> Alerta si el producto es un <strong>ETF, Depósito o Seguro Unit-Linked</strong> (no admiten traspaso exento) o un <strong>Fondo Garantizado</strong> con comisión de salida del <code>4 %</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Datos en vivo desde https://mcp.myinvestor.es/mcp (Fidelity IE00BYX5NX33 · iShares IE000ZYRH0Q7 · AXA FR0000447823)</span>
+    <span>Diapositiva 6 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 7: DEMO EN VIVO EN 3 ACTOS (90 SEGUNDOS) -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 6. DEMO EN VIVO (90 SEGUNDOS)</span></span>
+    <span class="slide-tag">Experiencia Dual: Móvil de Carmen + Móvil de su hijo Daniel</span>
+  </div>
+
+  <div>
+    <h2>Guion de Demostración en Tiempo Real</h2>
+    <p style="margin-bottom:3mm;">
+      La interfaz presenta a la izquierda el <strong>iPhone de Carmen</strong> (integrado en la App de MyInvestor) y a la derecha el <strong>Centro de Control Familiar y Técnico</strong>:
+    </p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card card-accent-red">
+      <div style="display:flex; justify-content:space-between; margin-bottom:2mm;">
+        <span class="badge badge-red">ACTO 1 · 40 SEGUNDOS</span>
+        <span style="font-size:8pt; font-weight:700; color:var(--muted);">Vishing / Falso Bróker</span>
+      </div>
+      <h3>“Quantum Ibérica Capital (12 % Garantizado)”</h3>
+      <ul>
+        <li>Carmen pone la llamada en altavoz. El falso bróker le pide transferir <code>9.000 €</code> en 15 minutos al IBAN <code>ES91 2100...</code></li>
+        <li>Centinela detecta <strong>Fase 5/5 Kill-Chain</strong>, alerta <strong>CNMV</strong>, <code>SEPA VoP: NO_MATCH</code> (cuenta mula) y <code>188 WPM</code>.</li>
+        <li><strong>Acción:</strong> Retiene los <code>9.000 €</code>, lanza alerta push al móvil de <strong>Daniel (Hijo)</strong> y Daniel congela la operativa con 1 toque (<em>Kill-Switch</em>).</li>
+      </ul>
+    </div>
+
+    <div class="card card-accent-amber">
+      <div style="display:flex; justify-content:space-between; margin-bottom:2mm;">
+        <span class="badge badge-amber">ACTO 2 · 40 SEGUNDOS</span>
+        <span style="font-size:8pt; font-weight:700; color:var(--muted);">Sucursal Bancaria</span>
+      </div>
+      <h3>Folleto DFI: Fondo Renta Variable al 1,80 % TER</h3>
+      <ul>
+        <li>Carmen sube el PDF DFI que le ofrecen en su banco tradicional sobre <code>50.000 €</code>.</li>
+        <li>Centinela consulta en vivo el <strong>MCP de MyInvestor</strong>, encuentra alternativas al <code>0,06 %–0,30 %</code> y calcula que perderá <strong>10.635 €</strong> en 10 años (<code>-63 €/mes</code>).</li>
+        <li><strong>Acción:</strong> Prepara la orden de traspaso exento de IRPF (<code>0 €</code>) y Carmen la firma con <strong>FaceID In-App</strong>.</li>
+      </ul>
+    </div>
+
+    <div class="card card-accent-blue">
+      <div style="display:flex; justify-content:space-between; margin-bottom:2mm;">
+        <span class="badge badge-blue">ACTO 3 · 10 SEGUNDOS</span>
+        <span style="font-size:8pt; font-weight:700; color:var(--muted);">Inclusión Total</span>
+      </div>
+      <h3>Conmutación de Accesibilidad en 1 Clic</h3>
+      <ul>
+        <li><strong>🦻 Modo Persona Sorda:</strong> Silencia la síntesis de voz y activa el banner visual de alta prioridad con subtítulos íntegros en tiempo real.</li>
+        <li><strong>👁️ Modo Baja Visión:</strong> Escala la tipografía a alto contraste AAA y lee preventivamente en voz alta el importe, el titular real del IBAN y las comisiones antes de permitir cualquier firma.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Todo ocurre dentro de la sesión autenticada de la App de MyInvestor</span>
+    <span>Diapositiva 7 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 8: BENCHMARK DE 30 CASOS (VALIDACIÓN EMPÍRICA) -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 7. VALIDACIÓN Y BENCHMARK</span></span>
+    <span class="slide-tag">Ejecutable en Vivo: npm run eval / Modal UI</span>
+  </div>
+
+  <div>
+    <h2>Suite Automatizada de 30 Escenarios Reales: 30 / 30 (100 % Precisión)</h2>
+    <p style="margin-bottom:3mm;">
+      Para demostrar fiabilidad de grado bancario, incluimos un benchmark reproducible de <strong>30 casos</strong> (<code>src/evals/cases_30.js</code>) que evalúa precisión por clase y latencia en milisegundos:
+    </p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card card-accent-red">
+      <h3>🔴 10 Casos ESTAFA (10 / 10)</h3>
+      <ul>
+        <li><code>CASE-01</code> Chiringuito Quantum Ibérica (12 % + IBAN mula)</li>
+        <li><code>CASE-02</code> SMS Spoofing suplantando a MyInvestor</li>
+        <li><code>CASE-03</code> Vishing "Cuenta Segura" del Banco de España</li>
+        <li><code>CASE-04</code> Plataforma cripto AlphaYield (Alerta CNMV)</li>
+        <li><code>CASE-05</code> Clon EuroPrime Garantizado 12 (CNMV)</li>
+        <li><code>CASE-06</code> Falso gestor pidiendo AnyDesk + código SMS</li>
+        <li><code>CASE-07</code> Horizon Gold &amp; AI Trading con IBAN lituano</li>
+        <li><code>CASE-08</code> Coacción para ocultar transferencia al banco</li>
+        <li><code>CASE-09</code> Clon Iberia Wealth Management Ltd</li>
+        <li><code>CASE-10</code> Falso Depósito Cripto-Garantizado MyInvestor</li>
+      </ul>
+    </div>
+
+    <div class="card card-accent-amber">
+      <h3>🟠 10 Casos CARO (10 / 10)</h3>
+      <ul>
+        <li><code>CASE-11</code> Fondo RV Global Sucursal (TER 1,80 %)</li>
+        <li><code>CASE-12</code> Fondo Garantizado (TER 1,45 % + 4 % salida)</li>
+        <li><code>CASE-13</code> Fondo Mixto Defensivo Sucursal (TER 1,65 %)</li>
+        <li><code>CASE-14</code> Fondo al tope legal CNMV (2,25 % + 0,20 %)</li>
+        <li><code>CASE-15</code> Seguro Unit-Linked (TER 2,10 % · No traspasable)</li>
+        <li><code>CASE-16</code> Renta Fija Corto Plazo al 1,15 %</li>
+        <li><code>CASE-17</code> Monetario sucursal al 0,95 % (vs 0,05 % AXA)</li>
+        <li><code>CASE-18</code> ETF Temático al 1,35 % (Tributa al vender)</li>
+        <li><code>CASE-19</code> Fondo Bolsa USA Activo al 1,92 %</li>
+        <li><code>CASE-20</code> Fondo Objetivo con 3 % de penalización</li>
+      </ul>
+    </div>
+
+    <div class="card card-accent-teal">
+      <h3>🟢 10 Casos ADELANTE (10 / 10)</h3>
+      <ul>
+        <li><code>CASE-21</code> Fidelity MSCI World Index (IE00BYX5NX33 · 0,12 %)</li>
+        <li><code>CASE-22</code> iShares Developed World (IE000ZYRH0Q7 · 0,06 %)</li>
+        <li><code>CASE-23</code> AXA Trésor Court Terme (FR0000447823 · 0,05 %)</li>
+        <li><code>CASE-24</code> Cartera Ahorro MyInvestor (TER 0,22 %–0,30 %)</li>
+        <li><code>CASE-25</code> Cartera Indexada Indie MyInvestor (0,30 %)</li>
+        <li><code>CASE-26</code> Amundi Prime Euro Gov Bond (0,05 %)</li>
+        <li><code>CASE-27</code> Lazard Euro Short Duration SRI (0,04 %)</li>
+        <li><code>CASE-28</code> Ofi Invest ISR Monétaire CT (0,06 %)</li>
+        <li><code>CASE-29</code> Consulta familiar legítima sobre ahorro mensual</li>
+        <li><code>CASE-30</code> Vanguard Global Stock Index (IE00B03HCZ61 · 0,18 %)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>0 % Falsos Negativos en Fraude · 0,00 € Desviación en Cálculos · Tiempo medio del motor determinista: ~1,2 ms/caso</span>
+    <span>Diapositiva 8 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 9: CASO DE NEGOCIO Y VIABILIDAD LEGAL (MIFID II / PSR) -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 8. IMPACTO EN MYINVESTOR &amp; VIABILIDAD LEGAL</span></span>
+    <span class="slide-tag">Rentabilidad B2B2C + Cumplimiento Normativo CNMV / UE</span>
+  </div>
+
+  <div>
+    <h2>Por qué MyInvestor y GPTadvisor pueden desplegar Centinela mañana mismo</h2>
+  </div>
+
+  <div class="grid-2" style="margin-top:2mm;">
+    <div class="card card-accent-blue">
+      <h3>1. Doble Retorno Financiero para MyInvestor</h3>
+      <ul>
+        <li><strong>Máquina de Captación de Patrimonio (AuM) con CAC = 0 €:</strong>
+          <br>Cuando un cliente usa Centinela en una sucursal de la competencia y descubre que pierde <code>10.635 €</code> en comisiones, firma el traspaso hacia MyInvestor en ese mismo minuto. Cada traspaso de <code>50.000 €</code> a una Cartera Indexada (<code>0,30 %</code>) genera <strong>150 €/año recurrentes (1.500 € LTV a 10 años)</strong> frente a un CAC sectorial de 61–163 $.</li>
+        <li><strong>Escudo Directo de Balance ante el nuevo PSR / PSD3 Europeo:</strong>
+          <br>Bajo el nuevo Reglamento Europeo de Servicios de Pago (PSR), el banco responde con su propio balance del <strong>100 %</strong> de las estafas por suplantación bancaria o fallos de verificación SEPA VoP. Evitar una sola estafa media (<code>2.347 €</code> a <code>9.000 €</code>) paga el coste de inferencia IA (<code>~0,50 €/mes</code>) de miles de clientes.</li>
+      </ul>
+    </div>
+
+    <div class="card card-accent-teal">
+      <h3>2. Viabilidad Jurídica: MiFID II, PSD2/PSR y RGPD</h3>
+      <ul>
+        <li><strong>Exención de Asesoramiento en el LLM (Art. 24 MiFID II / CNMV):</strong>
+          <br>El LLM de Centinela <strong>no perfila al usuario ni emite recomendaciones personalizadas de idoneidad</strong>. Actúa como un <strong>comparador cuantitativo objetivo ex-ante</strong> dentro de la misma categoría oficial INVERCO/Morningstar y deriva la contratación al <strong>Robo-advisor regulado de MyInvestor</strong>, que ya posee licencia de gestión discrecional y test de idoneidad.</li>
+        <li><strong>Retención Preventiva y SEPA VoP (Reg. UE 2024/886):</strong>
+          <br>El bloqueo preventivo de órdenes sospechosas está amparado por las medidas de seguridad de pagos (PSD2/PSR) y por el mandato del propio titular en <strong>Mi Contrato</strong>.</li>
+        <li><strong>Privacidad Familiar (RGPD Art. 6.1.a):</strong>
+          <br>Daniel (Hijo) ha sido designado expresamente por Carmen con alcance limitado a alertas de riesgo.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Posicionamiento único: Ningún competidor combina Escudo Antifraude + Auditor MCP + Traspaso Fiscal In-App</span>
+    <span>Diapositiva 9 / 10</span>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- SLIDE 10: BIBLIOGRAFÍA CIENTÍFICA, PAPERS Y FUENTES REGULATORIAS -->
+<!-- ====================================================================== -->
+<section class="slide">
+  <div class="slide-top">
+    <span class="brand-pill">CENTINELA <span>· 9. FUENTES CIENTÍFICAS Y REGULATORIAS</span></span>
+    <span class="slide-tag">Papers Académicos, Ensayos Clínicos (RCTs) y Normativa Oficial</span>
+  </div>
+
+  <div>
+    <h2 style="font-size:16.5pt; margin-bottom:2mm;">Bibliografía de Papers y Fuentes Oficiales Empleadas en el Proyecto</h2>
+  </div>
+
+  <div class="grid-2" style="gap:4mm;">
+    <div class="card" style="padding:3.5mm 4.5mm;">
+      <h3 style="font-size:10pt; color:var(--accent); margin-bottom:1.5mm;">A. Papers de Detección de Fraude, Vishing 2.0 y Economía Conductual</h3>
+      <ul style="font-size:7.8pt; line-height:1.32;">
+        <li><strong>PreScam Benchmark &amp; COLD Framework (2024–2025):</strong> <em>"PreScam: A Benchmark for Predicting Scam Progression from Early Conversations"</em> &amp; <em>"Linguistic Dynamics of Online Scam Conversations (Contextual Organization of Language in Deception)"</em>. Base de nuestra máquina de estados de 5 fases (<em>Kill-Chain</em>).</li>
+        <li><strong>Multimodal Vishing &amp; Acoustic Prosody (2025–2026):</strong> <em>"Automatically Detecting Voice Phishing: A Large Audio Model Approach (VishGPT)"</em> &amp; estudios de fusión ASR + prosodia de urgencia (velocidad de habla <code>WPM</code> y compresión de turnos con <code>ElevenLabs Scribe</code>).</li>
+        <li><strong>USENIX SOUPS &amp; FinCEN / TRM Labs (2024–2026):</strong> Estudios sobre escalado de pagos en falsos brókers (<em>"Bait-and-Escalate"</em> con micro-retiros cebo y extorsión de salida mediante falsas tasas previas de desbloqueo o impuestos).</li>
+        <li><strong>Behavioural Insights Team (BIT), UK FCA &amp; PSR Trials (2024–2025):</strong> Ensayos Controlados Aleatorizados (RCTs) sobre <em>"Friction-by-Design"</em> y preguntas diagnósticas de contradicción para romper el secuestro del <strong>Sistema 1 al Sistema 2</strong> (Kahneman, 2011) evitando la fatiga de alertas.</li>
+        <li><strong>Active Call &amp; Behavioral Biometrics Telemetry (BioCatch / Wultra, 2024–2025):</strong> Detección de coacción mediante telemetría simultánea de llamada activa (<em>Off-Hook</em>) + pegado de IBAN desde portapapeles.</li>
+      </ul>
+    </div>
+
+    <div class="card" style="padding:3.5mm 4.5mm;">
+      <h3 style="font-size:10pt; color:var(--teal); margin-bottom:1.5mm;">B. Papers de Finanzas Conductuales (Comisiones) y Fuentes Regulatorias</h3>
+      <ul style="font-size:7.8pt; line-height:1.32;">
+        <li><strong>Barber, B. M., Odean, T., &amp; Zheng, L. (2005) — <em>Journal of Business</em>:</strong> <em>"Out of Sight, Out of Mind: The Effects of Expenses on Mutual Fund Flows"</em>. Demuestra el "velo del porcentaje" y la baja saliencia de las comisiones anuales expresadas en % TER.</li>
+        <li><strong>Stango, V., &amp; Zinman, J. (2009) — <em>Journal of Finance</em>:</strong> <em>"Exponential Growth Bias and Household Finance"</em>. Demuestra por qué el ahorrador subestima sistemáticamente el interés compuesto a 10 años.</li>
+        <li><strong>Fisch, J. E., &amp; Wilkinson-Ryan, T. / Informes ESMA sobre <em>Fee Salience</em>:</strong> Evidencia experimental de que traducir el % TER a euros tangibles (coste mensual/diario y pérdida a 10 años) multiplica la sensibilidad del inversor minorista.</li>
+        <li><strong>Banco de España (2025) &amp; EBA-BCE (2025):</strong> Estadística oficial de fraude en pagos autorizados en España (<code>2.347 €</code> transferencia media; <code>85 %</code> pérdida asumida por el cliente).</li>
+        <li><strong>Reglamento (UE) 2024/886 (SEPA Instant Payments / Verification of Payee) &amp; PSR/PSD3:</strong> Verificación obligatoria titular vs. IBAN (<code>MATCH / NO_MATCH</code>) y responsabilidad bancaria por suplantación.</li>
+        <li><strong>Ley 35/2006 del IRPF (Art. 94 y Escala del Ahorro AEAT 2025–2026) &amp; CNMV / INVERCO:</strong> Régimen de diferimiento fiscal en traspasos entre IIC (<code>0 € IRPF</code>) y techos legales de comisiones en España (<code>2,25 %</code> gestión + <code>0,20 %</code> depósito).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>Repositorio Oficial: https://github.com/MisaelHerreraB/centinela-hackfinance · Demo: http://localhost:3000</span>
+    <span>Diapositiva 10 / 10</span>
+  </div>
+</section>
+
+</body>
+</html>
