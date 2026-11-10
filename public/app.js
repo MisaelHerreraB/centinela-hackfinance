@@ -314,9 +314,34 @@ function renderCallVerdict(data) {
           🧠 <strong>Fricción Cognitiva (FCA/PSR):</strong> Ruptura <code>Sistema 1 → Sistema 2</code> activada.
         </div>`
       : '';
+    const killChainBadge = v.kill_chain_progression
+      ? `<div style="margin-bottom:6px; padding:7px 9px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; font-size:0.69rem; color:#1e293b;">
+          <div style="font-weight:800; color:#0f172a; margin-bottom:4px;">
+            ⛓️ Kill-Chain Conversacional (Modelo COLD / PreScam): <span style="color:#dc2626;">${v.kill_chain_progression.phase_summary}</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:3px;">
+            ${v.kill_chain_progression.stages
+              .map(
+                (st) => `
+              <div style="padding:3px 4px; border-radius:4px; text-align:center; font-size:0.60rem; font-weight:700; background:${st.active ? '#fee2e2' : '#e2e8f0'}; color:${st.active ? '#991b1b' : '#64748b'}; border:1px solid ${st.active ? '#fca5a5' : 'transparent'};">
+                F${st.stage} ${st.active ? '●' : '○'}
+              </div>`
+              )
+              .join('')}
+          </div>
+        </div>`
+      : '';
+    const rctPromptBadge = v.behavioral_intervention?.bit_fca_rct_diagnostic_question
+      ? `<div style="margin-bottom:6px; padding:7px 9px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; font-size:0.70rem; color:#1e3a8a;">
+          🛑 <strong>Pregunta Diagnóstica RCT (BIT / FCA Anti-Tunnel):</strong><br/>
+          <em>“${v.behavioral_intervention.bit_fca_rct_diagnostic_question}”</em>
+        </div>`
+      : '';
     detailsBox.innerHTML = `
+      ${killChainBadge}
       ${vopBadge}
       ${prosodyBadge}
+      ${rctPromptBadge}
       <div class="phone-signals">
         ${v.signals
           .map(
@@ -364,6 +389,8 @@ function renderCallVerdict(data) {
     {
       verdict: v.verdict,
       risk_score: v.risk_score,
+      kill_chain_cold_prescam: v.kill_chain_progression,
+      in_call_coercion_telemetry: v.in_call_telemetry,
       cnmv_check: v.cnmv_check,
       iban_sepa_vop_check: v.iban_check,
       prosody_vishing_analysis: v.prosody_analysis,
@@ -617,9 +644,34 @@ function handlePresetSelect(val) {
   if (!val) return;
   if (val === 'SMISHING_MYINVESTOR') {
     runSmishingQuickCase();
+  } else if (val === 'EXTORSION_DESBLOQUEO_IRPF') {
+    runUnlockTaxExtortionCase();
   } else {
     runScenario2Caro(val);
   }
+}
+
+async function runUnlockTaxExtortionCase() {
+  document.getElementById('input-source-tag').textContent = '📞 Audio / Chat · Detector Extorsión Salida';
+  document.getElementById('evidence-title').innerHTML =
+    '🔴 <strong>Trampa Fase 4–5 (USENIX / FinCEN):</strong> Falsa Tasa Previa de Desbloqueo / IRPF';
+  document.getElementById('evidence-content').innerHTML = `
+    “Como ya viste que cobraste tus <span class="hl-warn">primeros 100 € de beneficio</span>, tu cuenta acumula 38.000 €.
+    Para <span class="hl-danger">liberar tus ganancias tienes que pagar antes el 15% de tasa de desbloqueo e impuesto previo para retirar</span>
+    transfiriendo <strong>5.700 €</strong> hoy al IBAN <span class="hl-danger">LT60 3250 0811 9922 1100</span>.”
+  `;
+  const res = await fetch('/api/analyze-call', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: 'Como ya viste que cobraste tus primeros 100 € de beneficio, para liberar tus ganancias tienes que pagar antes el 15% de tasa de desbloqueo e impuesto previo para retirar transfiriendo 5.700 euros hoy al IBAN LT603250081199221100.',
+      entity_name: 'Horizon Gold & AI Trading',
+      iban: 'LT603250081199221100',
+      amount_eur: 5700
+    })
+  });
+  const data = await res.json();
+  renderCallVerdict(data);
 }
 
 async function runSmishingQuickCase() {

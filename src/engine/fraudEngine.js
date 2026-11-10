@@ -101,9 +101,28 @@ const MANIPULATION_PATTERNS = [
     id: 'SOLICITUD_CLAVES_O_CUENTA_SEGURA',
     label: 'Solicitud de claves SMS/OTP, acceso remoto o "Cuenta Segura"',
     cognitive_bias: 'Sesgo de Obediencia a la Autoridad Suplantada (PSR Bank Impersonation)',
+    cold_stage: 5,
     weight: 65,
     regex: /(c[oó]digo\s+sms|clave\s+de\s+firma|cuenta\s+segura\s+del\s+banco|anydesk|teamviewer|bloqueo\s+inminente|movimiento\s+sospechoso\s+transfiere|pincha\s+en\s+este\s+enlace)/i,
     explanation: 'MyInvestor NUNCA pide códigos SMS por teléfono, ni instalar AnyDesk, ni transferir fondos a una supuesta "cuenta segura".'
+  },
+  {
+    id: 'FALSA_TASA_DESBLOQUEO_O_IMPUESTO_PREVIO',
+    label: 'Extorsión de salida: exigen transferencia previa para "liberar fondos" o "pagar IRPF"',
+    cognitive_bias: 'Falacia del Coste Hundido y Aversión a la Pérdida (USENIX SOUPS / FinCEN Escalation)',
+    cold_stage: 4,
+    weight: 75,
+    regex: /(pagar\s+(?:antes|primero)\s+el\s+\d+\s*%|tasa\s+de\s+desbloqueo|liberar\s+(?:tus\s+)?(?:fondos|ganancias)|impuesto\s+previo\s+para\s+retirar|comisi[oó]n\s+de\s+liquidez\s+para\s+retirar|certificado\s+antiblanqueo|transferir\s+el\s+irpf\s+para\s+desbloquear)/i,
+    explanation: 'En España (Ley 35/2006 IRPF), la retención del 19% se descuenta automáticamente del reembolso. JAMÁS se transfiere dinero aparte para desbloquear fondos.'
+  },
+  {
+    id: 'ESCALADO_TRAS_MICRO_RETIRO_CEBO',
+    label: 'Patrón "Bait-and-Escalate" (escalado tras micro-abono cebo inicial)',
+    cognitive_bias: 'Condicionamiento Operante por Micro-Recompensa (TRM Labs / Elliptic Pig-Butchering)',
+    cold_stage: 1,
+    weight: 45,
+    regex: /(ya\s+viste\s+que\s+cobraste|primeros?\s+\d+\s*€?\s+de\s+beneficio|ya\s+retiraste\s+tu\s+primera\s+ganancia|como\s+ya\s+probaste\s+con\s+poco|ahora\s+entra\s+en\s+el\s+tramo\s+vip)/i,
+    explanation: 'Los falsos brókers abonan primero una pequeña ganancia real (cebo) para generar confianza ciega antes de robar el capital fuerte.'
   }
 ];
 
@@ -277,12 +296,68 @@ function analyzeFraudRisk({
     scientific_basis: 'Multimodal Vishing Detection (Fusión Semántica + Prosodia de Urgencia, 2025–2026)'
   };
 
-  // 6. Intervención Conductual (Ruptura Sistema 1 -> Sistema 2) y Escudo de Responsabilidad PSR/PSD3
+  // 6. Máquina de Estados de la Kill-Chain Conversacional (5 Fases — Modelo COLD & PreScam Benchmark, 2025)
+  const activeStages = new Set();
+  if (cnmvCheck.flagged || (claimed_product && product_exists_in_mcp === false) || signals.some((s) => s.type === 'ESCALADO_TRAS_MICRO_RETIRO_CEBO')) {
+    activeStages.add(1);
+  }
+  if (signals.some((s) => s.type === 'URGENCIA_ARTIFICIAL')) {
+    activeStages.add(2);
+  }
+  if (signals.some((s) => s.type === 'PROMESA_GARANTIZADA')) {
+    activeStages.add(3);
+  }
+  if (signals.some((s) => s.type === 'AISLAMIENTO_O_SECRETO' || s.type === 'FALSA_TASA_DESBLOQUEO_O_IMPUESTO_PREVIO')) {
+    activeStages.add(4);
+  }
+  if (ibanCheck.flagged || signals.some((s) => s.type === 'SOLICITUD_CLAVES_O_CUENTA_SEGURA')) {
+    activeStages.add(5);
+  }
+
+  const coldStages = [
+    { stage: 1, name: '1. Trust Cultivation (Falsa Autoridad / Cebo)', active: activeStages.has(1) },
+    { stage: 2, name: '2. Risk & Scarcity Fabrication (Urgencia)', active: activeStages.has(2) },
+    { stage: 3, name: '3. Persuasive Pitching (Ilusión Sin Riesgo)', active: activeStages.has(3) },
+    { stage: 4, name: '4. Isolation & Coercion (Ocultación / Tasa Previa)', active: activeStages.has(4) },
+    { stage: 5, name: '5. Payoff Exploitation (Extracción IBAN / OTP)', active: activeStages.has(5) }
+  ];
+  const highestStage = activeStages.size > 0 ? Math.max(...Array.from(activeStages)) : 0;
+
+  const killChainProgression = {
+    framework: 'COLD Framework & PreScam Benchmark (Multi-Turn Scam Kill-Chain, 2025)',
+    highest_stage_reached: highestStage,
+    phase_summary: highestStage > 0 ? `Fase ${highestStage}/5 alcanzada` : 'Sin progresión de ataque (0/5)',
+    stages: coldStages
+  };
+
+  // 7. Telemetría Contextual In-Call + Portapapeles (BioCatch / Wultra MTD Studies)
+  const inCallTelemetry = {
+    active_voice_call_during_banking: isScam,
+    iban_clipboard_paste_detected: Boolean(ibanCheck.provided && ibanCheck.flagged),
+    coercion_telemetry_flag: isScam
+      ? 'ALTA_PROBABILIDAD_COACCION (Llamada activa Off-Hook + IBAN dictado/pegado en sesión)'
+      : 'NORMAL',
+    scientific_basis: 'Active Call & Behavioral Biometrics Coercion Telemetry (BioCatch / Wultra)'
+  };
+
+  // 8. Intervención Conductual (Ruptura Sistema 1 -> Sistema 2 + Pregunta Diagnóstica RCT BIT/FCA)
+  let diagnosticQuestion = null;
+  if (isScam) {
+    if (signals.some((s) => s.type === 'FALSA_TASA_DESBLOQUEO_O_IMPUESTO_PREVIO')) {
+      diagnosticQuestion = '¿Te están pidiendo transferir dinero previo para "pagar impuestos" o "desbloquear ganancias"? En España, Hacienda jamás cobra por adelantado: se descuenta del reembolso.';
+    } else if (signals.some((s) => s.type === 'SOLICITUD_CLAVES_O_CUENTA_SEGURA')) {
+      diagnosticQuestion = '¿Alguien al teléfono dice ser de seguridad bancaria y te pide mover dinero a una "cuenta segura" o leer un código SMS? MyInvestor jamás lo solicita.';
+    } else {
+      diagnosticQuestion = '¿El interlocutor al teléfono te promete una rentabilidad garantizada superior al 8% o te presiona para transferir hoy sin consultar a tu familia?';
+    }
+  }
+
   const behavioralIntervention = {
     cognitive_state_detected: isScam ? 'SECUESTRO_SISTEMA_1 (Urgencia / Autoridad / Escasez)' : 'SISTEMA_2_ANALITICO',
     intervention_applied: isScam
       ? 'Fricción Cognitiva Adaptativa (Cooling-off + Co-firma familiar de Daniel fuera del túnel emocional)'
       : 'Flujo sin fricción (Operación legítima verificada)',
+    bit_fca_rct_diagnostic_question: diagnosticQuestion,
     psr_psd3_bank_shield: isScam
       ? `Escudo PSR/PSD3 activo: evita pérdida de ${(Number(amount_eur) || 9000).toLocaleString('es-ES')} € y protege el balance de MyInvestor frente a responsabilidad por suplantación o discrepancia SEPA VoP.`
       : 'Cumplimiento íntegro SEPA VoP y MiFID II.'
@@ -294,6 +369,8 @@ function analyzeFraudRisk({
     signals,
     cnmv_check: cnmvCheck,
     iban_check: ibanCheck,
+    kill_chain_progression: killChainProgression,
+    in_call_telemetry: inCallTelemetry,
     prosody_analysis: prosodyAnalysis,
     behavioral_intervention: behavioralIntervention,
     amount_detected_eur: Number(amount_eur) || 0,
