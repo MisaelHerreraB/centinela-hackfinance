@@ -1,120 +1,142 @@
-# 🛡️ CENTINELA: “Antes de firmar, pregúntale”
-**Presentación Oficial, Guion de Defensa para el Jurado y Bibliografía Científica**  
-**HackFinance 2026 (BEST UC3M · Madrid Engineering Week)** · Patrocinadores: **MyInvestor · GPTadvisor · Anthropic (Claude) · ElevenLabs**
+# 🎤 MANUAL DE PITCH, COREOGRAFÍA DE DEMO EN VIVO Y Q&A DEL JURADO
+## 🛡️ CENTINELA: “Antes de firmar, pregúntale”
+**HackFinance 2026 (BEST UC3M · Madrid Engineering Week)** · Equipo **Across the lake**  
+**Jurado y Patrocinadores:** MyInvestor · GPTadvisor (incl. David Parro Plaza) · Anthropic (Claude) · ElevenLabs
 
 ---
 
-## Índice de Diapositivas (16:9 Pitch Deck)
+## 0. Checklist de 60 Segundos Antes de Subir al Escenario
 
-### Diapositiva 1 — Portada Ejecutiva
-- **Título:** CENTINELA · *“Antes de firmar, pregúntale.”*
-- **Subtítulo:** Cortafuegos Financiero Multimodal, Auditor de Costes vía MCP y Gobernanza Programable In-App.
-- **KPIs de portada:**
-  - `30 / 30` Precisión en Benchmark (`100 %` en `1,2 ms/caso`).
-  - `0,00 €` Alucinación matemática (*Principio Jagged Frontier*).
-  - `+10.635 €` Ahorro a 10 años sobre `50.000 €` (`TER 1,80 %` vs `0,30 %`).
-  - `0 € IRPF` Traspaso exento bajo Art. 94 LIRPF vía Fondo Puente.
-- **Guion para el ponente (15 s):**
-  > *"Buenos días al jurado. Somos el equipo Across the lake y hemos construido Centinela: el primer módulo dentro de la app de MyInvestor que actúa en el único segundo que hoy ningún banco protege: el instante exacto en que alguien presiona a un ahorrador por teléfono o en una sucursal para que firme o transfiera."*
+1. **Tener dos pestañas abiertas a pantalla completa (`F11` o `Cmd+Ctrl+F`):**
+   - **Pestaña 1:** El PDF de la presentación ([`CENTINELA_PRESENTACION_PITCH_DECK.pdf`](./CENTINELA_PRESENTACION_PITCH_DECK.pdf)).
+   - **Pestaña 2:** La aplicación en vivo en **`http://localhost:3000`** con el zoom al `100 %` y el sonido del portátil al máximo.
+2. **Reparto de roles recomendado (2 personas hablan + 1 persona opera el ratón):**
+   - **Ponente A (Negocio, Problema y Caso B2B/B2C):** Abre con fuerza, explica el problema de Carmen, hace la conclusión de negocio B2B + MyInvestor Premium y responde preguntas de regulación/negocio.
+   - **Ponente B (Producto, Demo en Vivo y Arquitectura IA/MCP):** Narra los 90 segundos de la Demo en Vivo mientras el Operador hace clic y explica la separación *Jagged Frontier* + Papers + Benchmark `30/30`.
+   - **Operador de Demo (al teclado):** No habla; su única misión es hacer clic en el segundo exacto en que el Ponente B lo menciona.
 
 ---
 
-### Diapositiva 2 — El Problema Real: Dos Vías de Pérdida en el Mismo Segundo Crítico
-- **La historia de Carmen (68 años):**
-  1. **Vía Criminal (Manipulación Psicológica / Vishing / APP Fraud):**
-     - La transferencia fraudulenta media en España es de **2.347 €** (*Banco de España, 2025*) y el cliente asume el **85 %** de la pérdida en pagos autorizados bajo engaño (*EBA-BCE, 2025*).
-     - El estafador induce un **secuestro del Sistema 1 (Kahneman)** usando urgencia y falsa autoridad. Los ensayos clínicos del *Behavioural Insights Team (BIT)* y la *FCA* demuestran que el **88 %** de las víctimas ignora los avisos genéricos en pantalla.
-     - Además, bajo el nuevo **Reglamento Europeo PSR / PSD3**, el banco pasa a ser responsable del **100 %** del reembolso en fraudes de suplantación bancaria o fallos de verificación de titularidad (*SEPA VoP*).
-  2. **Vía Legal (Comisiones Ocultas y Peaje Fiscal Evitable):**
-     - En España hay **450.000–482.000 M€** en fondos de inversión (*INVERCO*), con techos legales del **2,25 %** de gestión (*CNMV*) frente al **0,12 %–0,30 %** indexado en MyInvestor.
-     - Por el **Velo del Porcentaje** (*Barber, Odean & Zheng, 2005*) y el **Sesgo de Crecimiento Exponencial** (*Stango & Zinman, 2009*), el cliente ve un `1,80 %` como algo pequeño, sin saber que perderá **10.635 €** en 10 años y que puede traspasar pagando **0 € a Hacienda** (Art. 94 LIRPF).
+## 1. Guion Palabra por Palabra (Estructura Ganadora de 4 Minutos: 90s Pitch + 90s Demo en Vivo + 60s Arquitectura y Negocio)
 
 ---
 
-### Diapositiva 3 — La Solución: Output PUSH (`Estafa / Caro / Ok`) + Gráfica 30 Años + Intercepción Explicable Sin Hard Block
-- **Paso 1 — 2 Niveles de Escucha Pasiva e Ingesta Multimodal:**
-  - **Nivel 1 (Bajo Demanda):** El cliente consulta puntualmente una llamada, audio, SMS o folleto DFI.
-  - **Nivel 2 (Escucha Pasiva + PUSH):** En llamada activa, detecta coacción y dispara automáticamente la notificación **PUSH (`Estafa / Caro / Ok`)**.
-- **Paso 2 — Output Base = PUSH + Banner In-App:**
-  - En **`ESTAFA`**: **PUSH** + Banner Rojo *"Creemos que es una estafa"*.
-  - En **`CARO`**: **PUSH** + Banner *"Producto Caro"* + **Gráfica In-App de Crecimiento a 30 Años (TER Caro vs. TER Barato / Índice MCP)** para que el cliente no tenga que leer texto; si pulsa la gráfica, se abre el **Drill-In** numérico.
-  - En **`OK`**: **PUSH** + Sello verde verificando costes competitivos contra el índice MCP.
-- **Paso 3 — Intercepción Explicable (Sin *Hard Block*) y Traspaso 0 € IRPF:**
-  - En **`ESTAFA` (Sin *Hard Block*):** El banco no puede aplicar un *hard block* que quite el control al cliente. Al darle a *Enviar*, Centinela lleva a una **pantalla adicional de explicabilidad** del fraude con un botón principal amigable para abrir el **Canal Oficial en Tiempo Real (Voz / Chat)** y un botón en **rojo clarito** (*"Seguir bajo mi responsabilidad"*).
-  - En **`CARO`**: Tras pulsar la gráfica a 30 años (*Drill-In*), deja pre-rellenada la **Orden de Traspaso Exento de IRPF (`0 €`)** hacia MyInvestor lista para firmar con FaceID.
+### ⏱️ BLOQUE 1 — EL GANCHO Y EL PROBLEMA (0:00 – 0:45)
+*(En pantalla: **Diapositiva 1** y luego **Diapositiva 2** del Pitch Deck)*
+
+> **Ponente A:**  
+> *"Buenos días al jurado. Imaginen a **Carmen, 68 años**, ahorradora de toda la vida. Hoy Carmen puede perder los ahorros de su jubilación de **dos formas distintas en el mismo segundo crítico**: el instante exacto en que alguien le presiona por teléfono o en una sucursal bancaria para que firme o transfiera dinero.*
+>
+> *La primera vía es **ilegal**: le llama un supuesto bróker o falso soporte bancario. No hackean los servidores de MyInvestor; **hackean a Carmen** secuestrando su Sistema 1 emocional con urgencia. En España la transferencia fraudulenta media ya es de **2.347 €** según el Banco de España y el cliente soporta el **85 %** de la pérdida. Y ojo al dato para el banco: con la nueva normativa europea **PSR / PSD3 y SEPA VoP**, el banco pasa a responder con su propio balance del reembolso de estos fraudes.*
+>
+> *La segunda vía es **100 % legal**: Carmen va a su sucursal tradicional y le colocan un fondo con un **1,80 % de comisión anual TER**. Por el 'velo del porcentaje' estudiado por Barber y Odean, un 1,80 % le parece poquito... sin saber que en una cartera a 30 años está regalando **más de 85.000 €** frente a un fondo indexado de MyInvestor, y sin saber que puede traspasarlo pagando **0 € a Hacienda**.*
+>
+> *Para proteger ese segundo exacto hemos creado **Centinela: antes de firmar, pregúntale**."*
 
 ---
 
-### Diapositiva 4 — Arquitectura Técnica en 3 Capas (*Jagged Frontier*: Cero Cálculos en el LLM)
-- **Capa 1 — Escucha Pasiva (2 Niveles), Percepción Multimodal y Accesibilidad Universal:**
-  - `ElevenLabs Scribe (scribe_v1)` con *word-level timestamps* para medir cadencia vocal (`WPM`).
-  - `Claude Sonnet 4` (Vision, documentos PDF nativos y *Tool Use*).
-  - `ElevenLabs TTS (eleven_multilingual_v2)` + 3 modos en vivo: **Estándar**, **Persona Sorda** y **Baja Visión**.
-- **Capa 2 — Comparador MCP a 30 Años contra Índice + Servidor MCP Propio:**
-  - Conectado en tiempo real a `https://mcp.myinvestor.es/mcp` (`search_funds`) para comparar fondos a **10, 20 y 30 años en base a TER contra índice**.
-  - Expone nuestro propio servidor MCP (`POST /mcp`) con las 3 herramientas nuevas para GPTadvisor: `verify_cnmv_and_iban`, `calculate_10y_fee_and_tax` (series 10–30 años + *drill-in*) y `enforce_client_contract`.
-- **Capa 3 — Intercepción Explicable ("Mi Contrato") + Audit Log SHA-256 + Seguridad:**
-  - Pantalla de explicabilidad sin *hard block* + Canal Oficial Voz/Chat + cadena inmutable `SHA-256` (`prev_hash` → `hash`) y blindaje de red anti-DNS Rebinding y CSRF Cross-Origin.
+### ⏱️ BLOQUE 2 — QUÉ ES CENTINELA Y FLUJO DE SALIDA (0:45 – 1:15)
+*(En pantalla: **Diapositiva 3** del Pitch Deck)*
+
+> **Ponente B:**  
+> *"Centinela vive dentro de la app de MyInvestor. Tiene **dos niveles de invasividad configurables** por el cliente: un **Nivel 1 bajo demanda** (cuando enseñas un folleto PDF o un SMS) y un **Nivel 2 de escucha pasiva**, que detecta coacción durante una llamada.*
+>
+> *Nuestro **output base es un PUSH inmediato (`Estafa`, `Caro` u `Ok`)** acompañado de una acción visual in-app diseñada al milímetro:*
+> - *Si es **CARO**: lanza **PUSH + Banner de Producto Caro + una Gráfica Visual de Crecimiento a 30 años contra el índice vía MCP**, para que el cliente no tenga que leer texto, y si pulsa la gráfica hace **drill-in** a los números.*
+> - *Y si es **ESTAFA**: como un banco **jamás puede hacer un hard block** ni quitarle al cliente el control de su dinero, al darle a 'Enviar' le llevamos a una **pantalla adicional de explicabilidad** con un botón amigable para abrir en tiempo real el **Canal Oficial de Voz o Chat de MyInvestor**, y un botón en **rojo clarito** por si insiste en continuar.*
+>
+> *No os lo contamos en diapositivas: **veámoslo funcionando en vivo**."*
 
 ---
 
-### Diapositiva 5 — Ciencia Antifraude: Los 5 Descubrimientos (2024–2026) Integrados en Código
-1. **Máquina de Estados *COLD* & Benchmark *PreScam* (2025):** Mapea toda conversación en 5 fases (`F1 Trust Cultivation` → `F2 Scarcity` → `F3 Pitching` → `F4 Isolation` → `F5 Payoff`) para cortar el ataque antes del desenlace.
-2. **SEPA Verification of Payee (`Reg. UE 2024/886`):** Cruza el nombre comercial anunciado (*"Quantum Ibérica"*) con el titular registral del IBAN (*"Comercializadora Puente S.L. - Cuenta Mula"*), disparando `SEPA VoP: NO_MATCH`.
-3. **Detector de Extorsión de Salida y Patrón *Bait-and-Escalate* (*USENIX SOUPS / FinCEN / TRM Labs*):** Detecta el cebo de micro-retiro inicial (`100 €`) y bloquea la falsa exigencia de transferir un `15 %` previo para *"liberar ganancias o pagar IRPF"* (recordando que en España la retención del `19 %` se deduce del reembolso).
-4. **Prosodia Acústica (`WPM`) y Telemetría *In-Call* (*BioCatch / Wultra*):** Mide la velocidad de habla (`188 WPM > 175 WPM`) con `ElevenLabs Scribe` y detecta la combinación de llamada activa (*Off-Hook*) + pegado de IBAN desde el portapapeles.
-5. **Pregunta Diagnóstica RCT (*Behavioural Insights Team / FCA*):** En lugar de un pop-up genérico, formula la pregunta exacta que contradice el guion del estafador, forzando la transición del **Sistema 1 al Sistema 2**.
+### ⏱️ BLOQUE 3 — DEMO EN VIVO EN `http://localhost:3000` (1:15 – 2:45 · 90 SEGUNDOS)
+*(El Operador cambia a la pestaña de **`http://localhost:3000`**)*
+
+#### 🔴 ACTO 1: Escucha Pasiva + PUSH + Intercepción Explicable Sin *Hard Block* (40 segundos)
+1. **Qué hace el Operador:**
+   - Señala con el cursor en el iPhone de Carmen (izquierda) el selector **`Nivel 2: Escucha Pasiva + Push`**.
+   - Pulsa arriba el botón **`🔴 1. Falso Bróker (Estafa 9.000 €)`**.
+2. **Qué dice el Ponente B mientras corre la simulación:**
+   > *"A la izquierda tenéis el iPhone de Carmen con el **Nivel 2 de Escucha Pasiva activo**; a la derecha, el móvil de su hijo Daniel y el motor técnico. Un falso bróker de 'Quantum Ibérica' presiona a Carmen a **188 palabras por minuto** (`ElevenLabs Scribe`) para transferir **9.000 €** en 15 minutos.*
+   >
+   > *Mirad la parte superior del móvil de Carmen: salta el **PUSH de la app** y el **Banner Rojo 'Creemos que es una estafa'**. Nuestro motor ha cruzado la entidad con la lista negra de la **CNMV**, ha detectado las **5 etapas de la Kill-Chain del paper PreScam (ACL 2025)** y ha pillado que el IBAN pertenece a una cuenta mula mediante **SEPA Verification of Payee (`NO_MATCH`)**.*
+   >
+   > *Y fijaos en cómo resolvemos el bloqueo en el móvil de Carmen: **no hay hard block**. Al intentar enviar los 9.000 €, Centinela abre esta **pantalla adicional de explicabilidad** donde le cuenta en lenguaje claro por qué parece fraude, le ofrece este **botón azul principal para hablar en tiempo real por voz o chat con el Canal Oficial de MyInvestor** —*(el Operador hace clic en `🎧 Consultar en Canal Oficial MyInvestor` para enseñar el modal un segundo y lo cierra)*— y debajo mantiene un **botón en rojo clarito ('Seguir bajo mi responsabilidad')**. Así evitamos la estafa sin quitarle el control al cliente, mientras su hijo Daniel recibe la alerta en su móvil."*
+
+#### 🟠 ACTO 2: Folleto DFI en Sucursal + Gráfica a 30 Años vía MCP + *Drill-In* (40 segundos)
+1. **Qué hace el Operador:**
+   - Pulsa arriba el botón **`🟠 2. Fondo Caro en Oficina (TER 1,8%)`**.
+   - Cuando aparece el resultado naranja en el móvil de Carmen, espera 3 segundos mostrando la **Gráfica a 30 años** y luego **hace clic encima de la gráfica** para que se despliegue el panel **`Drill-In`** con los números a 10, 20 y 30 años.
+   - Finalmente pulsa el botón verde **`✍️ Firmar Traspaso Exento (0 € IRPF)`**.
+2. **Qué dice el Ponente B:**
+   > *"Segundo escenario: Carmen está en su banco de toda la vida y le dan el PDF de un fondo con un **1,80 % de TER** para sus **50.000 €**. Carmen le hace una foto.*
+   >
+   > *Salta el **PUSH naranja**, el banner de **'Producto Caro'** y, para que Carmen no tenga que leer ni una línea de texto financiero, Centinela consulta en vivo el **servidor MCP oficial de MyInvestor** y le dibuja esta **gráfica de crecimiento a 30 años comparando el TER caro contra el índice MCP**.*
+   >
+   > *De un vistazo ve cómo la curva verde de MyInvestor se despega de la línea roja de su banco. Y **si Carmen pulsa encima de la gráfica** —*(el Operador hace clic en la gráfica)*— se abre el **drill-in numérico**: en 30 años su banco se queda en **128.165 €**, mientras que el índice en MyInvestor (`0,06 %` TER) crece hasta **213.649 €**. ¡Son **+85.484 € de diferencia**! Además, el motor fiscal verifica el **Artículo 94 del IRPF**: traspaso vía fondo puente monetario (`AXA Trésor`) pagando **0 € a Hacienda**. Carmen pulsa **Firmar con FaceID** y el dinero ya viaja a MyInvestor."*
+
+#### ♿ ACTO 3: Accesibilidad e Inclusión (10 segundos)
+1. **Qué hace el Operador:**
+   - Pulsa arriba **`♿ 3. Accesibilidad (10s)`** (o alterna a `🦻 Persona Sorda` / `👁️ Baja Visión`).
+2. **Qué dice el Ponente B:**
+   > *"Y en un clic conmutamos entre modo **Persona Sorda** (100 % visual) y **Baja Visión** (alto contraste AAA y lectura preventiva de IBAN y comisiones con `ElevenLabs TTS`)."*
 
 ---
 
-### Diapositiva 6 — Comparativa MCP a 30 Años (TER Caro vs. Índice) + Drill-In + Motor Fiscal
-- **Gráfica Visual a 30 Años ($V_f = C_0(1+r-\text{TER})^{30}$ sobre `50.000 €` al `5 %` bruto anual):**
-  - Fondo Sucursal (`1,80 % TER`): Año 10 = `67.196 €` · Año 30 = `128.165 €`
-  - Cartera Indexada MyInvestor (`0,30 % TER`): Año 10 = `77.831 €` (`+10.635 €`) · Año 30 = `199.078 €` (**`+70.913 €` más patrimonio**)
-  - Índice MCP `iShares Developed World` (`IE000ZYRH0Q7`, `0,06 % TER`): Año 10 = `79.699 €` (`+12.503 €`) · Año 30 = `213.649 €` (**`+85.484 €` más patrimonio**)
-- **UX *Drill-In* + Saliencia Conductual ESMA (*Pain of Paying*):** El cliente ve primero la gráfica a 30 años sin texto denso y, al pulsar la gráfica, despliega el *Drill-In* con los números exactos y el drenaje mensual (**`-63 €/mes`**).
-- **Matriz Fiscal Art. 94 LIRPF + Fondo Puente:**
-  - Traspaso exento (`0 € IRPF`) aterrizando en el monetario puente `AXA Trésor Court Terme C` (`FR0000447823`, TER `0,05 %`), ahorrando `1.665 €` de impuestos hoy sobre una plusvalía de `8.500 €` (escala AEAT `19 %–30 %`).
-  - Alerta automáticamente si el producto es un **ETF, Depósito o Seguro Unit-Linked** (no traspasables) o un **Fondo Garantizado** con penalización de salida (`4 %`).
+### ⏱️ BLOQUE 4 — ARQUITECTURA "JAGGED FRONTIER", BENCHMARK Y CASO DE NEGOCIO B2B/B2C (2:45 – 4:00)
+*(El Operador vuelve al PDF en las **Diapositivas 4, 8 y 9**, o abre el modal `🧪 Benchmark (30 Casos)`)*
+
+> **Ponente A:**  
+> *"Para terminar, tres pilares que hacen que MyInvestor pueda lanzar Centinela en producción mañana mismo:*
+>
+> *1. **Rigor Técnico (Principio Jagged Frontier — Diapositiva 4):** El LLM (`Claude Sonnet 4`) **jamás calcula un euro ni un impuesto**. Claude extrae datos del PDF y orquesta herramientas; toda la matemática compuesta a 30 años, la escala del IRPF y la cadena criptográfica `SHA-256` corren en motores deterministas en código. En nuestro benchmark automatizado de **30 escenarios reales**, logramos **30 de 30 (100 % de precisión)** en **2 milisegundos** con **0,00 € de desviación**.*
+>
+> *2. **Caso de Negocio B2B Principal + Capa B2C en MyInvestor Premium (Diapositiva 9):** Como solución in-app, el retorno **B2B** para el banco es directo: **reducir drásticamente la partida de dinero que el banco destina a pagar e indemnizar fraudes** bajo PSR/PSD3, costando apenas **0,50 € por usuario activo al mes**. A la vez, el comparador a 30 años vía MCP actúa como una máquina de captación de fondos con **CAC cero** (`150 €/año` recurrentes por cada `50.000 €` traspasados). Y como vía extra **B2C**, encaja directamente dentro del **Plan Premium de MyInvestor**.*
+>
+> *3. **Viabilidad Regulatoria (MiFID II y PSD2):** Al no aplicar hard block y al comparar objetivamente costes ex-ante contra el índice oficial vía MCP sin perfilar al usuario en el LLM, cumplimos estrictamente con el Artículo 24 de MiFID II.*
+>
+> *Eso es **Centinela**: proteger los ahorros de toda una vida en el único segundo que importa. Muchas gracias y estamos listos para vuestras preguntas."*
 
 ---
 
-### Diapositiva 7 — Demo en Vivo en 3 Actos (90 Segundos)
-- **Acto 1 (40s — Falso Bróker, Escucha Pasiva y Sin *Hard Block*):** Llamada de *Quantum Ibérica* pidiendo `9.000 €` → Salta **PUSH** + **Banner Rojo *"Creemos que es una estafa"***. Al pulsar *Enviar*, abre la **pantalla adicional de explicabilidad** con botón principal al **Canal Oficial en Tiempo Real (Voz / Chat)** y botón en **rojo clarito** (*Seguir bajo mi responsabilidad*), más alerta al móvil de Daniel.
-- **Acto 2 (40s — Folleto DFI Sucursal, Gráfica 30 Años y *Drill-In*):** Subida del folleto al `1,80 %` → Salta **PUSH** + **Banner *"Producto Caro"*** + **Gráfica de Crecimiento a 30 Años vs. Índice MCP** (`+85.484 €`). Al pulsar la gráfica se abre el *Drill-In* numérico y Carmen firma el traspaso exento (`0 € IRPF`) con FaceID In-App.
-- **Acto 3 (10s — Accesibilidad):** Conmutación instantánea a **Modo Persona Sorda** y **Modo Baja Visión**.
+## 2. Las 8 Preguntas Trampa del Jurado y Cómo Clavarlas (Q&A)
 
----
+### 1. Pregunta de Producto / Banca (estilo David Parro Plaza):
+**«¿Un banco puede bloquear una transferencia si el cliente quiere hacerla? ¿No es ilegal quitarle el control de su dinero?»**
+- **Respuesta ganadora:**  
+  *"Totalmente de acuerdo: bajo PSD2/PSR un banco no puede aplicar un hard block arbitrario sobre una orden autorizada por el titular legítimo. Por eso en Centinela no hacemos hard block: cuando el cliente pulsa 'Enviar' en una operación con indicadores de estafa, insertamos una **pantalla intermedia de explicabilidad** (fricción positiva respaldada por los ensayos RCT de la FCA británica). Ahí le explicamos por qué parece fraude, le ponemos un botón principal para abrir en un clic una **llamada de voz o chat en el canal oficial de MyInvestor**, y debajo dejamos un **botón en rojo clarito ('Seguir bajo mi responsabilidad')**. Así salvamos al 90 % de las víctimas sin quitarle jamás el control al cliente, y si decide seguir, queda firmado su consentimiento informado en el `Audit Log SHA-256` para eximir de responsabilidad al banco."*
 
-### Diapositiva 8 — Validación Empírica: Benchmark de 30 Casos (`30/30` — `100 %`)
-- **10 Casos `ESTAFA` (`10/10`):** Chiringuitos CNMV, smishing MyInvestor, falsa cuenta segura BdE, AnyDesk+OTP, IBAN lituano, extorsión de desbloqueo.
-- **10 Casos `CARO` (`10/10`):** Fondos RV/Mixtos/Monetarios caros, tope legal CNMV (`2,45 %`), garantizados con `4 %` de salida, Unit-Linked y ETFs no traspasables.
-- **10 Casos `ADELANTE` (`10/10`):** Fondos indexados reales del MCP de MyInvestor (`IE00BYX5NX33`, `IE000ZYRH0Q7`, `FR0000447823`, Carteras Ahorro/Indie/Metal).
+### 2. Pregunta de Negocio:
+**«¿Cuál es el modelo de negocio real? ¿Quién paga esto?»**
+- **Respuesta ganadora:**  
+  *"El caso de negocio base es **100 % B2B para el banco** por dos vías: primero, **ahorro directo en pérdidas por fraude** (evitar una sola estafa media de 2.347 € a 9.000 € paga la inferencia IA de miles de clientes a ~0,50 €/mes); y segundo, **captación de activos (AuM)** gracias a la gráfica a 30 años vía MCP contra el índice. Y si se quiere monetizar también en **B2C**, se incluye como funcionalidad estrella dentro del **Plan MyInvestor Premium**."*
 
----
+### 3. Pregunta Técnica sobre MCP y GPTadvisor:
+**«¿Cómo habéis usado exactamente el MCP de MyInvestor?»**
+- **Respuesta ganadora:**  
+  *"De dos formas complementarias: primero, como **cliente MCP en tiempo real** conectado a `https://mcp.myinvestor.es/mcp` por JSON-RPC 2.0 invocando `search_funds` para traer los fondos indexados y monetarios reales de MyInvestor (`iShares Developed World IE000ZYRH0Q7` al 0,06 %, `Fidelity MSCI World IE00BYX5NX33` al 0,12 %, `AXA Trésor FR0000447823` al 0,05 %) y alimentar con datos reales la **gráfica comparativa a 30 años contra el índice**. Y segundo, hemos construido nuestro propio **servidor MCP en `/mcp`** que expone tres herramientas nuevas para GPTadvisor: `verify_cnmv_and_iban`, `calculate_10y_fee_and_tax` (con series de 10 a 30 años) y `enforce_client_contract`."*
 
-### Diapositiva 9 — Caso de Negocio B2B (Ahorro Bancario en Fraudes) + B2C (MyInvestor Premium) & Viabilidad Legal
-- **Core B2B — Reducir el Dinero que el Banco Destina a Pagar Fraudes:** Bajo el nuevo **PSR / PSD3 y SEPA VoP (`Reg. UE 2024/886`)**, el banco asume el reembolso de fraudes por suplantación o fallos de verificación de titularidad. Centinela reduce drásticamente esa partida de pérdidas bancarias con un coste marginal de `~0,50 €/usuario activo/mes`.
-- **Palanca B2B de Captación vía MCP (Comparativa a 30 años contra índice):** Cada traspaso de `50.000 €` atraído por la gráfica a 30 años genera `150 €/año` recurrentes (`1.500 € LTV` a 10 años).
-- **Extensión B2C Extra — Plan MyInvestor Premium:** Se ofrece como ventaja diferencial dentro de la suscripción **MyInvestor Premium** (escucha pasiva Nivel 2 con PUSH, comparador MCP a 30 años con *drill-in* y escudo familiar).
-- **Viabilidad Legal (Sin *Hard Block* PSD2/PSR + MiFID II Art. 24):** No aplica un *hard block* ilegal que quite al cliente el control de su dinero, sino una pantalla de explicabilidad + canal oficial en vivo; y compara objetivamente costes ex-ante contra el índice MCP sin perfilado de idoneidad en el LLM.
+### 4. Pregunta Técnica de iOS / Móvil:
+**«En iOS o Android una app bancaria no puede pinchar el audio interno de una llamada telefónica GSM por privacidad del sistema operativo. ¿Cómo funciona la escucha?»**
+- **Respuesta ganadora:**  
+  *"Exacto, iOS bloquea el acceso de terceros al canal celular GSM. Por eso diseñamos dos mecanismos reales: en el **Nivel 1**, Carmen pulsa el botón de **Altavoz** y el micrófono ambiental de la app de MyInvestor captura la voz del estafador en la habitación y la transcribe con `ElevenLabs Scribe`. Y en el **Nivel 2 (Escucha Pasiva)**, usamos la **telemetría permitida por el sistema operativo** (`CallKit / AudioSession` para saber que hay una llamada activa *Off-Hook* + detección de pegado de IBAN desde el portapapeles, igual que hace *BioCatch*), disparando el **PUSH preventivo** en cuanto el usuario entra a hacer una transferencia con una llamada en curso."*
 
----
+### 5. Pregunta sobre Alucinaciones del LLM (Anthropic / Claude):
+**«¿Qué pasa si Claude se equivoca sumando comisiones o calculando el IRPF?»**
+- **Respuesta ganadora:**  
+  *"No puede equivocarse porque **Claude tiene prohibido hacer matemáticas en nuestra arquitectura**. Aplicamos el principio de la *Jagged Frontier*: usamos `Claude Sonnet 4` exclusivamente para lo que hace mejor que nadie —leer el PDF del folleto DFI con Vision y extraer en un JSON tipado el ISIN y el porcentaje TER—. Ese JSON pasa a `financialEngine.js`, que es código determinista puro auditado con test suite (`30/30`), donde se calcula $V_f = C_0(1+r-\text{TER})^{30}$ y los tramos del IRPF 2025–2026 con **0,00 € de error**."*
 
-### Diapositiva 10 — Fuentes Científicas, Papers (2005–2026) y Normativa Oficial
+### 6. Pregunta Regulatoria CNMV / MiFID II:
+**«Si le decís al cliente que su fondo del Santander es caro y que se pase a un indexado de MyInvestor, ¿no estáis haciendo asesoramiento financiero sin test de idoneidad?»**
+- **Respuesta ganadora:**  
+  *"Lo hemos blindado bajo el **Artículo 24 de MiFID II**. Centinela no perfila al cliente ni le recomienda asumir más o menos riesgo: compara **únicamente costes ex-ante dentro de la misma categoría oficial INVERCO/Morningstar** que el cliente ya tiene en su folleto, enfrentando su TER contra el índice equivalente en el MCP. Y cuando el cliente pulsa traspasar, la orden se inyecta en el flujo nativo del **Robo-advisor de MyInvestor**, que ya tiene licencia de gestión discrecional y el test de idoneidad firmado."*
 
-#### A. Papers sobre Detección de Fraude, Vishing 2.0 y Economía Conductual
-1. **PreScam Benchmark (2025):** *"PreScam: A Benchmark for Predicting Scam Progression from Early Conversations"*. Modelado multi-turno de progresión de estafas y predicción temprana antes de la fase de extracción (*Payoff*).
-2. **COLD Framework (2024–2025):** *"Linguistic Dynamics of Online Scam Conversations (Contextual Organization of Language in Deception)"*. Identifica las 5 etapas lingüísticas del engaño (*Trust Cultivation, Risk Fabrication, Persuasive Pitching, Compliance Induction, Exploitation*).
-3. **VishGPT & Real-Time Multimodal Vishing Detection (2024–2026):** *"Automatically Detecting Voice Phishing: A Large Audio Model Approach"* (MIS Quarterly / University of Patras). Fusión de transcripción semántica (ASR) con marcadores paralingüísticos y prosódicos de urgencia (velocidad de habla en palabras por minuto `WPM` y compresión de turnos).
-4. **USENIX SOUPS & FinCEN / TRM Labs / Elliptic Reports (2024–2026):** Estudios empíricos sobre el embudo transaccional de falsos brókers (*Boiler Rooms & Pig Butchering*): mecanismo de cebo con micro-retiros iniciales (*Bait-and-Escalate*) y fase de extorsión de liquidez mediante falsas tasas previas o impuestos de desbloqueo.
-5. **Behavioural Insights Team (BIT), UK FCA & Payment Systems Regulator (PSR) Trials (2024–2025):** Ensayos Controlados Aleatorizados (RCTs) sobre *Friction-by-Design* en pagos autorizados (APP Fraud), demostrando la eficacia de las preguntas diagnósticas de contradicción frente a los avisos pasivos para forzar la transición del **Sistema 1 al Sistema 2** (*Kahneman, 2011: Thinking, Fast and Slow*).
-6. **Active Call & Behavioral Biometrics Coercion Telemetry (BioCatch / Wultra / OneSpan, 2024–2025):** Detección contextual de coacción bancaria combinando estado de llamada activa (*Off-Hook*) con eventos de pegado de IBAN desde el portapapeles (*Clipboard Paste*).
+### 7. Pregunta Fiscal (Art. 94 LIRPF):
+**«¿Cómo traspasáis un fondo de un banco tradicional a una Cartera Indexada de MyInvestor sin pagar impuestos si una cartera tiene muchos fondos?»**
+- **Respuesta ganadora:**  
+  *"Replicamos el flujo operativo real de MyInvestor: bajo el Artículo 94 de la Ley del IRPF, el traspaso entre fondos UCITS está exento de retención (`0 € IRPF`). Para entrar a una Cartera Indexada, la orden de traspaso aterriza primero en el **fondo monetario puente de MyInvestor (`AXA Trésor Court Terme C`, `FR0000447823`, TER `0,05 %`)** sin pasar jamás por cuenta corriente, y desde ahí el motor de carteras distribuye la inversión manteniendo el diferimiento fiscal."*
 
-#### B. Papers sobre Finanzas Conductuales (Comisiones) y Fuentes Regulatorias
-7. **Barber, B. M., Odean, T., & Zheng, L. (2005):** *"Out of Sight, Out of Mind: The Effects of Expenses on Mutual Fund Flows"*, *The Journal of Business*, 78(6), 2095–2120. Demuestra la baja saliencia cognitiva de las comisiones anuales expresadas en porcentaje (*Percentage Veil*).
-8. **Stango, V., & Zinman, J. (2009):** *"Exponential Growth Bias and Household Finance"*, *The Journal of Finance*, 64(6), 2807–2849. Demuestra por qué los hogares subestiman sistemáticamente el efecto compuesto a largo plazo.
-9. **Fisch, J. E., & Wilkinson-Ryan, T. / ESMA Cost Disclosure Studies:** Evidencia experimental sobre *Fee Salience*: traducir porcentajes TER a unidades monetarias tangibles (coste mensual/diario y pérdida acumulada en euros a 10 años) incrementa significativamente la sensibilidad del inversor minorista.
-10. **Banco de España (2025) & EBA-BCE (2025):** Informes de supervisión sobre fraude en pagos autorizados en España (`2.347 €` importe medio por transferencia fraudulenta; `85 %` de pérdida soportada por el cliente).
-11. **Reglamento (UE) 2024/886 (SEPA Instant Payments — Verification of Payee) & Propuesta Europea PSR / PSD3:** Obligación de verificar la coincidencia entre el nombre del beneficiario y el titular del IBAN (`MATCH / NO_MATCH`) y régimen de responsabilidad del proveedor de servicios de pago en estafas de suplantación bancaria.
-12. **Ley 35/2006 del IRPF (Art. 94 y Escala del Ahorro AEAT 2025–2026), CNMV e INVERCO:** Régimen de diferimiento fiscal en traspasos entre Instituciones de Inversión Colectiva (`0 €` peaje fiscal) y límites máximos legales de comisiones de gestión (`2,25 %`) y depósito (`0,20 %`) en España.
+### 8. Pregunta Científica / Diferenciación:
+**«¿En qué os habéis basado para diseñar las reglas de detección de estafa?»**
+- **Respuesta ganadora:**  
+  *"En 5 papers científicos de 2024–2026 que tenéis citados en la última diapositiva: el framework **COLD y PreScam (ACL 2025)** para modelar las 5 fases de la estafa antes del pago; la verificación titular/IBAN del **Reglamento UE 2024/886 (SEPA VoP)**; los estudios de **USENIX SOUPS y TRM Labs** sobre la trampa de 'pagar un 15 % de impuestos previos para desbloquear ganancias'; la prosodia acústica de urgencia (`>175 WPM`) con **ElevenLabs Scribe**; y los ensayos clínicos del **Behavioural Insights Team y la FCA** para romper el secuestro del Sistema 1 con preguntas diagnósticas."*
