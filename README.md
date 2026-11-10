@@ -12,16 +12,21 @@ Un ahorrador pierde dinero de dos formas en el mismo instante crítico —**cuan
 1. **Vía Ilegal (Estafa por manipulación / *Vishing* y *Smishing*):** La transferencia fraudulenta media en España es de **2.347 €** (Banco de España, 2025) y el cliente soporta el **85 % de las pérdidas** cuando él mismo autoriza la orden bajo engaño (EBA-BCE, 2025).
 2. **Vía Legal (Productos caros e ilíquidos):** En España hay **450.000–482.000 M€** en fondos de inversión (INVERCO), donde la banca tradicional cobra medias del **1,20 %–1,85 % TER** (con techos legales de gestión del **2,25 %**, CNMV) frente al **0,12 %–0,30 %** de los fondos y carteras indexadas de **MyInvestor**, sin que el cliente calcule la pérdida compuesta a 10 años ni sepa que puede cambiar por **traspaso pagando 0 € en IRPF** (Art. 94 LIRPF).
 
-### Cómo actúa Centinela en 3 pasos (`Enseñar → Veredicto → Actuar`)
-1. **Enseñar:** Llamada en altavoz (sorteando el bloqueo GSM de iOS), captura de SMS o foto/PDF del Documento de Datos Fundamentales (DFI).
-2. **Veredicto Determinista (Cero Alucinación):**
-   * 🔴 **ESTAFA:** Detecta señales de manipulación psicológica, cruza la entidad con la **lista de alertas de la CNMV**, verifica si el supuesto producto existe en el **MCP real de MyInvestor (`https://mcp.myinvestor.es/mcp`)** y comprueba si el **IBAN** tiene reportes.
-   * 🟠 **CARO:** Extrae el TER y comisiones de salida del folleto, consulta en tiempo real el **MCP de MyInvestor** para obtener productos de la **misma categoría oficial (MiFID II Art. 24)**, calcula con un motor matemático propio cuántos euros se pierden a 10 años ($V_f = C_0(1+r-\text{TER})^{10}$) y verifica si es **traspasable sin tributar en IRPF** (distinguiendo fondos armonizados —que entran a Carteras MyInvestor vía su fondo monetario puente `FR0000447823` *AXA Trésor Court Terme*— frente a ETFs, depósitos o *Unit-Linked*).
-   * 🟢 **ADELANTE:** Sin alertas en CNMV y con comisiones competitivas.
-3. **Actuar ("Mi Contrato"):**
-   * Si es **Estafa**, **Mi Contrato** retiene preventivamente la transferencia, envía una notificación push al **Familiar de Confianza (Daniel)** y ofrece el botón **Deshabilitar operativa (*Kill-Switch*)**.
-   * Si es **Caro**, deja la orden de **Traspaso Exento de IRPF (0 €)** pre-rellenada y lista para la **Firma In-App**.
-   * Todo se oye y se lee a la vez, con **Modo Persona Sorda** (solo texto/visual) y **Modo Baja Visión** (lectura preventiva de importe, comisiones e IBAN antes de firmar).
+### Cómo actúa Centinela (`Escucha Pasiva 2 Niveles → PUSH → Pantalla In-App`)
+1. **2 Niveles de Invasividad + Ingesta Multimodal:**
+   * **Nivel 1 (Bajo Demanda):** El cliente consulta puntualmente una llamada en altavoz, captura de SMS o foto/PDF del Documento de Datos Fundamentales (DFI).
+   * **Nivel 2 (Escucha Pasiva + PUSH):** En llamada activa, detecta señales de coacción y dispara automáticamente una notificación **PUSH (`Estafa` / `Caro` / `Ok`)**.
+2. **Output PUSH + Experiencia Visual Determinista (Cero Alucinación):**
+   * 🔴 **ESTAFA (`PUSH + Banner Rojo "Creemos que es una estafa"`):** Detecta manipulación psicológica (5 fases *COLD / PreScam*), cruza la entidad con la **lista de alertas de la CNMV**, verifica discrepancia titular/IBAN (**SEPA VoP Reg. UE 2024/886**) y mide presión vocal (`WPM`).
+   * 🟠 **CARO (`PUSH + Banner "Producto Caro" + Gráfica de Crecimiento a 30 Años + Drill-In`):** Extrae el TER y comisiones de salida del folleto, consulta en tiempo real el **MCP de MyInvestor (`https://mcp.myinvestor.es/mcp`)** y dibuja una **Gráfica de Crecimiento a 30 Años (TER Caro vs. TER Barato / Índice MCP)** ($V_f = C_0(1+r-\text{TER})^{30}$, mostrando cómo `50.000 €` pasan de `128.165 €` al `1,80 %` a `213.649 €` en el índice MCP al `0,06 %`: **`+85.484 €`**). Al **pulsar la gráfica**, se despliega el panel **Drill-In** con los números a 10, 20 y 30 años y la exención fiscal (**0 € IRPF** vía fondo puente `FR0000447823` *AXA Trésor Court Terme*).
+   * 🟢 **OK / ADELANTE (`PUSH + Sello Verde`):** Sin alertas en CNMV y con comisiones competitivas frente al índice MCP.
+3. **Gobernanza y Salida In-App ("Mi Contrato" — Sin *Hard Block*):**
+   * **En `ESTAFA` (Intercepción Explicable Sin *Hard Block*):** El banco no aplica un *hard block* que quite el control al cliente. Al darle a *Enviar*, abre una **pantalla adicional de explicabilidad** de por qué parece fraude con:
+     1. Botón principal amigable: **`🎧 Consultar en Canal Oficial MyInvestor (Voz / Chat en vivo)`**.
+     2. Botón secundario en **rojo clarito** (*"Seguir bajo mi responsabilidad — No recomendado"*), más alerta al **Familiar de Confianza (Daniel)**.
+   * **En `CARO`:** Tras pulsar la gráfica a 30 años (*Drill-In*), deja la orden de **Traspaso Exento de IRPF (0 €)** lista para **Firma In-App con FaceID**.
+   * **Caso de Negocio B2B + B2C (MyInvestor Premium):** El núcleo **B2B** reduce el dinero que el banco destina a reembolsar fraudes (PSR/PSD3) y capta patrimonio vía MCP a 30 años; como extra **B2C**, se integra en el **Plan MyInvestor Premium**.
+   * **Presentación y Documentación para el Equipo:** En la carpeta [`presentacion/`](./presentacion/) se incluyen el Pitch Deck de 10 diapositivas (`CENTINELA_PRESENTACION_PITCH_DECK.pdf`), el One-Pager Técnico (`CENTINELA_ONE_PAGER_TECNICO.pdf`) y el guion completo con bibliografía de papers (`CENTINELA_GUION_Y_PRESENTACION.md`).
 
 ---
 

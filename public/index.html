@@ -85,6 +85,16 @@
           <span>5G · 100%</span>
         </div>
 
+        <!-- NOTIFICACIÓN PUSH NATIVA DE iOS (Output Base: Estafa / Caro / Ok) -->
+        <div id="ios-push-banner" class="ios-push-banner" onclick="document.getElementById('verdict-banner').scrollIntoView({behavior:'smooth'})">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.64rem; opacity:0.9; margin-bottom:2px;">
+            <span>🛡️ <strong>MYINVESTOR CENTINELA · PUSH</strong></span>
+            <span id="push-level-tag">ahora mismo</span>
+          </div>
+          <div id="push-title" style="font-size:0.77rem; font-weight:800; line-height:1.25;"></div>
+          <div id="push-body" style="font-size:0.69rem; opacity:0.95; margin-top:2px;"></div>
+        </div>
+
         <!-- Cabecera interna de la App de MyInvestor -->
         <div class="mi-app-header">
           <div class="mi-app-toprow">
@@ -108,6 +118,16 @@
             </button>
             <button id="mode-LOW_VISION" class="access-btn" onclick="setAccessMode('LOW_VISION')">
               👁️ Baja Visión
+            </button>
+          </div>
+
+          <!-- Selector de 2 Niveles de Invasividad / Escucha Pasiva (Feedback Jurado) -->
+          <div class="passive-level-bar" title="Configura cómo de proactivo quieres que sea Centinela">
+            <button id="lvl-LEVEL_1_ON_DEMAND" class="passive-level-btn" onclick="setProtectionLevel('LEVEL_1_ON_DEMAND')">
+              🛡️ Nivel 1: Bajo Demanda
+            </button>
+            <button id="lvl-LEVEL_2_PASSIVE_LISTENING" class="passive-level-btn active" onclick="setProtectionLevel('LEVEL_2_PASSIVE_LISTENING')">
+              📡 Nivel 2: Escucha Pasiva + Push
             </button>
           </div>
         </div>
@@ -271,9 +291,9 @@
           <div class="mcp-comparison-box">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
               <div>
-                <div style="font-size:0.72rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Cálculo Determinista a 10 Años (50.000 € · 5% bruto anual idéntico)</div>
+                <div style="font-size:0.72rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Proyección Compuesta a 30 Años (50.000 € · 5% bruto anual · TER Caro vs Índice MCP)</div>
                 <div style="font-size:0.94rem; font-weight:800; color:var(--ink);" id="exec-chart-headline">
-                  Pulsa "Acto 2: Fondo Caro en Oficina" para comparar con el catálogo real de MyInvestor
+                  En 30 años ganas hasta +85.484 € más con un Indexado MCP MyInvestor frente al Fondo Bancario (TER 1,80%)
                 </div>
               </div>
               <span style="font-size:0.73rem; font-weight:700; background:var(--surface); color:var(--ink); padding:4px 10px; border-radius:8px; border:1px solid var(--line-strong);">
@@ -283,28 +303,28 @@
 
             <div class="bar-chart-row">
               <div class="bar-chart-header">
-                <span id="bar-label-offered">🏦 Fondo Banca Tradicional (TER 1,80 % anual)</span>
-                <strong id="bar-val-offered" style="color:var(--scam-red);">68.512 €</strong>
+                <span id="bar-label-offered">🏦 Fondo Banca Tradicional a 30 años (TER 1,80 % anual)</span>
+                <strong id="bar-val-offered" style="color:var(--scam-red);">128.165 €</strong>
               </div>
               <div class="bar-chart-track">
-                <div id="bar-fill-offered" class="bar-chart-fill" style="width:85%; background:var(--scam-red);"></div>
+                <div id="bar-fill-offered" class="bar-chart-fill" style="width:60%; background:var(--scam-red);"></div>
               </div>
             </div>
 
             <div class="bar-chart-row">
               <div class="bar-chart-header">
-                <span id="bar-label-portfolio">🟢 Cartera Indexada MyInvestor (TER 0,30 % · Vía Fondo Puente FR0000447823)</span>
-                <strong id="bar-val-portfolio" style="color:var(--mi-teal);">79.147 € (+10.635 € más para ti)</strong>
+                <span id="bar-label-portfolio">🟢 Cartera Indexada MyInvestor a 30 años (TER 0,30 % · Vía Fondo Puente FR0000447823)</span>
+                <strong id="bar-val-portfolio" style="color:var(--mi-teal);">199.078 € (+70.913 € más para ti)</strong>
               </div>
               <div class="bar-chart-track">
-                <div id="bar-fill-portfolio" class="bar-chart-fill" style="width:98%; background:var(--mi-teal);"></div>
+                <div id="bar-fill-portfolio" class="bar-chart-fill" style="width:93%; background:var(--mi-teal);"></div>
               </div>
             </div>
 
             <div class="bar-chart-row">
               <div class="bar-chart-header">
-                <span id="bar-label-direct">⚡ Fondo Indexado Directo MCP: Fidelity MSCI World (IE00BYX5NX33 · TER 0,12 %)</span>
-                <strong id="bar-val-direct" style="color:var(--accent);">80.565 € (+12.053 € más para ti)</strong>
+                <span id="bar-label-direct">⚡ Fondo Indexado Directo MCP a 30 años: iShares / Fidelity World (TER 0,06 %–0,12 %)</span>
+                <strong id="bar-val-direct" style="color:var(--accent);">213.649 € (+85.484 € más para ti)</strong>
               </div>
               <div class="bar-chart-track">
                 <div id="bar-fill-direct" class="bar-chart-fill" style="width:100%; background:var(--accent);"></div>
@@ -394,6 +414,31 @@
       <button class="btn-cta-primary" style="margin-top:16px;" onclick="saveApiKeys()">
         💾 Guardar y Activar en Caliente
       </button>
+    </div>
+  </div>
+
+  <!-- MODAL: CANAL OFICIAL EN TIEMPO REAL DE MYINVESTOR (VOZ / CHAT VERIFICADO) -->
+  <div id="modal-official-channel" class="modal-backdrop">
+    <div class="modal-card" style="max-width:520px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="width:10px; height:10px; border-radius:50%; background:var(--mi-teal); display:inline-block;"></span>
+          <h2 style="font-family:'Inter Tight',sans-serif; font-size:1.12rem; font-weight:800;">🎧 Canal Oficial MyInvestor en Tiempo Real</h2>
+        </div>
+        <button class="btn-ghost" onclick="closeOfficialChannelModal()">✖ Cerrar</button>
+      </div>
+      <div style="background:var(--mi-teal-bg); border:1px solid var(--mi-teal-border); border-radius:12px; padding:12px 14px; margin-bottom:12px; font-size:0.81rem; color:#065f46;">
+        ✅ <strong>Conexión In-App Verificada (Sin riesgo de suplantación telefónica):</strong> Estás hablando directamente con el equipo de Prevención de Fraude de MyInvestor dentro de tu sesión segura.
+      </div>
+      <div id="official-channel-chat-box" style="background:#f8fafc; border:1px solid var(--line); border-radius:12px; padding:12px; font-size:0.81rem; line-height:1.45; margin-bottom:14px;">
+        <div style="margin-bottom:8px;"><strong>👩‍💼 Gestor Oficial MyInvestor (Voz + Chat):</strong> “Hola Carmen, vemos en pantalla la operación que estabas a punto de enviar. Te confirmamos que <strong>Quantum Ibérica Capital está en la lista de chiringuitos de la CNMV</strong> y el IBAN destino es una cuenta puente reportada.”</div>
+        <div style="color:var(--accent); font-weight:700;">🎙️ “No envíes el dinero. Si quieres, cancelamos ahora mismo el borrador de transferencia por ti sin quitarte el control de tu cuenta.”</div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-cta-primary" onclick="confirmCancelFraudFromChannel()">
+          🛡️ Cancelar transferencia recomendada y proteger mi cuenta
+        </button>
+      </div>
     </div>
   </div>
 

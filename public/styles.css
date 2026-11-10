@@ -957,3 +957,170 @@ body.mode-deaf .deaf-visual-alert {
   font-weight: 700;
   color: var(--ink);
 }
+
+/* ==========================================================================
+   DAVID PARRO FEEDBACK UPGRADES:
+   1. iOS Push Notification (Estafa / Caro / Ok) + 2 Passive Listening Levels
+   2. 30-Year Growth Curve SVG Chart + Clickable Drill-In
+   3. Non-Hard-Block Fraud Interception Screen + Official Channel + Soft Red Override
+   ========================================================================== */
+.ios-push-banner {
+  display: none;
+  margin: 6px 10px 4px 10px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.94);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  animation: pushSlideDown 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.ios-push-banner.show {
+  display: block;
+}
+
+.ios-push-banner.push-ESTAFA {
+  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+  border-color: #fca5a5;
+}
+
+.ios-push-banner.push-CARO {
+  background: linear-gradient(135deg, #78350f 0%, #b45309 100%);
+  border-color: #fcd34d;
+}
+
+.ios-push-banner.push-ADELANTE {
+  background: linear-gradient(135deg, #064e3b 0%, #0f766e 100%);
+  border-color: #6ee7b7;
+}
+
+@keyframes pushSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.passive-level-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 7px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+}
+
+.passive-level-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 5px 6px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.passive-level-btn.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 30-Year Growth Chart Card inside Phone with Drill-In */
+.chart-30y-card {
+  margin-top: 9px;
+  background: #ffffff;
+  border: 1.5px solid #fed7aa;
+  border-radius: 12px;
+  padding: 10px 11px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.chart-30y-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(0, 70, 222, 0.1);
+}
+
+.drill-in-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.drill-in-panel {
+  display: none;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line-strong);
+  font-size: 0.71rem;
+}
+
+.drill-in-panel.open {
+  display: block;
+}
+
+/* Non-Hard-Block Fraud Interception Screen Buttons */
+.btn-official-channel {
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: linear-gradient(135deg, #0046DE 0%, #159E8A 100%);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.79rem;
+  font-weight: 800;
+  padding: 11px 14px;
+  border-radius: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: 0 6px 16px rgba(0, 70, 222, 0.26);
+  margin-bottom: 7px;
+  transition: transform 0.15s ease;
+}
+
+.btn-official-channel:hover {
+  transform: translateY(-1px);
+}
+
+.btn-soft-red-override {
+  width: 100%;
+  appearance: none;
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px dashed #fda4af;
+  font-family: inherit;
+  font-size: 0.71rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s ease;
+}
+
+.btn-soft-red-override:hover {
+  background: #ffe4e6;
+}

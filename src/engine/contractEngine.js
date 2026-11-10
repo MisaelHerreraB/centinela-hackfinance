@@ -24,6 +24,7 @@ let clientContract = {
     device: 'iPhone 16 Pro · App MyInvestor',
     channel: 'Notificación Push In-App'
   },
+  protection_level: 'LEVEL_2_PASSIVE_LISTENING', // 'LEVEL_1_ON_DEMAND' | 'LEVEL_2_PASSIVE_LISTENING'
   accessibility_mode: 'STANDARD' // 'STANDARD' | 'DEAF' | 'LOW_VISION'
 };
 
@@ -117,9 +118,12 @@ function evaluateContractAction({
     });
 
     return {
-      contract_status: 'OPERACION_RETENIDA',
-      action_taken: 'RETENER_TRANSFERENCIA_Y_AVISAR_FAMILIAR',
-      allow_signature: false,
+      contract_status: 'PANTALLA_INTERCEPCION_FRAUDE_ACTIVA',
+      action_taken: 'INTERCEPCION_EXPLICABLE_SIN_HARD_BLOCK',
+      allow_signature: true,
+      allow_client_override: true,
+      official_channel_cta: 'Consultar en el Canal Oficial de MyInvestor en Tiempo Real (Voz / Chat)',
+      override_warning_cta: 'Continuar y enviar bajo mi responsabilidad (No recomendado)',
       offer_kill_switch: true,
       rules_triggered: rulesTriggered,
       family_notification: notification,
@@ -166,6 +170,8 @@ function evaluateContractAction({
       },
       amount_eur: cost_analysis?.inputs?.amount_eur || 50000,
       estimated_10y_savings_eur: cost_analysis?.metrics?.loss_10y_vs_portfolio_eur || 10635,
+      estimated_30y_savings_vs_index_eur: cost_analysis?.metrics?.loss_30y_vs_direct_index_eur || 85484,
+      estimated_30y_savings_vs_portfolio_eur: cost_analysis?.metrics?.loss_30y_vs_portfolio_eur || 70913,
       tax_impact_today_eur: cost_analysis?.transferability?.irpf_to_pay_today_eur || 0,
       exit_warning: cost_analysis?.transferability?.exit_warning || null,
       status: 'LISTO_PARA_FIRMA_IN_APP'

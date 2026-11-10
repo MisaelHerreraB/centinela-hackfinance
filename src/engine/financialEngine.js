@@ -138,12 +138,13 @@ function calculateCostComparison({
   const terDirect = (Number(direct_index_ter_pct) || 0.12) / 100;
 
   const yearlySeries = [];
-  for (let y = 0; y <= T; y++) {
+  const yearlySeries30 = [];
+  for (let y = 0; y <= 30; y++) {
     const valGross = C0 * Math.pow(1 + rGross, y);
     const valOffered = C0 * Math.pow(1 + rGross - terOffered, y);
     const valBenchmark = C0 * Math.pow(1 + rGross - terBenchmark, y);
     const valDirect = C0 * Math.pow(1 + rGross - terDirect, y);
-    yearlySeries.push({
+    const point = {
       year: y,
       gross_eur: Math.round(valGross),
       offered_bank_eur: Math.round(valOffered),
@@ -151,12 +152,21 @@ function calculateCostComparison({
       myinvestor_direct_index_eur: Math.round(valDirect),
       cumulative_loss_vs_portfolio_eur: Math.round(valBenchmark - valOffered),
       cumulative_loss_vs_direct_eur: Math.round(valDirect - valOffered)
-    });
+    };
+    yearlySeries30.push(point);
+    if (y <= T) {
+      yearlySeries.push(point);
+    }
   }
 
   const finalYear = yearlySeries[yearlySeries.length - 1];
+  const year10 = yearlySeries30[10];
+  const year20 = yearlySeries30[20];
+  const year30 = yearlySeries30[30];
   const lossVsPortfolio10y = finalYear.myinvestor_portfolio_eur - finalYear.offered_bank_eur;
   const lossVsDirect10y = finalYear.myinvestor_direct_index_eur - finalYear.offered_bank_eur;
+  const lossVsPortfolio30y = year30.myinvestor_portfolio_eur - year30.offered_bank_eur;
+  const lossVsDirect30y = year30.myinvestor_direct_index_eur - year30.offered_bank_eur;
   const annualFeeGapEur = Math.round(C0 * (terOffered - terBenchmark));
 
   const transferability = evaluateTransferability({
@@ -191,18 +201,30 @@ function calculateCostComparison({
       final_capital_myinvestor_portfolio_eur: finalYear.myinvestor_portfolio_eur,
       final_capital_myinvestor_direct_eur: finalYear.myinvestor_direct_index_eur,
       loss_10y_vs_portfolio_eur: lossVsPortfolio10y,
-      loss_10y_vs_direct_index_eur: lossVsDirect10y
+      loss_10y_vs_direct_index_eur: lossVsDirect10y,
+      final_capital_30y_offered_eur: year30.offered_bank_eur,
+      final_capital_30y_portfolio_eur: year30.myinvestor_portfolio_eur,
+      final_capital_30y_direct_eur: year30.myinvestor_direct_index_eur,
+      loss_30y_vs_portfolio_eur: lossVsPortfolio30y,
+      loss_30y_vs_direct_index_eur: lossVsDirect30y,
+      milestones_drill_in: {
+        year_10: year10,
+        year_20: year20,
+        year_30: year30
+      }
     },
     behavioral_salience: {
       daily_pain_of_paying_eur: Number((annualFeeGapEur / 365).toFixed(2)),
       monthly_pain_of_paying_eur: Math.round(annualFeeGapEur / 12),
       compound_10y_loss_eur: lossVsPortfolio10y,
+      compound_30y_loss_vs_index_eur: lossVsDirect30y,
       academic_basis:
-        'Fee Salience & Percentage Veil (Barber, Odean & Zheng, 2005; ESMA Cost Disclosures) + Exponential Growth Bias (Stango & Zinman)'
+        'Fee Salience & Percentage Veil (Barber, Odean & Zheng, 2005; ESMA Cost Disclosures) + Exponential Growth Bias a 30 años (Stango & Zinman)'
     },
     transferability,
     yearly_series: yearlySeries,
-    formula_audit: `Vf = ${C0} * (1 + ${rGross} - TER)^${T} | Sin alucinación (Motor Determinista Centinela)`
+    yearly_series_30y: yearlySeries30,
+    formula_audit: `Vf(30a) = ${C0} * (1 + ${rGross} - TER)^30 | Sin alucinación (Motor Determinista Centinela)`
   };
 }
 

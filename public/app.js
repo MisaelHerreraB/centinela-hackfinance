@@ -286,6 +286,120 @@ async function runScenario1Scam() {
   renderCallVerdict(data);
 }
 
+function triggerIosPush(verdict, title, body) {
+  const pushEl = document.getElementById('ios-push-banner');
+  if (!pushEl) return;
+  const isPassive = currentContract?.protection_level !== 'LEVEL_1_ON_DEMAND';
+  document.getElementById('push-level-tag').textContent = isPassive
+    ? 'Escucha Pasiva · Nivel 2'
+    : 'Consulta · Nivel 1';
+  document.getElementById('push-title').textContent = title;
+  document.getElementById('push-body').textContent = body;
+  pushEl.className = `ios-push-banner show push-${verdict}`;
+}
+
+async function setProtectionLevel(level) {
+  document.querySelectorAll('.passive-level-btn').forEach((b) => b.classList.remove('active'));
+  const btn = document.getElementById(`lvl-${level}`);
+  if (btn) btn.classList.add('active');
+  const res = await fetch('/api/contract', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ protection_level: level })
+  });
+  const data = await res.json();
+  if (data.ok) renderGlobalState(data.state);
+}
+
+function build30YearSvgChart(series30 = [], offeredTer = 1.8, indexTer = 0.06) {
+  if (!Array.isArray(series30) || series30.length === 0) return '';
+  const w = 310;
+  const h = 118;
+  const padL = 8;
+  const padR = 8;
+  const padT = 14;
+  const padB = 20;
+  const maxVal = Math.max(...series30.map((p) => p.myinvestor_direct_index_eur), 100000);
+  const minVal = series30[0]?.offered_bank_eur || 50000;
+
+  const toX = (yr) => padL + (yr / 30) * (w - padL - padR);
+  const toY = (val) => padT + (1 - (val - minVal * 0.9) / (maxVal * 1.04 - minVal * 0.9)) * (h - padT - padB);
+
+  const ptsIndex = series30.map((p) => `${toX(p.year).toFixed(1)},${toY(p.myinvestor_direct_index_eur).toFixed(1)}`).join(' ');
+  const ptsPortfolio = series30.map((p) => `${toX(p.year).toFixed(1)},${toY(p.myinvestor_portfolio_eur).toFixed(1)}`).join(' ');
+  const ptsOffered = series30.map((p) => `${toX(p.year).toFixed(1)},${toY(p.offered_bank_eur).toFixed(1)}`).join(' ');
+
+  const areaIndex = `${toX(0)},${h - padB} ${ptsIndex} ${toX(30)},${h - padB}`;
+  const y30 = series30[30] || series30[series30.length - 1];
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:auto; display:block; overflow:visible;">
+      <defs>
+        <linearGradient id="gradIndex30" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#159E8A" stop-opacity="0.26"/>
+          <stop offset="100%" stop-color="#159E8A" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <polygon points="${areaIndex}" fill="url(#gradIndex30)" />
+      <polyline fill="none" stroke="#DC2626" stroke-width="2.4" stroke-dasharray="4 2" points="${ptsOffered}" />
+      <polyline fill="none" stroke="#0046DE" stroke-width="2" opacity="0.7" points="${ptsPortfolio}" />
+      <polyline fill="none" stroke="#159E8A" stroke-width="3" points="${ptsIndex}" />
+      <circle cx="${toX(30)}" cy="${toY(y30.myinvestor_direct_index_eur)}" r="4" fill="#159E8A" />
+      <circle cx="${toX(30)}" cy="${toY(y30.offered_bank_eur)}" r="4" fill="#DC2626" />
+      <text x="${padL}" y="${h - 4}" font-size="8.5" fill="#64748B" font-weight="700">Hoy (50k €)</text>
+      <text x="${toX(10) - 14}" y="${h - 4}" font-size="8.5" fill="#64748B" font-weight="600">Año 10</text>
+      <text x="${toX(20) - 14}" y="${h - 4}" font-size="8.5" fill="#64748B" font-weight="600">Año 20</text>
+      <text x="${toX(30) - 32}" y="${h - 4}" font-size="8.5" fill="#0F172A" font-weight="800">Año 30</text>
+      <text x="${toX(30) - 96}" y="${toY(y30.myinvestor_direct_index_eur) + 3}" font-size="9.5" fill="#0f6f4b" font-weight="800">Índice ${indexTer}%: ${y30.myinvestor_direct_index_eur.toLocaleString('es-ES')} €</text>
+      <text x="${toX(30) - 98}" y="${toY(y30.offered_bank_eur) - 5}" font-size="9" fill="#b91c1c" font-weight="800">TER ${offeredTer}%: ${y30.offered_bank_eur.toLocaleString('es-ES')} €</text>
+    </svg>
+  `;
+}
+
+function toggleChartDrillIn() {
+  const panel = document.getElementById('chart-drill-in-panel');
+  const hint = document.getElementById('chart-drill-in-hint');
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  if (hint) {
+    hint.textContent = isOpen ? '🔼 Ocultar números detallados' : '👆 Pulsa la gráfica para ver números (Drill-In)';
+  }
+}
+
+function openOfficialChannelModal() {
+  document.getElementById('modal-official-channel').classList.add('open');
+  speakMessage(
+    'Conectada con el Canal Oficial de MyInvestor en tiempo real. Hola Carmen, te confirmamos que Quantum Ibérica está en la lista de alertas de la CNMV. Te recomendamos no enviar la transferencia.'
+  );
+}
+
+function closeOfficialChannelModal() {
+  document.getElementById('modal-official-channel').classList.remove('open');
+}
+
+function confirmCancelFraudFromChannel() {
+  closeOfficialChannelModal();
+  const actionBox = document.getElementById('action-container');
+  if (actionBox) {
+    actionBox.innerHTML = `
+      <div style="padding:10px 12px; background:var(--mi-teal-bg); border:1px solid var(--mi-teal-border); border-radius:10px; color:#065f46; font-weight:700; font-size:0.77rem;">
+        ✅ <strong>Transferencia cancelada por Carmen tras verificar con el Canal Oficial de MyInvestor.</strong> Se han protegido 9.000 € sin quitarle el control al cliente.
+      </div>
+    `;
+  }
+}
+
+function continueFraudWithOverride(amountEur) {
+  const actionBox = document.getElementById('action-container');
+  if (actionBox) {
+    actionBox.innerHTML = `
+      <div style="padding:10px 12px; background:#fff1f2; border:1px solid #fecdd3; border-radius:10px; color:#9f1239; font-size:0.75rem;">
+        ⚠️ <strong>El cliente ha decidido continuar bajo su responsabilidad</strong> tras haber recibido la explicación de riesgo y la opción de Canal Oficial (Trazabilidad registrada en Audit Log SHA-256).
+      </div>
+    `;
+  }
+}
+
 function renderCallVerdict(data) {
   const v = data.step_2_verdict.fraud_analysis;
   const mcpCheck = data.step_2_verdict.mcp_verification;
@@ -293,31 +407,37 @@ function renderCallVerdict(data) {
 
   document.getElementById('latency-badge').textContent = `⚡ ${data.total_latency_ms} ms`;
 
+  // 1. Disparar PUSH Notification nativa arriba del móvil (Output Base)
+  if (v.verdict === 'ESTAFA') {
+    triggerIosPush(
+      'ESTAFA',
+      '🔴 Creemos que es una ESTAFA (Escucha Pasiva)',
+      `Detectada entidad alertada en CNMV (${v.cnmv_check?.entity || 'Falso bróker'}) y 12% garantizado. Pulsa para ver por qué.`
+    );
+  } else {
+    triggerIosPush('ADELANTE', '🟢 Operación Verificada (OK)', 'Sin alertas en la CNMV ni patrones de manipulación.');
+  }
+
+  // 2. Banner Rojo In-App ("Creemos que es una estafa")
   const banner = document.getElementById('verdict-banner');
   banner.className = `verdict-hero ${v.verdict}`;
   document.getElementById('verdict-title').textContent =
-    v.verdict === 'ESTAFA' ? '🔴 ESTAFA · CUELGA' : '🟢 ADELANTE · SEGURO';
+    v.verdict === 'ESTAFA' ? '🔴 CREEMOS QUE ES ESTAFA' : '🟢 ADELANTE · OK';
   document.getElementById('verdict-badge-right').textContent = `Riesgo ${v.risk_score}%`;
   document.getElementById('verdict-sub-right').textContent =
-    v.cnmv_check?.flagged ? 'Alerta CNMV + IBAN reportado' : 'Verificado sin alertas';
+    v.cnmv_check?.flagged ? 'Explicabilidad Activa' : 'Verificado sin alertas';
 
   const detailsBox = document.getElementById('verdict-details-container');
   if (v.verdict === 'ESTAFA') {
     const vopBadge = v.iban_check?.sepa_vop_status === 'NO_MATCH'
       ? `<div style="margin-bottom:6px; padding:6px 9px; background:#fff1f2; border:1px solid #fecdd3; border-radius:8px; font-size:0.71rem; color:#9f1239; font-weight:700;">
-          🏦 <strong>SEPA VoP (Reg. UE 2024/886): NO_MATCH</strong> · El IBAN pertenece a <em>"${v.iban_check.registered_holder}"</em>, NO a ${v.iban_check.claimed_holder}.
-        </div>`
-      : '';
-    const prosodyBadge = v.prosody_analysis
-      ? `<div style="margin-bottom:6px; padding:6px 9px; background:#fef3c7; border:1px solid #fde68a; border-radius:8px; font-size:0.70rem; color:#92400e;">
-          🎙️ <strong>Prosodia Scribe (Vishing 2.0):</strong> ${v.prosody_analysis.speech_rate_wpm} WPM · ${v.prosody_analysis.acoustic_pressure_level}<br/>
-          🧠 <strong>Fricción Cognitiva (FCA/PSR):</strong> Ruptura <code>Sistema 1 → Sistema 2</code> activada.
+          🏦 <strong>SEPA VoP: NO_MATCH</strong> · El IBAN pertenece a <em>"${v.iban_check.registered_holder}"</em>, NO a ${v.iban_check.claimed_holder}.
         </div>`
       : '';
     const killChainBadge = v.kill_chain_progression
       ? `<div style="margin-bottom:6px; padding:7px 9px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; font-size:0.69rem; color:#1e293b;">
           <div style="font-weight:800; color:#0f172a; margin-bottom:4px;">
-            ⛓️ Kill-Chain Conversacional (Modelo COLD / PreScam): <span style="color:#dc2626;">${v.kill_chain_progression.phase_summary}</span>
+            🔍 ¿Por qué creemos que es fraude? (${v.kill_chain_progression.phase_summary})
           </div>
           <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:3px;">
             ${v.kill_chain_progression.stages
@@ -331,24 +451,15 @@ function renderCallVerdict(data) {
           </div>
         </div>`
       : '';
-    const rctPromptBadge = v.behavioral_intervention?.bit_fca_rct_diagnostic_question
-      ? `<div style="margin-bottom:6px; padding:7px 9px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; font-size:0.70rem; color:#1e3a8a;">
-          🛑 <strong>Pregunta Diagnóstica RCT (BIT / FCA Anti-Tunnel):</strong><br/>
-          <em>“${v.behavioral_intervention.bit_fca_rct_diagnostic_question}”</em>
-        </div>`
-      : '';
     detailsBox.innerHTML = `
       ${killChainBadge}
       ${vopBadge}
-      ${prosodyBadge}
-      ${rctPromptBadge}
       <div class="phone-signals">
         ${v.signals
           .map(
             (s) => `
           <div class="phone-signal-row">
             <div style="font-weight:800; color:#991b1b;">⚠️ ${s.label}</div>
-            ${s.cognitive_bias ? `<div style="font-size:0.65rem; font-weight:700; color:#b45309; margin-top:1px;">Sesgo detectado: ${s.cognitive_bias}</div>` : ''}
             <div style="color:#475569; margin-top:2px;">${s.explanation}</div>
           </div>
         `
@@ -364,25 +475,27 @@ function renderCallVerdict(data) {
     `;
   }
 
+  // 3. Pantalla Adicional al pulsar "Enviar" (Sin Hard Block: Canal Oficial en Vivo + Botón Rojo Clarito)
   const actionBox = document.getElementById('action-container');
   if (v.verdict === 'ESTAFA') {
     actionBox.innerHTML = `
-      <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:11px; padding:11px 12px;">
-        <div style="font-weight:800; color:#991b1b; font-size:0.82rem; margin-bottom:4px;">
-          🛡️ Transferencia de ${(v.amount_detected_eur || 9000).toLocaleString('es-ES')} € RETENIDA por Mi Contrato
+      <div style="background:#ffffff; border:1.5px solid #fecaca; border-radius:12px; padding:11px 12px;">
+        <div style="font-weight:800; color:#991b1b; font-size:0.80rem; margin-bottom:4px;">
+          🛑 Pantalla de Seguridad antes de enviar ${(v.amount_detected_eur || 9000).toLocaleString('es-ES')} €
         </div>
-        <div style="font-size:0.74rem; color:#7f1d1d; margin-bottom:9px;">
-          • Supera el límite de seguridad (${(currentContract.max_transfer_amount_eur || 3000).toLocaleString('es-ES')} €), discrepancia <strong>SEPA VoP (NO_MATCH)</strong> y alerta CNMV.<br/>
-          • <strong>Escudo PSR/PSD3 MyInvestor:</strong> Protege al cliente y evita responsabilidad patrimonial del banco por suplantación.<br/>
-          • Notificación de co-firma enviada al móvil de <strong>${currentContract.trusted_contact?.name || 'Daniel (Hijo)'}</strong>.
+        <div style="font-size:0.73rem; color:#334155; margin-bottom:9px; line-height:1.38;">
+          Oye Carmen, <strong>esto tiene toda la pinta de ser un fraude</strong> por los motivos que te explicamos arriba. Puedes consultarnos ahora mismo en tiempo real antes de enviar tu dinero:
         </div>
-        <button class="btn-cta-danger" onclick="toggleKillSwitch(true)">
-          🛑 Deshabilitar Operativa Ahora
+        <button class="btn-official-channel" onclick="openOfficialChannelModal()">
+          🎧 Consultar en Canal Oficial MyInvestor (Voz / Chat en vivo)
+        </button>
+        <button class="btn-soft-red-override" onclick="continueFraudWithOverride(${v.amount_detected_eur || 9000})">
+          Seguir y enviar transferencia bajo mi responsabilidad (No recomendado)
         </button>
       </div>
     `;
   } else {
-    actionBox.innerHTML = `<div style="color:var(--ok-ink); font-weight:600;">✅ Operación permitida por Mi Contrato.</div>`;
+    actionBox.innerHTML = `<div style="color:var(--ok-ink); font-weight:600;">✅ Operación verificada sin alertas. Puedes continuar.</div>`;
   }
 
   document.getElementById('mcp-inspector-box').textContent = JSON.stringify(
@@ -405,7 +518,7 @@ function renderCallVerdict(data) {
   renderGlobalState(data.state);
   speakMessage(
     data.spoken_text,
-    `Importe retenido: ${v.amount_detected_eur} euros. Entidad en lista negra de la CNMV: ${v.cnmv_check?.entity || 'Desconocida'}. IBAN bloqueado con ${v.iban_check?.reports || 14} denuncias.`
+    `Importe: ${v.amount_detected_eur} euros. Entidad en lista negra de la CNMV: ${v.cnmv_check?.entity || 'Desconocida'}. Puedes consultar nuestro canal oficial en tiempo real pulsando el botón azul.`
   );
 }
 
@@ -444,43 +557,92 @@ function renderDocumentVerdict(data) {
   document.getElementById('latency-badge').textContent =
     `⚡ ${data.total_latency_ms} ms (MCP: ${mcp.mcp_latency_ms} ms)`;
 
+  const topAlt = mcp.alternatives?.[0] || {
+    isin: 'IE00BYX5NX33',
+    name: 'Fidelity MSCI World Index Fund EUR P Acc',
+    ter: 0.12
+  };
+  const loss30yIndex = cost.metrics.loss_30y_vs_direct_index_eur || 85484;
+  const loss30yPortfolio = cost.metrics.loss_30y_vs_portfolio_eur || 70913;
+
+  // 1. Output Base: Notificación PUSH arriba del móvil (Caro vs Ok)
+  if (verdict === 'CARO') {
+    triggerIosPush(
+      'CARO',
+      `🟠 Producto CARO (${cost.inputs.offered_ter_pct.toFixed(2)}% TER vs ${topAlt.ter}% Índice MCP)`,
+      `A 30 años dejas de ganar +${loss30yIndex.toLocaleString('es-ES')} €. Pulsa la gráfica para ver el desglose.`
+    );
+  } else {
+    triggerIosPush(
+      'ADELANTE',
+      `🟢 Producto OK (${cost.inputs.offered_ter_pct.toFixed(2)}% TER)`,
+      'Comisiones óptimas alineadas con el catálogo indexado de MyInvestor.'
+    );
+  }
+
+  // 2. Banner In-App de "CARO"
   const banner = document.getElementById('verdict-banner');
   banner.className = `verdict-hero ${verdict}`;
   document.getElementById('verdict-title').textContent =
     verdict === 'CARO'
       ? `🟠 PRODUCTO CARO (${cost.inputs.offered_ter_pct.toFixed(2)}%)`
-      : `🟢 ADELANTE (${cost.inputs.offered_ter_pct.toFixed(2)}%)`;
+      : `🟢 PRODUCTO OK (${cost.inputs.offered_ter_pct.toFixed(2)}%)`;
   document.getElementById('verdict-badge-right').textContent =
     verdict === 'CARO'
-      ? `-${cost.metrics.loss_10y_vs_portfolio_eur.toLocaleString('es-ES')} € (10a)`
+      ? `-${loss30yIndex.toLocaleString('es-ES')} € (30a)`
       : 'Coste Óptimo';
   document.getElementById('verdict-sub-right').textContent =
     cost.transferability.is_tax_exempt_transfer ? 'Traspasable 0 € IRPF' : 'No traspasable';
 
+  // 3. Gráfica In-App de Crecimiento a 30 Años (Sin texto denso) + Drill-In al pulsar la gráfica
+  const svg30 = build30YearSvgChart(
+    cost.yearly_series_30y || [],
+    cost.inputs.offered_ter_pct,
+    topAlt.ter
+  );
+  const m10 = cost.metrics.milestones_drill_in?.year_10 || {};
+  const m20 = cost.metrics.milestones_drill_in?.year_20 || {};
+  const m30 = cost.metrics.milestones_drill_in?.year_30 || {};
+
   const detailsBox = document.getElementById('verdict-details-container');
   detailsBox.innerHTML = `
-    <div class="phone-kpi-grid">
-      <div class="phone-kpi">
-        <div class="phone-kpi-label">Comisión Anual</div>
-        <div class="phone-kpi-val" style="color:${verdict === 'CARO' ? 'var(--caro-amber)' : 'var(--mi-teal)'};">
-          ${cost.inputs.offered_ter_pct.toFixed(2)}%
-        </div>
-        <div style="font-size:0.64rem; color:var(--muted);">vs 0,30% MyInvestor</div>
+    <div class="chart-30y-card" onclick="toggleChartDrillIn()" title="Pulsa la gráfica para desplegar los números detallados (Drill-In)">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <span style="font-size:0.72rem; font-weight:800; color:var(--ink);">📈 Crecimiento a 30 años (TER ${cost.inputs.offered_ter_pct}% vs Índice MCP ${topAlt.ter}%)</span>
+        <span id="chart-drill-in-hint" class="drill-in-hint">👆 Pulsa para números (Drill-In)</span>
       </div>
-      <div class="phone-kpi">
-        <div class="phone-kpi-label">Pierdes en 10 años</div>
-        <div class="phone-kpi-val" style="color:var(--scam-red);">
-          -${cost.metrics.loss_10y_vs_portfolio_eur.toLocaleString('es-ES')} €
+      ${svg30}
+      <div id="chart-drill-in-panel" class="drill-in-panel">
+        <div style="font-weight:800; color:var(--ink); margin-bottom:5px;">
+          🔍 Desglose Numérico Drill-In (Sobre ${cost.inputs.amount_eur.toLocaleString('es-ES')} € al 5% bruto anual):
         </div>
-        <div style="font-size:0.64rem; color:var(--muted);">-${cost.metrics.monthly_fee_drain_eur || 63} €/mes (-${cost.metrics.daily_fee_drain_eur || 2.05} €/día)</div>
-      </div>
-      <div class="phone-kpi">
-        <div class="phone-kpi-label">Peaje Fiscal IRPF</div>
-        <div class="phone-kpi-val" style="color:${cost.transferability.is_tax_exempt_transfer ? 'var(--mi-teal)' : 'var(--scam-red)'};">
-          ${cost.transferability.irpf_to_pay_today_eur.toLocaleString('es-ES')} €
+        <div class="phone-kpi-grid" style="margin-bottom:6px;">
+          <div class="phone-kpi">
+            <div class="phone-kpi-label">Año 10</div>
+            <div class="phone-kpi-val" style="color:var(--caro-amber); font-size:0.84rem;">
+              +${(m10.cumulative_loss_vs_direct_eur || cost.metrics.loss_10y_vs_direct_index_eur).toLocaleString('es-ES')} €
+            </div>
+            <div style="font-size:0.60rem; color:var(--muted);">${(m10.myinvestor_direct_index_eur || 79699).toLocaleString('es-ES')} € vs ${(m10.offered_bank_eur || 67196).toLocaleString('es-ES')} €</div>
+          </div>
+          <div class="phone-kpi">
+            <div class="phone-kpi-label">Año 20</div>
+            <div class="phone-kpi-val" style="color:var(--caro-amber); font-size:0.84rem;">
+              +${(m20.cumulative_loss_vs_direct_eur || 36840).toLocaleString('es-ES')} €
+            </div>
+            <div style="font-size:0.60rem; color:var(--muted);">${(m20.myinvestor_direct_index_eur || 130110).toLocaleString('es-ES')} € vs ${(m20.offered_bank_eur || 93270).toLocaleString('es-ES')} €</div>
+          </div>
+          <div class="phone-kpi">
+            <div class="phone-kpi-label">Año 30</div>
+            <div class="phone-kpi-val" style="color:var(--scam-red); font-size:0.84rem;">
+              +${loss30yIndex.toLocaleString('es-ES')} €
+            </div>
+            <div style="font-size:0.60rem; color:var(--muted);">${(m30.myinvestor_direct_index_eur || 213649).toLocaleString('es-ES')} € vs ${(m30.offered_bank_eur || 128165).toLocaleString('es-ES')} €</div>
+          </div>
         </div>
-        <div style="font-size:0.64rem; color:var(--muted);">
-          ${cost.transferability.is_tax_exempt_transfer ? 'Exento Art. 94' : 'Tributa 19%-30%'}
+        <div style="font-size:0.68rem; color:var(--ink-soft); line-height:1.38;">
+          • <strong>Drenaje mensual hoy:</strong> -${cost.metrics.monthly_fee_drain_eur || 63} €/mes (-${cost.metrics.daily_fee_drain_eur || 2.05} €/día)<br/>
+          • <strong>Índice MCP comparado:</strong> ${topAlt.name} (<code>${topAlt.isin}</code> · TER ${topAlt.ter}%)<br/>
+          • <strong>Peaje Fiscal IRPF hoy:</strong> <strong>${cost.transferability.irpf_to_pay_today_eur} €</strong> (${cost.transferability.is_tax_exempt_transfer ? 'Exento Art. 94 LIRPF' : 'No traspasable'})
         </div>
       </div>
     </div>
@@ -493,31 +655,26 @@ function renderDocumentVerdict(data) {
     }
   `;
 
-  // Actualizar panel comparativo grande de la derecha con los datos reales del MCP de MyInvestor
-  const topAlt = mcp.alternatives?.[0] || {
-    isin: 'IE00BYX5NX33',
-    name: 'Fidelity MSCI World Index Fund EUR P Acc',
-    ter: 0.12
-  };
-  const maxVal = cost.metrics.final_capital_myinvestor_direct_eur;
-  const pctOffered = Math.round((cost.metrics.final_capital_offered_eur / maxVal) * 100);
-  const pctPortfolio = Math.round((cost.metrics.final_capital_myinvestor_portfolio_eur / maxVal) * 100);
+  // Actualizar panel comparativo grande de la derecha con la proyección a 30 años contra Índice MCP
+  const maxVal30 = cost.metrics.final_capital_30y_direct_eur || 213649;
+  const pctOffered = Math.round(((cost.metrics.final_capital_30y_offered_eur || 128165) / maxVal30) * 100);
+  const pctPortfolio = Math.round(((cost.metrics.final_capital_30y_portfolio_eur || 199078) / maxVal30) * 100);
 
   document.getElementById('exec-chart-headline').textContent =
     verdict === 'CARO'
-      ? `En 10 años pierdes ${cost.metrics.loss_10y_vs_portfolio_eur.toLocaleString('es-ES')} € frente a una Cartera al 0,30 % (y ${cost.metrics.loss_10y_vs_direct_index_eur.toLocaleString('es-ES')} € frente al indexado al ${topAlt.ter} %)`
+      ? `A 30 años pierdes ${loss30yIndex.toLocaleString('es-ES')} € frente al Índice MCP al ${topAlt.ter} % (y ${loss30yPortfolio.toLocaleString('es-ES')} € frente a Cartera al 0,30 %)`
       : `Producto óptimo dentro de su categoría oficial en MyInvestor`;
 
-  document.getElementById('bar-label-offered').textContent = `🏦 ${doc.name} (TER ${cost.inputs.offered_ter_pct.toFixed(2)} %)`;
-  document.getElementById('bar-val-offered').textContent = `${cost.metrics.final_capital_offered_eur.toLocaleString('es-ES')} €`;
+  document.getElementById('bar-label-offered').textContent = `🏦 ${doc.name} a 30 años (TER ${cost.inputs.offered_ter_pct.toFixed(2)} %)`;
+  document.getElementById('bar-val-offered').textContent = `${(cost.metrics.final_capital_30y_offered_eur || 128165).toLocaleString('es-ES')} € (10a: ${cost.metrics.final_capital_offered_eur.toLocaleString('es-ES')} €)`;
   document.getElementById('bar-fill-offered').style.width = `${pctOffered}%`;
 
-  document.getElementById('bar-label-portfolio').textContent = `🟢 ${mcp.recommended_portfolio.name} (TER 0,30 % · Vía Fondo Puente FR0000447823)`;
-  document.getElementById('bar-val-portfolio').textContent = `${cost.metrics.final_capital_myinvestor_portfolio_eur.toLocaleString('es-ES')} € (+${cost.metrics.loss_10y_vs_portfolio_eur.toLocaleString('es-ES')} €)`;
+  document.getElementById('bar-label-portfolio').textContent = `🟢 ${mcp.recommended_portfolio.name} a 30 años (TER 0,30 % · Vía Fondo Puente FR0000447823)`;
+  document.getElementById('bar-val-portfolio').textContent = `${(cost.metrics.final_capital_30y_portfolio_eur || 199078).toLocaleString('es-ES')} € (+${loss30yPortfolio.toLocaleString('es-ES')} € a 30a)`;
   document.getElementById('bar-fill-portfolio').style.width = `${pctPortfolio}%`;
 
-  document.getElementById('bar-label-direct').textContent = `⚡ Indexado Directo MCP: ${topAlt.name} (${topAlt.isin} · TER ${topAlt.ter} %)`;
-  document.getElementById('bar-val-direct').textContent = `${cost.metrics.final_capital_myinvestor_direct_eur.toLocaleString('es-ES')} € (+${cost.metrics.loss_10y_vs_direct_index_eur.toLocaleString('es-ES')} €)`;
+  document.getElementById('bar-label-direct').textContent = `⚡ Indexado Directo MCP a 30 años: ${topAlt.name} (${topAlt.isin} · TER ${topAlt.ter} %)`;
+  document.getElementById('bar-val-direct').textContent = `${(cost.metrics.final_capital_30y_direct_eur || 213649).toLocaleString('es-ES')} € (+${loss30yIndex.toLocaleString('es-ES')} € a 30a)`;
 
   // Renderizar tarjetas del MCP de MyInvestor
   const cardsContainer = document.getElementById('mcp-cards-container');
@@ -546,8 +703,8 @@ function renderDocumentVerdict(data) {
         </div>
         <div style="font-size:0.74rem; color:var(--ink-soft); margin-bottom:9px;">
           • <strong>De:</strong> ${draft.origin_product} (TER ${draft.origin_ter_pct}%)<br/>
-          • <strong>A:</strong> ${draft.destination_option_2.name} (0,30%) o ${draft.destination_option_1.name} (${draft.destination_option_1.ter_pct}%)<br/>
-          • <strong>Ahorro a 10 años:</strong> +${draft.estimated_10y_savings_eur.toLocaleString('es-ES')} €
+          • <strong>A:</strong> ${draft.destination_option_1.name} (${draft.destination_option_1.ter_pct}%) o ${draft.destination_option_2.name} (0,30%)<br/>
+          • <strong>Ahorro a 30 años vs Índice MCP:</strong> +${(draft.estimated_30y_savings_vs_index_eur || 85484).toLocaleString('es-ES')} € (+${draft.estimated_10y_savings_eur.toLocaleString('es-ES')} € a 10a)
         </div>
         <div id="sign-box-area">
           <button class="btn-cta-primary" onclick="signTransferInApp('${draft.order_id}', '${draft.destination_option_2.name}', ${draft.amount_eur})">
@@ -865,6 +1022,8 @@ async function resetDemo() {
       b.className = 'scenario-pill';
     });
     document.getElementById('verdict-banner').className = 'verdict-hero ADELANTE';
+    const pushEl = document.getElementById('ios-push-banner');
+    if (pushEl) pushEl.className = 'ios-push-banner';
     document.getElementById('verdict-title').textContent = 'LISTO PARA VERIFICAR';
     document.getElementById('verdict-badge-right').textContent = 'MCP Online';
     document.getElementById('verdict-sub-right').textContent = 'CNMV + Catálogo MyInvestor';

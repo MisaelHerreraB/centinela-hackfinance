@@ -31,29 +31,30 @@
 
 ---
 
-### Diapositiva 3 — La Solución: 1 Gesto, 3 Pasos, 3 Veredictos en `< 5 s`
-- **Paso 1 — Enseñar:**
-  - Llamada en altavoz (sortea el bloqueo GSM en iOS) transcrita por `ElevenLabs Scribe (scribe_v1)`.
-  - Foto o PDF del folleto DFI analizado por `Claude Vision`.
-  - Captura de SMS o WhatsApp sospechoso.
-- **Paso 2 — Veredicto (`ESTAFA` | `CARO` | `ADELANTE`):**
-  - Emitido simultáneamente por voz (`ElevenLabs TTS`) y texto en pantalla.
-- **Paso 3 — Actuar (Gobernado por "Mi Contrato"):**
-  - En **`ESTAFA`**: Retiene la transferencia, lanza una *Pregunta Diagnóstica RCT*, alerta al móvil de su hijo **Daniel** y habilita el botón **Kill-Switch**.
-  - En **`CARO`**: Pre-rellena la **Orden de Traspaso Exento de IRPF (`0 €`)** hacia MyInvestor lista para firmar con FaceID.
+### Diapositiva 3 — La Solución: Output PUSH (`Estafa / Caro / Ok`) + Gráfica 30 Años + Intercepción Explicable Sin Hard Block
+- **Paso 1 — 2 Niveles de Escucha Pasiva e Ingesta Multimodal:**
+  - **Nivel 1 (Bajo Demanda):** El cliente consulta puntualmente una llamada, audio, SMS o folleto DFI.
+  - **Nivel 2 (Escucha Pasiva + PUSH):** En llamada activa, detecta coacción y dispara automáticamente la notificación **PUSH (`Estafa / Caro / Ok`)**.
+- **Paso 2 — Output Base = PUSH + Banner In-App:**
+  - En **`ESTAFA`**: **PUSH** + Banner Rojo *"Creemos que es una estafa"*.
+  - En **`CARO`**: **PUSH** + Banner *"Producto Caro"* + **Gráfica In-App de Crecimiento a 30 Años (TER Caro vs. TER Barato / Índice MCP)** para que el cliente no tenga que leer texto; si pulsa la gráfica, se abre el **Drill-In** numérico.
+  - En **`OK`**: **PUSH** + Sello verde verificando costes competitivos contra el índice MCP.
+- **Paso 3 — Intercepción Explicable (Sin *Hard Block*) y Traspaso 0 € IRPF:**
+  - En **`ESTAFA` (Sin *Hard Block*):** El banco no puede aplicar un *hard block* que quite el control al cliente. Al darle a *Enviar*, Centinela lleva a una **pantalla adicional de explicabilidad** del fraude con un botón principal amigable para abrir el **Canal Oficial en Tiempo Real (Voz / Chat)** y un botón en **rojo clarito** (*"Seguir bajo mi responsabilidad"*).
+  - En **`CARO`**: Tras pulsar la gráfica a 30 años (*Drill-In*), deja pre-rellenada la **Orden de Traspaso Exento de IRPF (`0 €`)** hacia MyInvestor lista para firmar con FaceID.
 
 ---
 
 ### Diapositiva 4 — Arquitectura Técnica en 3 Capas (*Jagged Frontier*: Cero Cálculos en el LLM)
-- **Capa 1 — Percepción Multimodal y Accesibilidad Universal:**
+- **Capa 1 — Escucha Pasiva (2 Niveles), Percepción Multimodal y Accesibilidad Universal:**
   - `ElevenLabs Scribe (scribe_v1)` con *word-level timestamps* para medir cadencia vocal (`WPM`).
   - `Claude Sonnet 4` (Vision, documentos PDF nativos y *Tool Use*).
   - `ElevenLabs TTS (eleven_multilingual_v2)` + 3 modos en vivo: **Estándar**, **Persona Sorda** y **Baja Visión**.
-- **Capa 2 — Cliente MCP Oficial en Vivo + Servidor MCP Propio:**
-  - Conectado en tiempo real a `https://mcp.myinvestor.es/mcp` (`search_funds`).
-  - Expone nuestro propio servidor MCP (`POST /mcp`) con las 3 herramientas nuevas para GPTadvisor: `verify_cnmv_and_iban`, `calculate_10y_fee_and_tax` y `enforce_client_contract`.
-- **Capa 3 — Gobernanza "Mi Contrato" + Audit Log SHA-256 + Seguridad:**
-  - Cadena inmutable de eventos con `SHA-256` (`prev_hash` → `hash`) y blindaje de red anti-DNS Rebinding y CSRF Cross-Origin.
+- **Capa 2 — Comparador MCP a 30 Años contra Índice + Servidor MCP Propio:**
+  - Conectado en tiempo real a `https://mcp.myinvestor.es/mcp` (`search_funds`) para comparar fondos a **10, 20 y 30 años en base a TER contra índice**.
+  - Expone nuestro propio servidor MCP (`POST /mcp`) con las 3 herramientas nuevas para GPTadvisor: `verify_cnmv_and_iban`, `calculate_10y_fee_and_tax` (series 10–30 años + *drill-in*) y `enforce_client_contract`.
+- **Capa 3 — Intercepción Explicable ("Mi Contrato") + Audit Log SHA-256 + Seguridad:**
+  - Pantalla de explicabilidad sin *hard block* + Canal Oficial Voz/Chat + cadena inmutable `SHA-256` (`prev_hash` → `hash`) y blindaje de red anti-DNS Rebinding y CSRF Cross-Origin.
 
 ---
 
@@ -66,12 +67,12 @@
 
 ---
 
-### Diapositiva 6 — Motor Cuantitativo, Fiscal y Saliencia Conductual (*Fee Salience*)
-- **Fórmula determinista:** $V_f = C_0(1+r-\text{TER})^{10}$ sobre `50.000 €` al `5 %` bruto anual:
-  - Fondo Sucursal (`1,80 % TER`): `67.196 €`
-  - Cartera Indexada MyInvestor (`0,30 % TER`): `77.831 €` (**`+10.635 €` de ahorro**)
-  - Indexado Directo `iShares Developed World` (`IE000ZYRH0Q7`, `0,06 % TER`): `79.699 €` (**`+12.503 €` de ahorro**)
-- **Saliencia Conductual ESMA (*Pain of Paying*):** Traduce el porcentaje abstracto a **`-63 €/mes` (`-2,05 €/día`)** drenados en comisiones.
+### Diapositiva 6 — Comparativa MCP a 30 Años (TER Caro vs. Índice) + Drill-In + Motor Fiscal
+- **Gráfica Visual a 30 Años ($V_f = C_0(1+r-\text{TER})^{30}$ sobre `50.000 €` al `5 %` bruto anual):**
+  - Fondo Sucursal (`1,80 % TER`): Año 10 = `67.196 €` · Año 30 = `128.165 €`
+  - Cartera Indexada MyInvestor (`0,30 % TER`): Año 10 = `77.831 €` (`+10.635 €`) · Año 30 = `199.078 €` (**`+70.913 €` más patrimonio**)
+  - Índice MCP `iShares Developed World` (`IE000ZYRH0Q7`, `0,06 % TER`): Año 10 = `79.699 €` (`+12.503 €`) · Año 30 = `213.649 €` (**`+85.484 €` más patrimonio**)
+- **UX *Drill-In* + Saliencia Conductual ESMA (*Pain of Paying*):** El cliente ve primero la gráfica a 30 años sin texto denso y, al pulsar la gráfica, despliega el *Drill-In* con los números exactos y el drenaje mensual (**`-63 €/mes`**).
 - **Matriz Fiscal Art. 94 LIRPF + Fondo Puente:**
   - Traspaso exento (`0 € IRPF`) aterrizando en el monetario puente `AXA Trésor Court Terme C` (`FR0000447823`, TER `0,05 %`), ahorrando `1.665 €` de impuestos hoy sobre una plusvalía de `8.500 €` (escala AEAT `19 %–30 %`).
   - Alerta automáticamente si el producto es un **ETF, Depósito o Seguro Unit-Linked** (no traspasables) o un **Fondo Garantizado** con penalización de salida (`4 %`).
@@ -79,8 +80,8 @@
 ---
 
 ### Diapositiva 7 — Demo en Vivo en 3 Actos (90 Segundos)
-- **Acto 1 (40s — Falso Bróker):** Llamada en altavoz de *Quantum Ibérica* pidiendo `9.000 €` → Veredicto `ESTAFA`, `Fase 5/5 Kill-Chain`, `SEPA VoP: NO_MATCH`, retención de la transferencia y alerta push al móvil de Daniel.
-- **Acto 2 (40s — Folleto DFI Sucursal):** Subida del folleto al `1,80 %` → Consulta en vivo a `mcp.myinvestor.es`, ahorro de `+10.635 €` (`-63 €/mes`), `0 € IRPF` y firma del traspaso con FaceID In-App.
+- **Acto 1 (40s — Falso Bróker, Escucha Pasiva y Sin *Hard Block*):** Llamada de *Quantum Ibérica* pidiendo `9.000 €` → Salta **PUSH** + **Banner Rojo *"Creemos que es una estafa"***. Al pulsar *Enviar*, abre la **pantalla adicional de explicabilidad** con botón principal al **Canal Oficial en Tiempo Real (Voz / Chat)** y botón en **rojo clarito** (*Seguir bajo mi responsabilidad*), más alerta al móvil de Daniel.
+- **Acto 2 (40s — Folleto DFI Sucursal, Gráfica 30 Años y *Drill-In*):** Subida del folleto al `1,80 %` → Salta **PUSH** + **Banner *"Producto Caro"*** + **Gráfica de Crecimiento a 30 Años vs. Índice MCP** (`+85.484 €`). Al pulsar la gráfica se abre el *Drill-In* numérico y Carmen firma el traspaso exento (`0 € IRPF`) con FaceID In-App.
 - **Acto 3 (10s — Accesibilidad):** Conmutación instantánea a **Modo Persona Sorda** y **Modo Baja Visión**.
 
 ---
@@ -92,10 +93,11 @@
 
 ---
 
-### Diapositiva 9 — Caso de Negocio para MyInvestor & Viabilidad Legal (MiFID II / PSR)
-- **Captación de Activos (AuM) con CAC = 0 €:** Cada traspaso de `50.000 €` genera `150 €/año` recurrentes (`1.500 € LTV` a 10 años).
-- **Escudo de Balance ante PSR / PSD3:** Evita a MyInvestor indemnizaciones obligatorias del `100 %` por suplantación bancaria con un coste operativo de solo `~0,50 €/usuario activo/mes`.
-- **Viabilidad Legal MiFID II (CNMV):** Comparador objetivo de costes por categoría oficial sin perfilado de idoneidad por el LLM; la contratación y el test de idoneidad permanecen en el Robo-advisor regulado de MyInvestor.
+### Diapositiva 9 — Caso de Negocio B2B (Ahorro Bancario en Fraudes) + B2C (MyInvestor Premium) & Viabilidad Legal
+- **Core B2B — Reducir el Dinero que el Banco Destina a Pagar Fraudes:** Bajo el nuevo **PSR / PSD3 y SEPA VoP (`Reg. UE 2024/886`)**, el banco asume el reembolso de fraudes por suplantación o fallos de verificación de titularidad. Centinela reduce drásticamente esa partida de pérdidas bancarias con un coste marginal de `~0,50 €/usuario activo/mes`.
+- **Palanca B2B de Captación vía MCP (Comparativa a 30 años contra índice):** Cada traspaso de `50.000 €` atraído por la gráfica a 30 años genera `150 €/año` recurrentes (`1.500 € LTV` a 10 años).
+- **Extensión B2C Extra — Plan MyInvestor Premium:** Se ofrece como ventaja diferencial dentro de la suscripción **MyInvestor Premium** (escucha pasiva Nivel 2 con PUSH, comparador MCP a 30 años con *drill-in* y escudo familiar).
+- **Viabilidad Legal (Sin *Hard Block* PSD2/PSR + MiFID II Art. 24):** No aplica un *hard block* ilegal que quite al cliente el control de su dinero, sino una pantalla de explicabilidad + canal oficial en vivo; y compara objetivamente costes ex-ante contra el índice MCP sin perfilado de idoneidad en el LLM.
 
 ---
 
