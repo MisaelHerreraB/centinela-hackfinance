@@ -1184,13 +1184,17 @@ async function transcribeAndAnalyze({ dataUrl, mimeType, durationSec = null, bro
   renderNeedsInput('AUDIO SIN TRANSCRIBIR', `${sttData.reason || 'No se ha podido transcribir el audio.'} Puedes repetirlo con el micrófono o escribir el mensaje.`);
 }
 
-async function scribeIsAvailable() {
+// ¿Se puede usar Scribe ahora mismo? Si no, se dice por qué (aviso discreto junto al motor usado).
+async function scribeStatus() {
   try {
     const state = await fetch('/api/state').then((r) => r.json());
     const el = (state.ai_status && state.ai_status.elevenlabs) || {};
-    return Boolean(el.configured && el.stt_mode === 'on' && !el.budget_exhausted);
+    if (!el.configured) return { available: false, why: 'sin clave de ElevenLabs' };
+    if (el.budget_exhausted) return { available: false, why: 'límite de créditos de ElevenLabs alcanzado' };
+    if (el.stt_mode !== 'on') return { available: false, why: `ElevenLabs en modo ${el.stt_mode}` };
+    return { available: true, why: '' };
   } catch (e) {
-    return false;
+    return { available: false, why: '' };
   }
 }
 
@@ -1202,7 +1206,8 @@ async function startLiveMic() {
   document.getElementById('evidence-content').textContent = '';
 
   const canRecord = Boolean(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  const useScribe = canRecord && (await scribeIsAvailable());
+  const scribe = await scribeStatus();
+  const useScribe = canRecord && scribe.available;
   if (micSession !== session) return;
 
   if (useScribe) {
@@ -1232,7 +1237,7 @@ async function startLiveMic() {
   // Modo de siempre: reconocimiento del navegador (sin clave, sin créditos o sin MediaRecorder)
   session.starting = false;
   session.recognition = startBrowserRecognition(session, (transcript) => {
-    setTranscriptionEngineTag('BROWSER');
+    setTranscriptionEngineTag('BROWSER', scribe.why);
     processLiveSpokenInput(transcript);
   });
   if (session.recognition) {
