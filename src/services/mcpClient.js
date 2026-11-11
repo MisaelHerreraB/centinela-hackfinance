@@ -188,68 +188,163 @@ const FALLBACK_PORTFOLIOS = [
   }
 ];
 
-async function callMyInvestorMCPTool(toolName, args = {}, timeoutMs = 4500) {
-  const start = Date.now();
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+// Sesión MCP (transporte Streamable HTTP): initialize -> notifications/initialized -> tools/call.
+// Si el servidor no usa sesiones, la cabecera simplemente no llega y se sigue sin ella.
+let mcpSession = { id: null, initialized: false };
 
-  try {
-    const response = await fetch(DEFAULT_MCP_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json, text/event-stream',
-        'User-Agent': 'Centinela-MyInvestor-HackFinance/1.0'
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: Date.now(),
-        method: 'tools/call',
-        params: {
-          name: toolName,
-          arguments: args
-        }
-      }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timer);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const rawText = await response.text();
-    let parsed = null;
-    for (const line of rawText.split('\n')) {
-      if (line.startsWith('data: ')) {
-        parsed = JSON.parse(line.slice(6));
-        break;
+function parseRpcResponse(rawText, requestId) {
+  const candidates = [];
+  const trimmed = rawText.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    const parsed = JSON.parse(trimmed);
+    candidates.push(...(Array.isArray(parsed) ? parsed : [parsed]));
+  } else {
+    // SSE: puede haber varios eventos "data:"; un mismo evento puede ocupar varias líneas data:
+    for (const block of rawText.split(/\r?\n\r?\n/)) {
+      const dataLines = block.split(/\r?\n/).filter((l) => l.startsWith('data:')).map((l) => l.slice(5).trimStart());
+      if (!dataLines.length) continue;
+      try {
+        candidates.push(JSON.parse(dataLines.join('\n')));
+      } catch (e) {
+        /* evento no JSON: se ignora */
       }
     }
-    if (!parsed && rawText.trim().startsWith('{')) {
-      parsed = JSON.parse(rawText);
-    }
+  }
+  return (
+    candidates.find((c) => c && c.id === requestId && ('result' in c || 'error' in c)) ||
+    candidates.find((c) => c && ('result' in c || 'error' in c)) ||
+    null
+  );
+}
 
-    const latencyMs = Date.now() - start;
+async function postRpc(body, { deadline, expectResponse = true }) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(300, deadline - Date.now()));
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+      'User-Agent': 'Centinela-MyInvestor-HackFinance/1.0'
+    };
+    if (mcpSession.id) headers['Mcp-Session-Id'] = mcpSession.id;
+    const response = await fetch(DEFAULT_MCP_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    const sessionHeader = response.headers.get('mcp-session-id');
+    if (sessionHeader) mcpSession.id = sessionHeader;
+    const rawText = expectResponse ? await response.text() : '';
+    return { status: response.status, ok: response.ok, rawText };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function ensureMcpSession(deadline) {
+  if (mcpSession.initialized) return;
+  const initId = Date.now();
+  let init;
+  init = await postRpc(
+    {
+      jsonrpc: '2.0',
+      id: initId,
+      method: 'initialize',
+      params: {
+        protocolVersion: '2025-03-26',
+        capabilities: {},
+        clientInfo: { name: 'centinela-hackfinance', version: '1.0.0' }
+      }
+    },
+    { deadline }
+  );
+  let parsed = null;
+  try {
+    parsed = init.ok ? parseRpcResponse(init.rawText, initId) : null;
+  } catch (e) {
+    parsed = null;
+  }
+  if (!init.ok || !parsed || parsed.error) {
+    // El servidor no acepta initialize: se intenta en modo sin sesión (tools/call directo)
+    mcpSession = { id: null, initialized: true };
+    return;
+  }
+  await postRpc({ jsonrpc: '2.0', method: 'notifications/initialized' }, { deadline, expectResponse: false }).catch(() => {});
+  mcpSession.initialized = true;
+}
+
+function extractToolData(result) {
+  if (!result) return {};
+  if (result.structuredContent) return result.structuredContent.data || result.structuredContent;
+  const textBlock = (result.content || []).find((b) => b.type === 'text');
+  if (textBlock) {
+    try {
+      const parsed = JSON.parse(textBlock.text);
+      return parsed.data || parsed;
+    } catch (e) {
+      return { text: textBlock.text };
+    }
+  }
+  return result;
+}
+
+async function rpcWithSession(method, params, timeoutMs) {
+  // Presupuesto total de tiempo para toda la secuencia (initialize + llamada + posible reintento)
+  const deadline = Date.now() + timeoutMs;
+  await ensureMcpSession(deadline);
+  const id = Date.now() + 1;
+  let res = await postRpc({ jsonrpc: '2.0', id, method, params }, { deadline });
+  if ((res.status === 404 || res.status === 400) && mcpSession.id && Date.now() < deadline - 300) {
+    // Sesión caducada: se reinicia una vez
+    mcpSession = { id: null, initialized: false };
+    await ensureMcpSession(deadline);
+    res = await postRpc({ jsonrpc: '2.0', id, method, params }, { deadline });
+  }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const parsed = parseRpcResponse(res.rawText, id);
+  if (!parsed) throw new Error('Respuesta MCP vacía o ilegible');
+  if (parsed.error) throw new Error(`MCP error ${parsed.error.code}: ${parsed.error.message}`);
+  return parsed.result;
+}
+
+async function callMyInvestorMCPTool(toolName, args = {}, timeoutMs = 4500) {
+  const start = Date.now();
+  try {
+    const result = await rpcWithSession('tools/call', { name: toolName, arguments: args }, timeoutMs);
+    if (result?.isError) {
+      const msg = (result.content || []).map((b) => b.text).join(' ').slice(0, 200);
+      throw new Error(`La herramienta devolvió error: ${msg}`);
+    }
     return {
       ok: true,
       source: 'LIVE_MCP (https://mcp.myinvestor.es/mcp)',
-      latency_ms: latencyMs,
+      latency_ms: Date.now() - start,
       tool: toolName,
       arguments: args,
-      data: parsed?.result?.structuredContent?.data || parsed?.result || {}
+      data: extractToolData(result)
     };
   } catch (err) {
-    clearTimeout(timer);
+    // Error de red, o estábamos en modo sin sesión: la próxima llamada vuelve a intentar initialize
+    if (!/HTTP|MCP error|herramienta/.test(err.message) || !mcpSession.id) mcpSession = { id: null, initialized: false };
     return {
       ok: false,
       source: 'CACHED_MCP_SNAPSHOT (Fallback sin red)',
       latency_ms: Date.now() - start,
       tool: toolName,
       arguments: args,
-      error: err.message
+      error: err.name === 'AbortError' ? 'Timeout' : err.message
     };
   }
+}
+
+async function listMyInvestorTools(timeoutMs = 6000) {
+  const result = await rpcWithSession('tools/list', {}, timeoutMs);
+  return result?.tools || [];
+}
+
+function resetMcpSession() {
+  mcpSession = { id: null, initialized: false };
 }
 
 /**
@@ -272,7 +367,8 @@ async function findCategoryAlternatives({ asset_type = 'Renta Variable', geograp
   }
 
   const liveRes = await callMyInvestorMCPTool('search_funds', mcpArgs);
-  let funds = liveRes.ok && Array.isArray(liveRes.data?.funds) && liveRes.data.funds.length > 0
+  const liveFundsAvailable = liveRes.ok && Array.isArray(liveRes.data?.funds) && liveRes.data.funds.length > 0;
+  let funds = liveFundsAvailable
     ? liveRes.data.funds.map((f) => ({
         isin: f.isin,
         name: f.name,
@@ -289,7 +385,14 @@ async function findCategoryAlternatives({ asset_type = 'Renta Variable', geograp
     : FALLBACK_CATALOG[normalizedCategory] || FALLBACK_CATALOG['Renta Variable'];
 
   return {
-    mcp_status: liveRes.source,
+    // Solo se dice "LIVE" si los fondos mostrados vienen de verdad del MCP en esta llamada
+    mcp_status: liveFundsAvailable
+      ? liveRes.source
+      : liveRes.ok
+        ? 'CACHED_MCP_SNAPSHOT (el MCP respondió sin fondos para estos filtros)'
+        : liveRes.source,
+    mcp_live: liveFundsAvailable,
+    mcp_error: liveRes.ok ? null : liveRes.error,
     mcp_latency_ms: liveRes.latency_ms,
     mcp_tool_called: 'search_funds',
     mcp_arguments: mcpArgs,
@@ -312,12 +415,17 @@ async function verifyProductExistsInMyInvestor(productNameOrIsin) {
     query: productNameOrIsin,
     limit: 3
   });
-  const foundFunds = liveRes.ok && Array.isArray(liveRes.data?.funds) ? liveRes.data.funds : [];
+  const verified = liveRes.ok && Array.isArray(liveRes.data?.funds);
+  const foundFunds = verified ? liveRes.data.funds : [];
   return {
     mcp_status: liveRes.source,
     mcp_latency_ms: liveRes.latency_ms,
     query: productNameOrIsin,
-    exists_in_catalog: foundFunds.length > 0,
+    // true / false solo si el MCP respondió de verdad; null = no se pudo comprobar (sin red, error...).
+    // Un "no verificado" NUNCA cuenta como señal de estafa.
+    exists_in_catalog: verified ? foundFunds.length > 0 : null,
+    verification: verified ? 'VERIFICADO_EN_MCP' : 'NO_VERIFICADO',
+    mcp_error: liveRes.ok ? null : liveRes.error,
     matches: foundFunds.slice(0, 2).map((f) => ({ isin: f.isin, name: f.name, ter: f.ter }))
   };
 }
@@ -327,6 +435,9 @@ module.exports = {
   FALLBACK_CATALOG,
   FALLBACK_PORTFOLIOS,
   callMyInvestorMCPTool,
+  listMyInvestorTools,
+  resetMcpSession,
+  parseRpcResponse,
   findCategoryAlternatives,
   verifyProductExistsInMyInvestor
 };

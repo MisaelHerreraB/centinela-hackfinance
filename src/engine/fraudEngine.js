@@ -1,6 +1,12 @@
 /**
  * Motor Determinista de Detección de Estafas, Lista de Alertas CNMV y Verificación de IBAN
+ *
+ * IMPORTANTE (datos de demostración): las entidades de CNMV_WARNING_ENTITIES y los IBAN de
+ * REPORTED_IBANS son FICTICIOS, creados para la demo. En producción se sustituyen por la lista
+ * oficial de advertencias de la CNMV y por la verificación de beneficiario (VoP) del banco.
  */
+
+const DEMO_DATA_NOTE = 'Datos de demostración (entidades/IBAN ficticios). En producción: lista oficial de advertencias de la CNMV y verificación VoP del banco.';
 
 const CNMV_WARNING_ENTITIES = [
   {
@@ -78,8 +84,17 @@ const MANIPULATION_PATTERNS = [
     label: 'Promesa de rentabilidad alta garantizada',
     cognitive_bias: 'Ilusión de Certeza y Sesgo de Optimismo (Sistema 1 - Kahneman)',
     weight: 55,
-    regex: /(\b1[0-9]\s*%\s*garantizad|\b[89]\s*%\s*garantizad|rentabilidad\s+garantizada|sin\s+ning[uú]n\s+riesgo|beneficio\s+asegurado|duplicar\s+tu\s+dinero|12\s*%\s*anual\s+fijo)/i,
+    // % alto (8 % o más, sin confundir 2,9 % con 9 %) + garantía/seguridad, "sin ningún riesgo", etc.
+    regex: /((?<![\d.,])(?:[89]|[1-9]\d{1,2})(?:[.,]\d+)?\s*%[^.\n]{0,40}(?:garantizad|asegurad|segur[oa]s?\b|sin\s+(?:ning[uú]n\s+)?riesgos?|fijo)|(?:garantizad[oa]s?|asegurad[oa]s?|segur[oa]s?)\s+(?:del?\s+|de\s+un\s+)?(?<![\d.,])(?:[89]|[1-9]\d{1,2})(?:[.,]\d+)?\s*%|sin\s+ning[uú]n\s+riesgo|beneficio\s+asegurado|gananci?as?\s+(?:seguras|aseguradas|garantizadas)|duplicar\s+tu\s+dinero)/i,
     explanation: 'En los mercados regulados no existe el 8%–12% garantizado sin riesgo. Es el gancho clásico de los falsos brókers.'
+  },
+  {
+    id: 'GARANTIA_GENERICA',
+    label: 'Se menciona una rentabilidad "garantizada"',
+    cognitive_bias: 'Ilusión de Certeza (señal débil: existen depósitos y fondos garantizados legales)',
+    weight: 20,
+    regex: /(rentabilidad\s+garantizada|inter[eé]s\s+garantizado|capital\s+garantizado)/i,
+    explanation: 'Hay productos garantizados legales (depósitos, fondos garantizados). Comprueba quién lo ofrece y si está registrado en la CNMV o el Banco de España.'
   },
   {
     id: 'URGENCIA_ARTIFICIAL',
@@ -144,14 +159,18 @@ function checkCnmvWarning(textOrEntity = '') {
         flagged: true,
         entity: item.name,
         warning_date: item.cnmv_warning_date,
-        reason: item.reason
+        reason: item.reason,
+        data_source: 'DEMO',
+        data_note: DEMO_DATA_NOTE
       };
     }
   }
   return {
     flagged: false,
     entity: null,
-    reason: 'Sin alertas activas en el registro de advertencias de la CNMV.'
+    reason: 'Sin coincidencias en la lista de alertas de demostración.',
+    data_source: 'DEMO',
+    data_note: DEMO_DATA_NOTE
   };
 }
 
@@ -180,34 +199,30 @@ function checkIbanStatus(rawIban = '', claimedEntity = '') {
       registered_holder: match.registered_holder,
       claimed_holder: claimedEntity || 'Entidad anunciada en llamada',
       regulation_ref: 'Reglamento (UE) 2024/886 (SEPA Verification of Payee) + PSR/PSD3',
-      note: match.note
+      note: match.note,
+      data_source: 'DEMO',
+      data_note: DEMO_DATA_NOTE
     };
   }
-  // Si empieza por LT, GB, CY, MT y se combina con promesa de inversión minorista en España
+  // IBAN extranjero sin denuncias: NO es estafa por sí solo (p. ej. Revolut usa IBAN lituanos).
+  // Solo suma una señal débil que pide verificar al beneficiario.
   const country = clean.slice(0, 2);
-  if (['LT', 'CY', 'MT', 'BG'].includes(country)) {
-    return {
-      provided: true,
-      flagged: true,
-      iban: clean,
-      reports: 3,
-      risk_level: 'ALTO',
-      sepa_vop_status: 'NO_MATCH',
-      registered_holder: `Cuenta Extranjera (${country}) no registrada en CNMV`,
-      claimed_holder: claimedEntity || 'Bróker no autorizado',
-      regulation_ref: 'Reglamento (UE) 2024/886 (SEPA Verification of Payee)',
-      note: `IBAN jurisdicción extranjera (${country}) frecuente en plataformas no supervisadas por CNMV.`
-    };
-  }
+  const isForeign = /^[A-Z]{2}$/.test(country) && country !== 'ES';
   return {
     provided: true,
     flagged: false,
+    foreign_unverified: isForeign,
     iban: clean,
     reports: 0,
-    risk_level: 'BAJO',
-    sepa_vop_status: 'MATCH',
-    registered_holder: claimedEntity || 'Titular verificado SEPA',
-    note: 'IBAN español sin reportes de fraude registrados y con coincidencia SEPA VoP.'
+    risk_level: isForeign ? 'MEDIO' : 'BAJO',
+    sepa_vop_status: 'NO_VERIFICADO',
+    registered_holder: null,
+    claimed_holder: claimedEntity || null,
+    note: isForeign
+      ? `IBAN extranjero (${country}) sin denuncias en la base de demostración. No es estafa por sí solo, pero conviene confirmar quién es el titular.`
+      : 'IBAN sin denuncias en la base de demostración. El titular (VoP) lo verifica el banco al ordenar la transferencia.',
+    data_source: 'DEMO',
+    data_note: DEMO_DATA_NOTE
   };
 }
 
@@ -218,7 +233,8 @@ function analyzeFraudRisk({
   claimed_product = '',
   product_exists_in_mcp = true,
   amount_eur = 0,
-  speech_rate_wpm = null
+  speech_rate_wpm = null,
+  speech_rate_source = null
 }) {
   const combinedText = `${text} ${entity_name} ${claimed_product}`;
   const signals = [];
@@ -270,7 +286,21 @@ function analyzeFraudRisk({
     });
   }
 
+  // 3B. IBAN extranjero sin denuncias: señal débil (no convierte en estafa por sí sola)
+  if (ibanCheck.foreign_unverified) {
+    riskScore += 15;
+    signals.push({
+      type: 'IBAN_EXTRANJERO_NO_VERIFICADO',
+      severity: 'MEDIA',
+      label: `IBAN extranjero (${ibanCheck.iban.slice(0, 2)}) sin verificar`,
+      cognitive_bias: 'Verificación de beneficiario pendiente',
+      evidence: ibanCheck.iban,
+      explanation: ibanCheck.note
+    });
+  }
+
   // 4. Producto inexistente en el catálogo oficial MCP
+  // (solo si el MCP respondió de verdad: product_exists_in_mcp === false; null = no verificado, no suma)
   if (claimed_product && product_exists_in_mcp === false) {
     riskScore += 25;
     signals.push({
@@ -287,11 +317,18 @@ function analyzeFraudRisk({
   const isScam = finalScore >= 50 || cnmvCheck.flagged || ibanCheck.flagged;
 
   // 5. Análisis Paralingüístico / Prosódico (Vishing 2.0: Speech Rate WPM & Turn-Taking Pressure)
-  const hasUrgencySignal = signals.some((s) => s.type === 'URGENCIA_ARTIFICIAL' || s.type === 'SOLICITUD_CLAVES_O_CUENTA_SEGURA');
-  const estimatedWpm = speech_rate_wpm || (isScam ? (hasUrgencySignal ? 188 : 176) : 126);
+  // La velocidad del habla SOLO se informa si se ha medido (ElevenLabs Scribe) o si la demo la
+  // declara como simulada. Nunca se deduce del veredicto. No modifica la puntuación de riesgo.
+  const wpm = Number(speech_rate_wpm);
+  const hasWpm = Number.isFinite(wpm) && wpm > 0;
   const prosodyAnalysis = {
-    speech_rate_wpm: estimatedWpm,
-    acoustic_pressure_level: estimatedWpm >= 175 ? 'ALTA (Compresión de turnos > 175 WPM)' : 'NORMAL (Cadencia conversacional)',
+    speech_rate_wpm: hasWpm ? Math.round(wpm) : null,
+    speech_rate_source: hasWpm ? speech_rate_source || 'ELEVENLABS_SCRIBE' : 'NO_MEDIDO',
+    acoustic_pressure_level: !hasWpm
+      ? 'NO_MEDIDO (sin audio transcrito con marcas de tiempo)'
+      : wpm >= 175
+        ? 'ALTA (Compresión de turnos > 175 WPM)'
+        : 'NORMAL (Cadencia conversacional)',
     detector_engine: 'ElevenLabs Scribe (scribe_v1 word-level timestamps) + Detector Semántico',
     scientific_basis: 'Multimodal Vishing Detection (Fusión Semántica + Prosodia de Urgencia, 2025–2026)'
   };
@@ -304,7 +341,7 @@ function analyzeFraudRisk({
   if (signals.some((s) => s.type === 'URGENCIA_ARTIFICIAL')) {
     activeStages.add(2);
   }
-  if (signals.some((s) => s.type === 'PROMESA_GARANTIZADA')) {
+  if (signals.some((s) => s.type === 'PROMESA_GARANTIZADA' || s.type === 'GARANTIA_GENERICA')) {
     activeStages.add(3);
   }
   if (signals.some((s) => s.type === 'AISLAMIENTO_O_SECRETO' || s.type === 'FALSA_TASA_DESBLOQUEO_O_IMPUESTO_PREVIO')) {
@@ -331,12 +368,11 @@ function analyzeFraudRisk({
   };
 
   // 7. Telemetría Contextual In-Call + Portapapeles (BioCatch / Wultra MTD Studies)
+  // No se mide en esta versión web: requiere la app nativa (estado de llamada del sistema operativo).
   const inCallTelemetry = {
-    active_voice_call_during_banking: isScam,
-    iban_clipboard_paste_detected: Boolean(ibanCheck.provided && ibanCheck.flagged),
-    coercion_telemetry_flag: isScam
-      ? 'ALTA_PROBABILIDAD_COACCION (Llamada activa Off-Hook + IBAN dictado/pegado en sesión)'
-      : 'NORMAL',
+    active_voice_call_during_banking: null,
+    iban_clipboard_paste_detected: null,
+    coercion_telemetry_flag: 'NO_MEDIDO (requiere integración con la app nativa de MyInvestor)',
     scientific_basis: 'Active Call & Behavioral Biometrics Coercion Telemetry (BioCatch / Wultra)'
   };
 
@@ -359,8 +395,8 @@ function analyzeFraudRisk({
       : 'Flujo sin fricción (Operación legítima verificada)',
     bit_fca_rct_diagnostic_question: diagnosticQuestion,
     psr_psd3_bank_shield: isScam
-      ? `Escudo PSR/PSD3 activo: evita pérdida de ${(Number(amount_eur) || 9000).toLocaleString('es-ES')} € y protege el balance de MyInvestor frente a responsabilidad por suplantación o discrepancia SEPA VoP.`
-      : 'Cumplimiento íntegro SEPA VoP y MiFID II.'
+      ? `Escudo PSR/PSD3 activo: ${Number(amount_eur) > 0 ? `evita una posible pérdida de ${Number(amount_eur).toLocaleString('es-ES')} € y ` : ''}protege el balance de MyInvestor frente a responsabilidad por suplantación o discrepancia SEPA VoP.`
+      : 'Sin señales de fraude en esta consulta.'
   };
 
   return {

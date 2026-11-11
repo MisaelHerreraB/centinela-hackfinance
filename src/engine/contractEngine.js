@@ -93,14 +93,21 @@ function evaluateContractAction({
       );
     }
 
+    // Solo se muestran importe, riesgo e IBAN si existen de verdad: nada de valores por defecto inventados
+    const hasAmount = amount > 0;
+    const riskScore = fraud_analysis?.risk_score;
     const notification = {
       id: `NOTIF-${Date.now()}`,
       timestamp: new Date().toISOString(),
       recipient: clientContract.trusted_contact.name,
-      title: `🚨 Alerta Centinela: Transferencia de ${amount.toLocaleString('es-ES')} € retenida`,
-      body: `Carmen ha recibido una oferta sospechosa (${beneficiary_name || 'Falso bróker'}) con riesgo del ${fraud_analysis?.risk_score || 95}%. Mi Contrato ha retenido los ${amount.toLocaleString('es-ES')} € preventivamente.`,
+      title: hasAmount
+        ? `🚨 Alerta Centinela: Transferencia de ${amount.toLocaleString('es-ES')} € retenida`
+        : '🚨 Alerta Centinela: posible estafa detectada',
+      body: `Carmen ha recibido una oferta sospechosa (${beneficiary_name || 'remitente desconocido'})${
+        typeof riskScore === 'number' ? ` con riesgo del ${riskScore}%` : ''
+      }. ${hasAmount ? `Mi Contrato ha retenido los ${amount.toLocaleString('es-ES')} € preventivamente.` : 'Mi Contrato ha activado la pantalla de seguridad.'}`,
       signals: (fraud_analysis?.signals || []).map((s) => s.label),
-      iban_blocked: iban || fraud_analysis?.iban_check?.iban || 'ES91 2100 0418 4502 0005 1332',
+      iban_blocked: iban || fraud_analysis?.iban_check?.iban || null,
       amount_eur: amount,
       status: 'PENDIENTE_REVISION_FAMILIAR'
     };
@@ -109,7 +116,7 @@ function evaluateContractAction({
     const auditEntry = recordAuditEvent({
       event_type: 'SCAM_INTERCEPTED_AND_HELD',
       verdict: 'ESTAFA',
-      summary: `Transferencia de ${amount.toLocaleString('es-ES')} € a "${beneficiary_name || 'Entidad no autorizada'}" retenida por Mi Contrato. Alerta enviada a ${clientContract.trusted_contact.name}.`,
+      summary: `${hasAmount ? `Transferencia de ${amount.toLocaleString('es-ES')} € a "${beneficiary_name || 'Entidad no autorizada'}" retenida por Mi Contrato.` : `Posible estafa de "${beneficiary_name || 'remitente desconocido'}" interceptada por Mi Contrato.`} Alerta enviada a ${clientContract.trusted_contact.name}.`,
       details: {
         rules_triggered: rulesTriggered,
         risk_score: fraud_analysis?.risk_score,
@@ -153,9 +160,9 @@ function evaluateContractAction({
         ? 'TRASPASO_EXTERNO_EXENTO_IRPF (Art. 94 LIRPF)'
         : 'REEMBOLSO_Y_SUSCRIPCION (Producto origen no traspasable)',
       origin_entity: offered_fund?.bank_name || 'Banco Tradicional S.A.',
-      origin_product: offered_fund?.name || 'Fondo Gestión Activa Tradicional FI',
-      origin_isin: offered_fund?.isin || 'ES0113900J37',
-      origin_ter_pct: cost_analysis?.inputs?.offered_ter_pct || 1.80,
+      origin_product: offered_fund?.name || 'Producto de origen no indicado',
+      origin_isin: offered_fund?.isin || null,
+      origin_ter_pct: cost_analysis?.inputs?.offered_ter_pct ?? null,
       destination_option_1: {
         type: 'FONDO_INDEXADO_DIRECTO',
         name: targetFund.name,
@@ -168,10 +175,10 @@ function evaluateContractAction({
         ter_pct: targetPortfolio.ter_total,
         bridge_fund: `${targetPortfolio.bridge_fund_name} (${targetPortfolio.bridge_fund_isin})`
       },
-      amount_eur: cost_analysis?.inputs?.amount_eur || 50000,
-      estimated_10y_savings_eur: cost_analysis?.metrics?.loss_10y_vs_portfolio_eur || 10635,
-      estimated_30y_savings_vs_index_eur: cost_analysis?.metrics?.loss_30y_vs_direct_index_eur || 85484,
-      estimated_30y_savings_vs_portfolio_eur: cost_analysis?.metrics?.loss_30y_vs_portfolio_eur || 70913,
+      amount_eur: cost_analysis?.inputs?.amount_eur ?? (Number(amount_eur) || null),
+      estimated_10y_savings_eur: cost_analysis?.metrics?.loss_10y_vs_portfolio_eur ?? null,
+      estimated_30y_savings_vs_index_eur: cost_analysis?.metrics?.loss_30y_vs_direct_index_eur ?? null,
+      estimated_30y_savings_vs_portfolio_eur: cost_analysis?.metrics?.loss_30y_vs_portfolio_eur ?? null,
       tax_impact_today_eur: cost_analysis?.transferability?.irpf_to_pay_today_eur || 0,
       exit_warning: cost_analysis?.transferability?.exit_warning || null,
       status: 'LISTO_PARA_FIRMA_IN_APP'
@@ -180,7 +187,11 @@ function evaluateContractAction({
     const auditEntry = recordAuditEvent({
       event_type: 'COST_COMPARISON_AND_TRANSFER_PREPARED',
       verdict: 'CARO',
-      summary: `Detectado sobrecoste (${transferOrderDraft.origin_ter_pct}% vs 0,30%). Ahorro a 10 años: ${transferOrderDraft.estimated_10y_savings_eur.toLocaleString('es-ES')} €. Orden ${transferOrderDraft.order_id} preparada.`,
+      summary: `Detectado sobrecoste (${transferOrderDraft.origin_ter_pct ?? '¿?'}% vs 0,30%).${
+        typeof transferOrderDraft.estimated_10y_savings_eur === 'number'
+          ? ` Ahorro a 10 años: ${transferOrderDraft.estimated_10y_savings_eur.toLocaleString('es-ES')} €.`
+          : ''
+      } Orden ${transferOrderDraft.order_id} preparada.`,
       details: transferOrderDraft
     });
 

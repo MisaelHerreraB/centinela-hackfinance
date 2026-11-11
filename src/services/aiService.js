@@ -4,9 +4,64 @@
  * Incluye extractor y transcripción determinista de respaldo para garantizar 0% de fallos en directo.
  */
 
+const { extractPdfText } = require('./pdfText');
+
 let runtimeAnthropicKey = process.env.ANTHROPIC_API_KEY || '';
 let runtimeElevenLabsKey = process.env.ELEVENLABS_API_KEY || '';
 const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
+// claude-sonnet-4-20250514 se retiró de la API el 15-jun-2026: cualquier llamada con ese id falla.
+const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
+const ANTHROPIC_BASE_URL = (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(/\/$/, '');
+const CLAUDE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+let lastClaudeError = null;
+
+// Porcentajes: "1,80", "1.80 %", 1.8 -> 1.8 (sin separador de miles)
+function toPctOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const n = parseFloat(String(value).replace(/[%\s]/g, '').replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
+}
+
+// Importes: "50.000", "50 000 €", "50000,50", 50000 -> 50000
+function toAmountOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const cleaned = String(value)
+    .replace(/[€\s]|eur(os)?/gi, '')
+    .replace(/[.,](\d{1,2})$/, '#$1')
+    .replace(/[.,]/g, '')
+    .replace('#', '.');
+  const n = parseFloat(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Normaliza la extracción (venga de Claude o del parser) y marca qué falta.
+ * Si no hay TER legible, el análisis de costes NO se hace: no se inventa una comisión.
+ */
+function normalizeExtraction(raw = {}, extractor) {
+  const offeredTer = toPctOrNull(raw.offered_ter_pct);
+  const amount = toAmountOrNull(raw.amount_eur);
+  const out = {
+    ...raw,
+    extractor,
+    name: raw.name || 'Producto sin identificar',
+    bank_name: raw.bank_name || 'Entidad no indicada',
+    isin: raw.isin || null,
+    asset_type: ['Renta Variable', 'Renta Fija', 'Monetario', 'Mixto'].includes(raw.asset_type) ? raw.asset_type : 'Renta Variable',
+    geography: raw.geography || 'Global',
+    product_type: raw.product_type || 'FONDO_INVERSION',
+    offered_ter_pct: offeredTer !== null && offeredTer >= 0 && offeredTer < 15 ? offeredTer : null,
+    management_fee_pct: toPctOrNull(raw.management_fee_pct),
+    deposit_fee_pct: toPctOrNull(raw.deposit_fee_pct),
+    exit_fee_pct: toPctOrNull(raw.exit_fee_pct) || 0,
+    amount_eur: amount !== null && amount > 0 ? amount : null
+  };
+  out.missing_fields = out.offered_ter_pct === null ? ['offered_ter_pct'] : [];
+  out.extraction_complete = out.missing_fields.length === 0;
+  return out;
+}
 
 // Definición explícita de herramientas (Tool Use) para Claude
 const CLAUDE_CENTINELA_TOOLS = [
@@ -76,7 +131,8 @@ function getAiStatus() {
   return {
     claude_configured: Boolean(runtimeAnthropicKey),
     elevenlabs_configured: Boolean(runtimeElevenLabsKey),
-    claude_model: 'claude-sonnet-4-20250514',
+    claude_model: CLAUDE_MODEL,
+    claude_last_error: lastClaudeError,
     claude_tools_registered: CLAUDE_CENTINELA_TOOLS.map((t) => t.name),
     elevenlabs_models: {
       stt: 'scribe_v1',
@@ -96,13 +152,15 @@ async function extractFinancialOfferWithClaude({
   presetDocument = null
 }) {
   if (presetDocument) {
-    return {
-      extractor: runtimeAnthropicKey ? 'CLAUDE_VISION_VERIFIED' : 'CENTINELA_STRUCTURED_PARSER',
-      ...presetDocument
-    };
+    // Documento de ejemplo de la demo: sus datos vienen escritos en el propio preset, no se lee ningún archivo.
+    return normalizeExtraction({ ...presetDocument }, 'DEMO_PRESET');
   }
 
-  if (runtimeAnthropicKey && (text || imageBase64)) {
+  const isPdf = imageMimeType === 'application/pdf';
+  const claudeCanRead = !imageBase64 || isPdf || CLAUDE_IMAGE_TYPES.includes(imageMimeType);
+  let callError = claudeCanRead ? null : `formato ${imageMimeType} no admitido; usa JPG, PNG o PDF`;
+
+  if (runtimeAnthropicKey && (text || imageBase64) && claudeCanRead) {
     try {
       const contentBlocks = [];
       if (imageBase64) {
@@ -148,7 +206,9 @@ async function extractFinancialOfferWithClaude({
 Texto/Contexto adicional: ${text}`
       });
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,83 +216,134 @@ Texto/Contexto adicional: ${text}`
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: CLAUDE_MODEL,
           max_tokens: 700,
           temperature: 0,
           messages: [{ role: 'user', content: contentBlocks }]
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timer);
 
       if (response.ok) {
         const data = await response.json();
-        const rawReply = data?.content?.[0]?.text || '';
+        const rawReply = (data?.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n');
         const jsonMatch = rawReply.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
-          return {
-            extractor: 'CLAUDE_SONNET_LIVE_API',
-            ...parsed
-          };
+          lastClaudeError = null;
+          const extracted = normalizeExtraction(parsed, 'CLAUDE_LIVE_API');
+          if (extracted.extraction_complete) return extracted;
+          callError = 'Claude no encontró la comisión (TER) en el documento';
+        } else {
+          callError = 'Respuesta de Claude sin JSON';
         }
+      } else {
+        const errBody = await response.text().catch(() => '');
+        callError = `HTTP_${response.status} ${errBody.slice(0, 200)}`;
+        console.warn(`[Centinela] Claude respondió ${callError}`);
       }
     } catch (err) {
-      // Fallback determinista transparente si falla la red o el formato
+      callError = err.name === 'AbortError' ? 'Timeout de 20 s' : err.message;
+      console.warn(`[Centinela] Error llamando a Claude: ${callError}`);
     }
+    if (callError) lastClaudeError = callError;
   }
 
-  // Parser determinista sobre el texto libre
-  const cleanText = String(text || '');
-  const terMatch =
-    cleanText.match(/(\d+[.,]\d+)\s*%\s*(?:TER|anual|comisi[oó]n|gastos\s+corrientes)/i) ||
-    cleanText.match(/(?:TER|comisi[oó]n\s+de\s+gesti[oó]n|gastos\s+corrientes)[^0-9]{0,25}(\d+[.,]\d+)\s*%/i);
-  const offeredTer = terMatch ? parseFloat(terMatch[1].replace(',', '.')) : 1.80;
+  // Respaldo sin Claude: texto escrito por el usuario + texto legible del PDF (si lo hay).
+  // Una imagen sin Claude no se puede leer: no se inventan datos.
+  let cleanText = String(text || '');
+  let extractor = 'CENTINELA_DETERMINISTIC_EXTRACTOR';
+  if (imageBase64 && isPdf) {
+    const pdfText = extractPdfText(imageBase64);
+    if (pdfText) {
+      cleanText = `${cleanText}\n${pdfText}`;
+      extractor = 'CENTINELA_PDF_TEXT_EXTRACTOR';
+    }
+  }
+  const unreadableImage = Boolean(imageBase64) && !isPdf;
+  if (unreadableImage) cleanText = String(text || '');
 
-  const exitMatch = cleanText.match(/(?:reembolso|salida|cancelaci[oó]n)[^0-9]{0,25}(\d+[.,]?\d*)\s*%/i);
+  // Orden de preferencia: "TER/gastos corrientes/comisión ... X %" > "X % de comisión" > "X % anual"
+  // (este último solo si no se habla de rentabilidad, para no confundir rentabilidad con comisión).
+  const talksAboutReturn = /rentab|rendimiento|gananc|beneficio|inter[eé]s/i.test(cleanText);
+  const terMatch =
+    // (una "comisión de reembolso/salida/suscripción/depósito" no es la comisión anual total)
+    cleanText.match(/(?:\bTER\b|gastos\s+corrientes|comisi[oó]n(?:es)?(?!\s+de\s+(?:reembolso|salida|suscripci|cancelaci|[eé]xito|dep[oó]sito)))[^0-9%\n]{0,40}(\d+(?:[.,]\d+)?)\s*%/i) ||
+    cleanText.match(/(\d+(?:[.,]\d+)?)\s*%\s*(?:de\s+)?(?:\bTER\b|comisi[oó]n|gastos\s+corrientes)/i) ||
+    (talksAboutReturn ? null : cleanText.match(/(\d+(?:[.,]\d+)?)\s*%\s*(?:al\s+a[nñ]o|anual)/i));
+  const offeredTer = terMatch ? parseFloat(terMatch[1].replace(',', '.')) : null;
+
+  const exitMatch = cleanText.match(/(?:reembolso|salida|cancelaci[oó]n)[^0-9%\n]{0,25}(\d+(?:[.,]\d+)?)\s*%/i);
   const exitFee = exitMatch ? parseFloat(exitMatch[1].replace(',', '.')) : 0;
 
-  const amountMatch = cleanText.match(/(\d{1,3}(?:[.\s]\d{3})+|\d{4,6})\s*(?:€|euros)/i);
-  const amountEur = amountMatch ? parseInt(amountMatch[1].replace(/[.\s]/g, ''), 10) : 50000;
+  const amountMatch = cleanText.match(/(\d{1,3}(?:[.\s]\d{3})+|\d{4,7})(?:[.,]\d{1,2})?\s*(?:€|euros?|eur)\b/i);
+  const amountEur = amountMatch ? parseInt(amountMatch[1].replace(/[.\s]/g, ''), 10) : null;
 
   const isinMatch = cleanText.match(/\b([A-Z]{2}[A-Z0-9]{9}\d)\b/);
-  const isin = isinMatch ? isinMatch[1] : 'ES0113900J37';
+  const isin = isinMatch ? isinMatch[1] : null;
+
+  const nameMatch = cleanText.match(/(?:Producto|Fondo)\s*:\s*([^\n(|]{3,90})/i);
+  const bankMatch = cleanText.match(/Entidad(?:\s+comercializadora)?\s*:\s*([^\n|]{3,80})/i);
 
   let assetType = 'Renta Variable';
-  if (/monetario|liquidez/i.test(cleanText)) assetType = 'Monetario';
+  if (/renta\s+variable|acciones|bolsa/i.test(cleanText)) assetType = 'Renta Variable';
+  else if (/monetario/i.test(cleanText)) assetType = 'Monetario';
   else if (/renta\s+fija|bonos|deuda/i.test(cleanText)) assetType = 'Renta Fija';
   else if (/mixto|garantizado/i.test(cleanText)) assetType = 'Mixto';
 
+  // "Comisión de depósito" (custodia) NO convierte un fondo en un depósito bancario.
   let productType = 'FONDO_INVERSION';
   if (/unit[\s-]?linked|seguro\s+de\s+vida/i.test(cleanText)) productType = 'UNIT_LINKED';
-  else if (/\bETF\b|cotizado/i.test(cleanText)) productType = 'ETF';
-  else if (/dep[oó]sito/i.test(cleanText)) productType = 'DEPOSITO';
-  else if (/garantizado/i.test(cleanText)) productType = 'FONDO_GARANTIZADO';
+  else if (/\bETF\b|fondo\s+cotizado/i.test(cleanText)) productType = 'ETF';
+  else if (/fondo\s+garantizado|garantizado\s+.{0,30}\bFI\b/i.test(cleanText)) productType = 'FONDO_GARANTIZADO';
+  else if (/dep[oó]sito\s+(?:a\s+plazo|bancario|estructurado)|plazo\s+fijo/i.test(cleanText)) productType = 'DEPOSITO';
+  else if (/\bfondo\b|\bFI\b|\bIIC\b/i.test(cleanText)) productType = 'FONDO_INVERSION';
 
-  return {
-    extractor: 'CENTINELA_DETERMINISTIC_EXTRACTOR',
-    name: 'FonBanco Selección Global Gestión Activa FI',
-    bank_name: 'Banco Tradicional Sucursal',
-    isin,
-    asset_type: assetType,
-    geography: 'Global',
-    product_type: productType,
-    offered_ter_pct: offeredTer,
-    management_fee_pct: Number((offeredTer * 0.88).toFixed(2)),
-    deposit_fee_pct: Number((offeredTer * 0.12).toFixed(2)),
-    exit_fee_pct: exitFee,
-    amount_eur: amountEur
-  };
+  const result = normalizeExtraction(
+    {
+      name: nameMatch ? nameMatch[1].trim() : null,
+      bank_name: bankMatch ? bankMatch[1].trim() : null,
+      isin,
+      asset_type: assetType,
+      geography: 'Global',
+      product_type: productType,
+      offered_ter_pct: offeredTer,
+      management_fee_pct: null,
+      deposit_fee_pct: null,
+      exit_fee_pct: exitFee,
+      amount_eur: amountEur
+    },
+    extractor
+  );
+  if (!result.extraction_complete) {
+    result.reason = unreadableImage
+      ? (runtimeAnthropicKey
+          ? `No he podido leer la imagen con Claude (${callError || 'error desconocido'}).`
+          : 'Para leer una foto hace falta la clave de Claude (botón API Keys).')
+      : imageBase64 && isPdf
+        ? 'No encuentro la comisión anual (TER) en el PDF. Si es un escaneo, hace falta la clave de Claude.'
+        : 'No encuentro la comisión anual (TER) en lo que me has dicho.';
+    result.ask_user = '¿Qué comisión anual (TER o gastos corrientes) aparece en el folleto?';
+  }
+  return result;
 }
 
 /**
  * Transcripción de Audio con ElevenLabs Scribe STT (scribe_v1)
  */
 async function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'audio/webm' }) {
-  if (!runtimeElevenLabsKey || !audioBase64) {
+  if (!audioBase64) {
+    return { ok: false, provider: 'NO_AUDIO', text: '', reason: 'No se ha recibido audio.' };
+  }
+  if (!runtimeElevenLabsKey) {
+    // Sin clave no hay transcripción: NUNCA se devuelve un texto inventado.
     return {
-      ok: true,
-      provider: 'CENTINELA_FALLBACK_SCRIBE',
+      ok: false,
+      provider: 'NO_ELEVENLABS_KEY',
       model: 'scribe_v1',
-      text: 'Hola Carmen, te llamo de Quantum Ibérica Capital. Tienes un 12% anual garantizado sin ningún riesgo si transfieres hoy 9.000 euros al IBAN ES91 2100 0418 4502 0005 1332.'
+      text: '',
+      reason: 'Para transcribir audios hace falta la clave de ElevenLabs (botón API Keys).'
     };
   }
 
@@ -271,14 +382,15 @@ async function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'au
       model: 'scribe_v1',
       text: data.text || '',
       speech_rate_wpm: speechRateWpm,
+      speech_rate_source: speechRateWpm ? 'ELEVENLABS_SCRIBE' : null,
       word_count: words.length
     };
   } catch (err) {
     return {
       ok: false,
       provider: 'FALLBACK_AFTER_ERROR',
-      reason: err.message,
-      text: 'Hola Carmen, te llamo de Quantum Ibérica Capital. Rentabilidad garantizada del 12% anual si transfieres hoy 9.000 euros.'
+      reason: `No se pudo transcribir el audio (${err.message}).`,
+      text: ''
     };
   }
 }
@@ -326,7 +438,9 @@ async function synthesizeSpeechElevenLabs(textToSpeak) {
 }
 
 module.exports = {
+  CLAUDE_MODEL,
   CLAUDE_CENTINELA_TOOLS,
+  normalizeExtraction,
   setRuntimeKeys,
   getAiStatus,
   extractFinancialOfferWithClaude,

@@ -7,12 +7,44 @@ let lastSpokenMessage = '';
 let currentContract = {};
 let isRecordingMic = false;
 let recognitionInstance = null;
+let lastScamAmountEur = 0;
+
+// Extrae un importe en euros de un texto libre ("9.000 euros", "5700 €"). null si no hay.
+function extractAmountEur(text = '') {
+  const m = String(text).match(/(\d{1,3}(?:[.\s]\d{3})+|\d{3,7})(?:[.,]\d{1,2})?\s*(?:€|euros?|eur)\b/i);
+  return m ? parseInt(m[1].replace(/[.\s]/g, ''), 10) : null;
+}
+
+function formatEur(n) {
+  return typeof n === 'number' && Number.isFinite(n) ? `${n.toLocaleString('es-ES')} €` : '—';
+}
+
+function escapeHtml(str = '') {
+  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Muestra un estado neutro cuando no hay datos suficientes: nunca se inventa un veredicto
+function renderNeedsInput(title, message, extraJson = null) {
+  const banner = document.getElementById('verdict-banner');
+  banner.className = 'verdict-hero PENDIENTE';
+  document.getElementById('verdict-title').textContent = title;
+  document.getElementById('verdict-badge-right').textContent = 'Falta un dato';
+  document.getElementById('verdict-sub-right').textContent = 'Sin veredicto';
+  document.getElementById('verdict-details-container').innerHTML = `
+    <div style="margin-top:8px; padding:9px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:9px; font-size:0.75rem; color:#334155; font-weight:600;">
+      ℹ️ ${escapeHtml(message)}
+    </div>`;
+  document.getElementById('action-container').innerHTML =
+    '<div style="color:var(--muted); font-weight:600;">Escribe el dato en la caja de texto o usa el micrófono para continuar.</div>';
+  if (extraJson) document.getElementById('mcp-inspector-box').textContent = JSON.stringify(extraJson, null, 2);
+  speakMessage(message);
+}
 
 const PRESET_DOCUMENTS = {
   FONDO_RV_180: {
     name: 'FonBanco Selección Global Gestión Activa FI',
     bank_name: 'Banco Tradicional Sucursal',
-    isin: 'ES0113900J37',
+    isin: 'XX0000DEMO01',
     asset_type: 'Renta Variable',
     geography: 'Global',
     product_type: 'FONDO_INVERSION',
@@ -24,7 +56,7 @@ const PRESET_DOCUMENTS = {
     accumulated_gain_eur: 9200,
     document_html: `
       <div style="font-size:0.71rem; font-weight:700; color:var(--accent); margin-bottom:4px;">📄 DFI / KID OFICIAL · CNMV</div>
-      <div><strong>Fondo:</strong> FonBanco Selección Global Activa, FI (<code>ES0113900J37</code>)</div>
+      <div><strong>Fondo:</strong> FonBanco Selección Global Activa, FI (<code>XX0000DEMO01</code>)</div>
       <div><strong>Categoría:</strong> Renta Variable Global · <strong>Importe:</strong> 50.000 €</div>
       <div style="margin-top:5px;">
         <strong>Costes Anuales:</strong> Gastos corrientes (TER): <span class="hl-danger">1,80 % anual</span>
@@ -38,7 +70,7 @@ const PRESET_DOCUMENTS = {
   FONDO_GARANTIZADO_SALIDA: {
     name: 'Fondo Garantizado Rendimiento Estabilidad 2031 FI',
     bank_name: 'Banco Tradicional Sucursal',
-    isin: 'ES0138922004',
+    isin: 'XX0000DEMO02',
     asset_type: 'Mixto',
     geography: 'Europa',
     product_type: 'FONDO_GARANTIZADO',
@@ -51,7 +83,7 @@ const PRESET_DOCUMENTS = {
     accumulated_gain_eur: 4500,
     document_html: `
       <div style="font-size:0.71rem; font-weight:700; color:var(--scam-red); margin-bottom:4px;">📄 DFI · FONDO GARANTIZADO CON COMISIÓN DE SALIDA</div>
-      <div><strong>Fondo:</strong> Garantizado Estabilidad 2031 FI (<code>ES0138922004</code>)</div>
+      <div><strong>Fondo:</strong> Garantizado Estabilidad 2031 FI (<code>XX0000DEMO02</code>)</div>
       <div style="margin-top:5px;">
         <strong>TER:</strong> <span class="hl-warn">1,45 % anual</span> ·
         <strong>Comisión de reembolso:</strong> <span class="hl-danger">4,00 % por salir antes de vencimiento</span>.
@@ -279,7 +311,11 @@ async function runScenario1Scam() {
       entity_name: 'Quantum Ibérica Capital',
       iban: 'ES9121000418450200051332',
       claimed_product: 'Bono VIP 12% Garantizado MyInvestor',
-      amount_eur: 9000
+      amount_eur: 9000,
+      // Guion de demo: no hay audio real, así que la velocidad del habla se declara SIMULADA.
+      // Con un audio real, /api/stt la mide con ElevenLabs Scribe.
+      speech_rate_wpm: 188,
+      speech_rate_source: 'DEMO_SIMULADO'
     })
   });
   const data = await res.json();
@@ -383,7 +419,7 @@ function confirmCancelFraudFromChannel() {
   if (actionBox) {
     actionBox.innerHTML = `
       <div style="padding:10px 12px; background:var(--mi-teal-bg); border:1px solid var(--mi-teal-border); border-radius:10px; color:#065f46; font-weight:700; font-size:0.77rem;">
-        ✅ <strong>Transferencia cancelada por Carmen tras verificar con el Canal Oficial de MyInvestor.</strong> Se han protegido 9.000 € sin quitarle el control al cliente.
+        ✅ <strong>Transferencia cancelada por Carmen tras verificar con el Canal Oficial de MyInvestor.</strong> ${lastScamAmountEur > 0 ? `Se han protegido ${formatEur(lastScamAmountEur)} sin quitarle el control al cliente.` : 'Sin quitarle el control al cliente.'}
       </div>
     `;
   }
@@ -401,7 +437,16 @@ function continueFraudWithOverride(amountEur) {
 }
 
 function renderCallVerdict(data) {
+  if (!data || !data.ok || !data.step_2_verdict) {
+    renderNeedsInput('SIN CONTENIDO', (data && data.error) || 'No he recibido nada que analizar.');
+    return;
+  }
   const v = data.step_2_verdict.fraud_analysis;
+  lastScamAmountEur = Number(v.amount_detected_eur) || 0;
+  const demoTag = (s) =>
+    s.type === 'ENTIDAD_ALERTA_CNMV' || s.type === 'IBAN_REPORTADO_Y_SEPA_VOP_NO_MATCH'
+      ? '<span class="demo-data-tag" title="Lista ficticia de demostración">datos de demo</span>'
+      : '';
   const mcpCheck = data.step_2_verdict.mcp_verification;
   const act = data.step_3_action;
 
@@ -409,13 +454,16 @@ function renderCallVerdict(data) {
 
   // 1. Disparar PUSH Notification nativa arriba del móvil (Output Base)
   if (v.verdict === 'ESTAFA') {
+    const reasons = v.signals.slice(0, 2).map((s) => s.label).join(' · ');
     triggerIosPush(
       'ESTAFA',
       '🔴 Creemos que es una ESTAFA (Escucha Pasiva)',
-      `Detectada entidad alertada en CNMV (${v.cnmv_check?.entity || 'Falso bróker'}) y 12% garantizado. Pulsa para ver por qué.`
+      `${reasons || 'Señales de fraude detectadas'}. Pulsa para ver por qué.`
     );
+  } else if (v.signals.length > 0) {
+    triggerIosPush('ADELANTE', '🟢 Sin estafa clara · revisa el aviso', v.signals[0].label);
   } else {
-    triggerIosPush('ADELANTE', '🟢 Operación Verificada (OK)', 'Sin alertas en la CNMV ni patrones de manipulación.');
+    triggerIosPush('ADELANTE', '🟢 Operación Verificada (OK)', 'Sin alertas ni patrones de manipulación.');
   }
 
   // 2. Banner Rojo In-App ("Creemos que es una estafa")
@@ -459,7 +507,7 @@ function renderCallVerdict(data) {
           .map(
             (s) => `
           <div class="phone-signal-row">
-            <div style="font-weight:800; color:#991b1b;">⚠️ ${s.label}</div>
+            <div style="font-weight:800; color:#991b1b;">⚠️ ${s.label}${demoTag(s)}</div>
             <div style="color:#475569; margin-top:2px;">${s.explanation}</div>
           </div>
         `
@@ -470,8 +518,16 @@ function renderCallVerdict(data) {
   } else {
     detailsBox.innerHTML = `
       <div style="margin-top:8px; padding:9px; background:var(--ok-bg); border:1px solid var(--ok-border); border-radius:9px; font-size:0.75rem; color:var(--ok-ink); font-weight:600;">
-        ✅ Sin alertas en la CNMV ni patrones de manipulación psicológica.
+        ✅ Sin alertas en la lista de demostración ni patrones claros de manipulación.
       </div>
+      ${v.signals
+        .map(
+          (s) => `
+        <div style="margin-top:6px; padding:7px 9px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; font-size:0.71rem; color:#92400e;">
+          <strong>Ojo:</strong> ${s.label}. ${s.explanation}
+        </div>`
+        )
+        .join('')}
     `;
   }
 
@@ -481,7 +537,7 @@ function renderCallVerdict(data) {
     actionBox.innerHTML = `
       <div style="background:#ffffff; border:1.5px solid #fecaca; border-radius:12px; padding:11px 12px;">
         <div style="font-weight:800; color:#991b1b; font-size:0.80rem; margin-bottom:4px;">
-          🛑 Pantalla de Seguridad antes de enviar ${(v.amount_detected_eur || 9000).toLocaleString('es-ES')} €
+          🛑 Pantalla de Seguridad antes de enviar ${lastScamAmountEur > 0 ? formatEur(lastScamAmountEur) : 'dinero'}
         </div>
         <div style="font-size:0.73rem; color:#334155; margin-bottom:9px; line-height:1.38;">
           Oye Carmen, <strong>esto tiene toda la pinta de ser un fraude</strong> por los motivos que te explicamos arriba. Puedes consultarnos ahora mismo en tiempo real antes de enviar tu dinero:
@@ -489,7 +545,7 @@ function renderCallVerdict(data) {
         <button class="btn-official-channel" onclick="openOfficialChannelModal()">
           🎧 Consultar en Canal Oficial MyInvestor (Voz / Chat en vivo)
         </button>
-        <button class="btn-soft-red-override" onclick="continueFraudWithOverride(${v.amount_detected_eur || 9000})">
+        <button class="btn-soft-red-override" onclick="continueFraudWithOverride(${lastScamAmountEur})">
           Seguir y enviar transferencia bajo mi responsabilidad (No recomendado)
         </button>
       </div>
@@ -518,7 +574,11 @@ function renderCallVerdict(data) {
   renderGlobalState(data.state);
   speakMessage(
     data.spoken_text,
-    `Importe: ${v.amount_detected_eur} euros. Entidad en lista negra de la CNMV: ${v.cnmv_check?.entity || 'Desconocida'}. Puedes consultar nuestro canal oficial en tiempo real pulsando el botón azul.`
+    v.verdict === 'ESTAFA'
+      ? `${lastScamAmountEur > 0 ? `Importe: ${lastScamAmountEur} euros. ` : ''}${
+          v.cnmv_check?.flagged ? `Entidad en la lista de alertas: ${v.cnmv_check.entity}. ` : ''
+        }Puedes consultar nuestro canal oficial en tiempo real pulsando el botón azul.`
+      : ''
   );
 }
 
@@ -548,6 +608,14 @@ async function runScenario2Caro(presetKey = 'FONDO_RV_180') {
 }
 
 function renderDocumentVerdict(data) {
+  if (!data || !data.ok) {
+    renderNeedsInput('NO SE PUDO ANALIZAR', (data && data.error) || 'Error al analizar el documento.');
+    return;
+  }
+  if (data.needs_input) {
+    renderNeedsInput('FALTA LA COMISIÓN', `${data.message} ${data.ask_user || ''}`.trim(), { extraction: data.step_1_input });
+    return;
+  }
   const doc = data.step_1_input;
   const cost = data.step_2_verdict.cost_analysis;
   const mcp = data.step_2_verdict.mcp_lookup;
@@ -562,8 +630,9 @@ function renderDocumentVerdict(data) {
     name: 'Fidelity MSCI World Index Fund EUR P Acc',
     ter: 0.12
   };
-  const loss30yIndex = cost.metrics.loss_30y_vs_direct_index_eur || 85484;
-  const loss30yPortfolio = cost.metrics.loss_30y_vs_portfolio_eur || 70913;
+  const loss30yIndex = cost.metrics.loss_30y_vs_direct_index_eur;
+  const loss30yPortfolio = cost.metrics.loss_30y_vs_portfolio_eur;
+  const isLiveMcp = /^LIVE/.test(mcp.mcp_status || '');
 
   // 1. Output Base: Notificación PUSH arriba del móvil (Caro vs Ok)
   if (verdict === 'CARO') {
@@ -614,7 +683,7 @@ function renderDocumentVerdict(data) {
       ${svg30}
       <div id="chart-drill-in-panel" class="drill-in-panel">
         <div style="font-weight:800; color:var(--ink); margin-bottom:5px;">
-          🔍 Desglose Numérico Drill-In (Sobre ${cost.inputs.amount_eur.toLocaleString('es-ES')} € al 5% bruto anual):
+          🔍 Desglose Numérico Drill-In (Sobre ${data.amount_is_example ? 'un ejemplo de ' : ''}${cost.inputs.amount_eur.toLocaleString('es-ES')} € al ${cost.inputs.gross_return_pct}% bruto anual):
         </div>
         <div class="phone-kpi-grid" style="margin-bottom:6px;">
           <div class="phone-kpi">
@@ -622,25 +691,25 @@ function renderDocumentVerdict(data) {
             <div class="phone-kpi-val" style="color:var(--caro-amber); font-size:0.84rem;">
               +${(m10.cumulative_loss_vs_direct_eur || cost.metrics.loss_10y_vs_direct_index_eur).toLocaleString('es-ES')} €
             </div>
-            <div style="font-size:0.60rem; color:var(--muted);">${(m10.myinvestor_direct_index_eur || 79699).toLocaleString('es-ES')} € vs ${(m10.offered_bank_eur || 67196).toLocaleString('es-ES')} €</div>
+            <div style="font-size:0.60rem; color:var(--muted);">${formatEur(m10.myinvestor_direct_index_eur)} vs ${formatEur(m10.offered_bank_eur)}</div>
           </div>
           <div class="phone-kpi">
             <div class="phone-kpi-label">Año 20</div>
             <div class="phone-kpi-val" style="color:var(--caro-amber); font-size:0.84rem;">
-              +${(m20.cumulative_loss_vs_direct_eur || 36840).toLocaleString('es-ES')} €
+              +${formatEur(m20.cumulative_loss_vs_direct_eur)}
             </div>
-            <div style="font-size:0.60rem; color:var(--muted);">${(m20.myinvestor_direct_index_eur || 130110).toLocaleString('es-ES')} € vs ${(m20.offered_bank_eur || 93270).toLocaleString('es-ES')} €</div>
+            <div style="font-size:0.60rem; color:var(--muted);">${formatEur(m20.myinvestor_direct_index_eur)} vs ${formatEur(m20.offered_bank_eur)}</div>
           </div>
           <div class="phone-kpi">
             <div class="phone-kpi-label">Año 30</div>
             <div class="phone-kpi-val" style="color:var(--scam-red); font-size:0.84rem;">
               +${loss30yIndex.toLocaleString('es-ES')} €
             </div>
-            <div style="font-size:0.60rem; color:var(--muted);">${(m30.myinvestor_direct_index_eur || 213649).toLocaleString('es-ES')} € vs ${(m30.offered_bank_eur || 128165).toLocaleString('es-ES')} €</div>
+            <div style="font-size:0.60rem; color:var(--muted);">${formatEur(m30.myinvestor_direct_index_eur)} vs ${formatEur(m30.offered_bank_eur)}</div>
           </div>
         </div>
         <div style="font-size:0.68rem; color:var(--ink-soft); line-height:1.38;">
-          • <strong>Drenaje mensual hoy:</strong> -${cost.metrics.monthly_fee_drain_eur || 63} €/mes (-${cost.metrics.daily_fee_drain_eur || 2.05} €/día)<br/>
+          • <strong>Drenaje mensual hoy:</strong> -${cost.metrics.monthly_fee_drain_eur} €/mes (-${cost.metrics.daily_fee_drain_eur} €/día)<br/>
           • <strong>Índice MCP comparado:</strong> ${topAlt.name} (<code>${topAlt.isin}</code> · TER ${topAlt.ter}%)<br/>
           • <strong>Peaje Fiscal IRPF hoy:</strong> <strong>${cost.transferability.irpf_to_pay_today_eur} €</strong> (${cost.transferability.is_tax_exempt_transfer ? 'Exento Art. 94 LIRPF' : 'No traspasable'})
         </div>
@@ -656,25 +725,40 @@ function renderDocumentVerdict(data) {
   `;
 
   // Actualizar panel comparativo grande de la derecha con la proyección a 30 años contra Índice MCP
-  const maxVal30 = cost.metrics.final_capital_30y_direct_eur || 213649;
-  const pctOffered = Math.round(((cost.metrics.final_capital_30y_offered_eur || 128165) / maxVal30) * 100);
-  const pctPortfolio = Math.round(((cost.metrics.final_capital_30y_portfolio_eur || 199078) / maxVal30) * 100);
+  const maxVal30 = Math.max(
+    cost.metrics.final_capital_30y_direct_eur,
+    cost.metrics.final_capital_30y_portfolio_eur,
+    cost.metrics.final_capital_30y_offered_eur,
+    1
+  );
+  const pctOffered = Math.round((cost.metrics.final_capital_30y_offered_eur / maxVal30) * 100);
+  const pctPortfolio = Math.round((cost.metrics.final_capital_30y_portfolio_eur / maxVal30) * 100);
 
+  const mcpBadge = document.getElementById('mcp-status-badge');
+  if (mcpBadge) {
+    mcpBadge.textContent = isLiveMcp
+      ? '● Conectado en vivo a https://mcp.myinvestor.es/mcp'
+      : '● Sin conexión al MCP: copia guardada del catálogo';
+  }
+  const execSubtitle = document.getElementById('exec-chart-subtitle');
+  if (execSubtitle) {
+    execSubtitle.textContent = `Proyección Compuesta a 30 Años (${data.amount_is_example ? 'ejemplo de ' : ''}${cost.inputs.amount_eur.toLocaleString('es-ES')} € · ${cost.inputs.gross_return_pct}% bruto anual · TER Caro vs Índice MCP)`;
+  }
   document.getElementById('exec-chart-headline').textContent =
     verdict === 'CARO'
       ? `A 30 años pierdes ${loss30yIndex.toLocaleString('es-ES')} € frente al Índice MCP al ${topAlt.ter} % (y ${loss30yPortfolio.toLocaleString('es-ES')} € frente a Cartera al 0,30 %)`
       : `Producto óptimo dentro de su categoría oficial en MyInvestor`;
 
   document.getElementById('bar-label-offered').textContent = `🏦 ${doc.name} a 30 años (TER ${cost.inputs.offered_ter_pct.toFixed(2)} %)`;
-  document.getElementById('bar-val-offered').textContent = `${(cost.metrics.final_capital_30y_offered_eur || 128165).toLocaleString('es-ES')} € (10a: ${cost.metrics.final_capital_offered_eur.toLocaleString('es-ES')} €)`;
+  document.getElementById('bar-val-offered').textContent = `${formatEur(cost.metrics.final_capital_30y_offered_eur)} (10a: ${cost.metrics.final_capital_offered_eur.toLocaleString('es-ES')} €)`;
   document.getElementById('bar-fill-offered').style.width = `${pctOffered}%`;
 
   document.getElementById('bar-label-portfolio').textContent = `🟢 ${mcp.recommended_portfolio.name} a 30 años (TER 0,30 % · Vía Fondo Puente FR0000447823)`;
-  document.getElementById('bar-val-portfolio').textContent = `${(cost.metrics.final_capital_30y_portfolio_eur || 199078).toLocaleString('es-ES')} € (+${loss30yPortfolio.toLocaleString('es-ES')} € a 30a)`;
+  document.getElementById('bar-val-portfolio').textContent = `${formatEur(cost.metrics.final_capital_30y_portfolio_eur)} (+${loss30yPortfolio.toLocaleString('es-ES')} € a 30a)`;
   document.getElementById('bar-fill-portfolio').style.width = `${pctPortfolio}%`;
 
   document.getElementById('bar-label-direct').textContent = `⚡ Indexado Directo MCP a 30 años: ${topAlt.name} (${topAlt.isin} · TER ${topAlt.ter} %)`;
-  document.getElementById('bar-val-direct').textContent = `${(cost.metrics.final_capital_30y_direct_eur || 213649).toLocaleString('es-ES')} € (+${loss30yIndex.toLocaleString('es-ES')} € a 30a)`;
+  document.getElementById('bar-val-direct').textContent = `${formatEur(cost.metrics.final_capital_30y_direct_eur)} (+${loss30yIndex.toLocaleString('es-ES')} € a 30a)`;
 
   // Renderizar tarjetas del MCP de MyInvestor
   const cardsContainer = document.getElementById('mcp-cards-container');
@@ -686,7 +770,7 @@ function renderDocumentVerdict(data) {
       </div>
       <div style="font-weight:800; font-size:0.83rem; color:var(--ink);">${f.name}</div>
       <div style="font-size:0.72rem; color:var(--muted); margin-top:3px;">
-        ${f.asset_type} · ${f.geography || 'Global'} · Datos en tiempo real vía <code>mcp.myinvestor.es</code>
+        ${f.asset_type} · ${f.geography || 'Global'} · ${isLiveMcp ? 'Datos en tiempo real vía <code>mcp.myinvestor.es</code>' : 'Copia guardada del catálogo MCP (sin conexión ahora)'}
       </div>
     </div>
   `).join('');
@@ -704,7 +788,7 @@ function renderDocumentVerdict(data) {
         <div style="font-size:0.74rem; color:var(--ink-soft); margin-bottom:9px;">
           • <strong>De:</strong> ${draft.origin_product} (TER ${draft.origin_ter_pct}%)<br/>
           • <strong>A:</strong> ${draft.destination_option_1.name} (${draft.destination_option_1.ter_pct}%) o ${draft.destination_option_2.name} (0,30%)<br/>
-          • <strong>Ahorro a 30 años vs Índice MCP:</strong> +${(draft.estimated_30y_savings_vs_index_eur || 85484).toLocaleString('es-ES')} € (+${draft.estimated_10y_savings_eur.toLocaleString('es-ES')} € a 10a)
+          • <strong>Ahorro a 30 años vs Índice MCP:</strong> +${formatEur(draft.estimated_30y_savings_vs_index_eur)} (+${formatEur(draft.estimated_10y_savings_eur)} a 10a)
         </div>
         <div id="sign-box-area">
           <button class="btn-cta-primary" onclick="signTransferInApp('${draft.order_id}', '${draft.destination_option_2.name}', ${draft.amount_eur})">
@@ -871,19 +955,20 @@ async function handleFileUpload(event) {
       const res = await fetch('/api/analyze-document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // Se analiza el archivo REAL que ha subido el usuario (sin documento de ejemplo)
         body: JSON.stringify({
           imageBase64: base64,
-          imageMimeType: file.type,
-          presetDocument: PRESET_DOCUMENTS.FONDO_RV_180,
-          text: file.name,
-          amount_eur: 50000
+          imageMimeType: file.type
         })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ ok: false, error: `Error HTTP ${res.status}` }));
+      if (!data.ok || data.needs_input) {
+        document.getElementById('evidence-content').textContent = `${file.name}: ${data.message || data.error || 'no se ha podido leer'}`;
+      }
       renderDocumentVerdict(data);
     };
     reader.readAsDataURL(file);
-  } else if (file.type.startsWith('audio/')) {
+  } else if (file.type.startsWith('audio/') || /\.(webm|mp3|m4a|wav|ogg|oga|aac|flac|mp4)$/i.test(file.name)) {
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result;
@@ -894,16 +979,28 @@ async function handleFileUpload(event) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audioBase64: base64, mimeType: file.type })
       });
-      const sttData = await sttRes.json();
-      const textToAnalyze =
-        sttData.ok && sttData.text
-          ? sttData.text
-          : 'Oportunidad en Quantum Ibérica Capital: 12% anual garantizado sin riesgo si transfieres hoy 9.000 €.';
-      processLiveSpokenInput(textToAnalyze);
+      const sttData = await sttRes.json().catch(() => ({ ok: false, reason: `Error HTTP ${sttRes.status}` }));
+      if (!sttData.ok || !String(sttData.text || '').trim()) {
+        // Sin transcripción real no se analiza nada (antes se usaba un texto de estafa fijo)
+        document.getElementById('evidence-content').textContent = sttData.reason || 'No se ha podido transcribir el audio.';
+        renderNeedsInput('AUDIO SIN TRANSCRIBIR', `${sttData.reason || 'No se ha podido transcribir el audio.'} Puedes usar el micrófono en vivo o escribir el mensaje.`);
+        return;
+      }
+      document.getElementById('evidence-content').textContent = `“${sttData.text}”`;
+      processLiveSpokenInput(sttData.text, sttData.speech_rate_wpm ? { speech_rate_wpm: sttData.speech_rate_wpm, speech_rate_source: 'ELEVENLABS_SCRIBE' } : {});
     };
     reader.readAsDataURL(file);
+  } else if (file.type === 'text/plain' || /\.txt$/i.test(file.name)) {
+    // Texto (p. ej. un SMS copiado): se analiza su contenido real
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = String(reader.result || '').slice(0, 5000);
+      document.getElementById('evidence-content').textContent = `“${content}”`;
+      processLiveSpokenInput(content);
+    };
+    reader.readAsText(file);
   } else {
-    runScenario2Caro('FONDO_RV_180');
+    renderNeedsInput('FORMATO NO ADMITIDO', `No puedo analizar "${file.name}". Sube una foto, un PDF, un audio o un .txt.`);
   }
 }
 
@@ -953,23 +1050,32 @@ function toggleLiveMic() {
   recognitionInstance.start();
 }
 
-async function processLiveSpokenInput(transcript) {
-  const isCostQuery = /(comisi[oó]n|ter\b|fondo|folleto|1[.,]\d+\s*%)/i.test(transcript) && !/garantizad|c[oó]digo\s+sms/i.test(transcript);
+async function processLiveSpokenInput(transcript, extra = {}) {
+  const text = String(transcript || '').trim();
+  if (!text) {
+    renderNeedsInput('SIN CONTENIDO', 'No he recibido nada que analizar.');
+    return;
+  }
+  // El importe sale de lo que se ha dicho; si no se dice, no se inventa
+  const amount = extractAmountEur(text);
+  // Si hay cualquier rasgo de estafa (promesas, transferencias, códigos), va al detector de fraude aunque se hable de un "fondo"
+  const looksLikeScamPitch = /garantizad|asegurad|segur[oa]s?\b|sin\s+(?:ning[uú]n\s+)?riesgos?|c[oó]digo\s+sms|\biban\b|transfi[eé]r|desbloque|duplicar|anydesk|cuenta\s+segura/i.test(text);
+  const isCostQuery = /(comisi[oó]n|\bTER\b|fondo|folleto|1[.,]\d+\s*%)/i.test(text) && !looksLikeScamPitch;
   if (isCostQuery) {
     const res = await fetch('/api/analyze-document', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: transcript, amount_eur: 50000 })
+      body: JSON.stringify({ text, ...(amount ? { amount_eur: amount } : {}) })
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({ ok: false, error: `Error HTTP ${res.status}` }));
     renderDocumentVerdict(data);
   } else {
     const res = await fetch('/api/analyze-call', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: transcript, amount_eur: 9000 })
+      body: JSON.stringify({ text, amount_eur: amount || 0, ...extra })
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({ ok: false, error: `Error HTTP ${res.status}` }));
     renderCallVerdict(data);
   }
 }

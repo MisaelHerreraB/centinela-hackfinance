@@ -244,7 +244,7 @@
       <p style="margin-bottom:4px;">Integrado en la app de <strong>MyInvestor</strong> con <strong>2 niveles configurables de escucha pasiva</strong>, el output base es un <strong>PUSH inmediato (<code>Estafa</code> / <code>Caro</code> / <code>Ok</code>)</strong> + experiencia visual in-app:</p>
       <ul>
         <li><span class="pill pill-red">ESTAFA</span> <strong>Escucha Pasiva + PUSH + Banner Rojo + Intercepción Explicable (Sin <em>Hard Block</em>):</strong> Al pulsar <em>Enviar</em>, abre una pantalla adicional que explica por qué parece fraude, conecta en un clic con el <strong>Canal Oficial en Tiempo Real (Voz / Chat)</strong> e incluye un botón en <strong>rojo clarito</strong> (<em>Seguir</em>) sin quitarle el control al cliente.</li>
-        <li><span class="pill pill-amber">CARO</span> <strong>PUSH + Banner "Caro" + Gráfica a 30 Años (TER Caro vs. Índice MCP) + <em>Drill-In</em>:</strong> Compara visualmente sin leer texto el crecimiento a <strong>30 años</strong> de <code>50.000 €</code> (<code>128.165 €</code> al 1,80 % vs. <code>213.649 €</code> al 0,06 % índice MCP: <strong>+85.484 €</strong>); al pulsar la gráfica despliega los números (<em>drill-in</em>) y el <strong>traspaso 0 € IRPF</strong>.</li>
+        <li><span class="pill pill-amber">CARO</span> <strong>PUSH + Banner "Caro" + Gráfica a 30 Años (TER Caro vs. Índice MCP) + <em>Drill-In</em>:</strong> Compara visualmente sin leer texto el crecimiento a <strong>30 años</strong> de <code>50.000 €</code> (<code>128.636 €</code> al 1,80 % vs. <code>212.423 €</code> al 0,06 % índice MCP: <strong>+83.787 €</strong>); al pulsar la gráfica despliega los números (<em>drill-in</em>) y el <strong>traspaso 0 € IRPF</strong>.</li>
         <li><span class="pill pill-green">OK</span> <strong>PUSH Verde + Sello In-App:</strong> Verifica registro oficial y TER competitivo contra índice MCP sin fricción.</li>
       </ul>
     </div>
@@ -253,7 +253,7 @@
   <!-- ROW 2: ARQUITECTURA TÉCNICA -->
   <div class="arch-box">
     <div class="section-title" style="border-bottom-color:#cbd5e1;"><span class="dot dot-purple"></span> 3. Arquitectura Técnica: Separación Semántico-Determinista ("Jagged Frontier")</div>
-    <p style="font-size:8pt; margin-bottom:4px;">Siguiendo el principio de la <em>Frontera Dentada</em>, <strong>ninguna cifra financiera ni fiscal sale del LLM</strong>. Claude interpreta lenguaje/visión y orquesta herramientas; el cálculo a 30 años y las reglas bancarias se ejecutan en código determinista auditado:</p>
+    <p style="font-size:8pt; margin-bottom:4px;">Siguiendo el principio de la <em>Frontera Dentada</em>, <strong>ninguna cifra financiera ni fiscal sale del LLM</strong>. Claude interpreta lenguaje/visión y extrae los datos; las herramientas se ejecutan en código; el cálculo a 30 años y las reglas bancarias se ejecutan en código determinista auditado:</p>
 
     <div class="arch-flow">
       <!-- Col 1 -->

@@ -282,8 +282,8 @@
           <div class="surface-title">
             <span>📊 Comparativa Objetiva vía MCP de MyInvestor y Motor Fiscal (IRPF)</span>
           </div>
-          <span style="font-size:0.72rem; font-weight:700; color:var(--accent); background:var(--accent-soft); padding:4px 10px; border-radius:999px;">
-            ● Conectado en vivo a https://mcp.myinvestor.es/mcp
+          <span id="mcp-status-badge" style="font-size:0.72rem; font-weight:700; color:var(--accent); background:var(--accent-soft); padding:4px 10px; border-radius:999px;">
+            ● Catálogo MCP de MyInvestor (https://mcp.myinvestor.es/mcp)
           </span>
         </div>
 
@@ -291,9 +291,9 @@
           <div class="mcp-comparison-box">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
               <div>
-                <div style="font-size:0.72rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Proyección Compuesta a 30 Años (50.000 € · 5% bruto anual · TER Caro vs Índice MCP)</div>
+                <div id="exec-chart-subtitle" style="font-size:0.72rem; font-weight:700; color:var(--accent); text-transform:uppercase;">Proyección Compuesta a 30 Años (50.000 € · 5% bruto anual · TER Caro vs Índice MCP)</div>
                 <div style="font-size:0.94rem; font-weight:800; color:var(--ink);" id="exec-chart-headline">
-                  En 30 años ganas hasta +85.484 € más con un Indexado MCP MyInvestor frente al Fondo Bancario (TER 1,80%)
+                  En 30 años ganas hasta +83.787 € más con un Indexado MCP MyInvestor frente al Fondo Bancario (TER 1,80%)
                 </div>
               </div>
               <span style="font-size:0.73rem; font-weight:700; background:var(--surface); color:var(--ink); padding:4px 10px; border-radius:8px; border:1px solid var(--line-strong);">
@@ -304,7 +304,7 @@
             <div class="bar-chart-row">
               <div class="bar-chart-header">
                 <span id="bar-label-offered">🏦 Fondo Banca Tradicional a 30 años (TER 1,80 % anual)</span>
-                <strong id="bar-val-offered" style="color:var(--scam-red);">128.165 €</strong>
+                <strong id="bar-val-offered" style="color:var(--scam-red);">128.636 €</strong>
               </div>
               <div class="bar-chart-track">
                 <div id="bar-fill-offered" class="bar-chart-fill" style="width:60%; background:var(--scam-red);"></div>
@@ -314,7 +314,7 @@
             <div class="bar-chart-row">
               <div class="bar-chart-header">
                 <span id="bar-label-portfolio">🟢 Cartera Indexada MyInvestor a 30 años (TER 0,30 % · Vía Fondo Puente FR0000447823)</span>
-                <strong id="bar-val-portfolio" style="color:var(--mi-teal);">199.078 € (+70.913 € más para ti)</strong>
+                <strong id="bar-val-portfolio" style="color:var(--mi-teal);">198.322 € (+69.686 € más para ti)</strong>
               </div>
               <div class="bar-chart-track">
                 <div id="bar-fill-portfolio" class="bar-chart-fill" style="width:93%; background:var(--mi-teal);"></div>
@@ -324,7 +324,7 @@
             <div class="bar-chart-row">
               <div class="bar-chart-header">
                 <span id="bar-label-direct">⚡ Fondo Indexado Directo MCP a 30 años: iShares / Fidelity World (TER 0,06 %–0,12 %)</span>
-                <strong id="bar-val-direct" style="color:var(--accent);">213.649 € (+85.484 € más para ti)</strong>
+                <strong id="bar-val-direct" style="color:var(--accent);">212.423 € (+83.787 € más para ti)</strong>
               </div>
               <div class="bar-chart-track">
                 <div id="bar-fill-direct" class="bar-chart-fill" style="width:100%; background:var(--accent);"></div>

@@ -57,7 +57,7 @@
    - Señala con el cursor en el iPhone de Carmen (izquierda) el selector **`Nivel 2: Escucha Pasiva + Push`**.
    - Pulsa arriba el botón **`🔴 1. Falso Bróker (Estafa 9.000 €)`**.
 2. **Qué dice el Ponente B mientras corre la simulación:**
-   > *"A la izquierda tenéis el iPhone de Carmen con el **Nivel 2 de Escucha Pasiva activo**; a la derecha, el móvil de su hijo Daniel y el motor técnico. Un falso bróker de 'Quantum Ibérica' presiona a Carmen a **188 palabras por minuto** (`ElevenLabs Scribe`) para transferir **9.000 €** en 15 minutos.*
+   > *"A la izquierda tenéis el iPhone de Carmen con el **Nivel 2 de Escucha Pasiva activo**; a la derecha, el móvil de su hijo Daniel y el motor técnico. Un falso bróker de 'Quantum Ibérica' presiona a Carmen a **188 palabras por minuto** (valor simulado en la demo; con un audio real lo mide `ElevenLabs Scribe`) para transferir **9.000 €** en 15 minutos.*
    >
    > *Mirad la parte superior del móvil de Carmen: salta el **PUSH de la app** y el **Banner Rojo 'Creemos que es una estafa'**. Nuestro motor ha cruzado la entidad con la lista negra de la **CNMV**, ha detectado las **5 etapas de la Kill-Chain del paper PreScam (ACL 2025)** y ha pillado que el IBAN pertenece a una cuenta mula mediante **SEPA Verification of Payee (`NO_MATCH`)**.*
    >
@@ -73,7 +73,7 @@
    >
    > *Salta el **PUSH naranja**, el banner de **'Producto Caro'** y, para que Carmen no tenga que leer ni una línea de texto financiero, Centinela consulta en vivo el **servidor MCP oficial de MyInvestor** y le dibuja esta **gráfica de crecimiento a 30 años comparando el TER caro contra el índice MCP**.*
    >
-   > *De un vistazo ve cómo la curva verde de MyInvestor se despega de la línea roja de su banco. Y **si Carmen pulsa encima de la gráfica** —*(el Operador hace clic en la gráfica)*— se abre el **drill-in numérico**: en 30 años su banco se queda en **128.165 €**, mientras que el índice en MyInvestor (`0,06 %` TER) crece hasta **213.649 €**. ¡Son **+85.484 € de diferencia**! Además, el motor fiscal verifica el **Artículo 94 del IRPF**: traspaso vía fondo puente monetario (`AXA Trésor`) pagando **0 € a Hacienda**. Carmen pulsa **Firmar con FaceID** y el dinero ya viaja a MyInvestor."*
+   > *De un vistazo ve cómo la curva verde de MyInvestor se despega de la línea roja de su banco. Y **si Carmen pulsa encima de la gráfica** —*(el Operador hace clic en la gráfica)*— se abre el **drill-in numérico**: en 30 años su banco se queda en **128.636 €**, mientras que el índice en MyInvestor (`0,06 %` TER) crece hasta **212.423 €**. ¡Son **+83.787 € de diferencia**! Además, el motor fiscal verifica el **Artículo 94 del IRPF**: traspaso vía fondo puente monetario (`AXA Trésor`) pagando **0 € a Hacienda**. Carmen pulsa **Firmar con FaceID** y el dinero ya viaja a MyInvestor."*
 
 #### ♿ ACTO 3: Accesibilidad e Inclusión (10 segundos)
 1. **Qué hace el Operador:**
@@ -89,7 +89,7 @@
 > **Ponente A:**  
 > *"Para terminar, tres pilares que hacen que MyInvestor pueda lanzar Centinela en producción mañana mismo:*
 >
-> *1. **Rigor Técnico (Principio Jagged Frontier — Diapositiva 4):** El LLM (`Claude Sonnet 4`) **jamás calcula un euro ni un impuesto**. Claude extrae datos del PDF y orquesta herramientas; toda la matemática compuesta a 30 años, la escala del IRPF y la cadena criptográfica `SHA-256` corren en motores deterministas en código. En nuestro benchmark automatizado de **30 escenarios reales**, logramos **30 de 30 (100 % de precisión)** en **2 milisegundos** con **0,00 € de desviación**.*
+> *1. **Rigor Técnico (Principio Jagged Frontier — Diapositiva 4):** El LLM (`Claude Sonnet 5.5`) **jamás calcula un euro ni un impuesto**. Claude extrae datos del PDF y las herramientas las ejecuta el código; toda la matemática compuesta a 30 años, la escala del IRPF y la cadena criptográfica `SHA-256` corren en motores deterministas en código. En nuestro benchmark automatizado de **30 escenarios reales**, logramos **30 de 30 (100 % de precisión)** en **2 milisegundos** con **0,00 € de desviación**.*
 >
 > *2. **Caso de Negocio B2B Principal + Capa B2C en MyInvestor Premium (Diapositiva 9):** Como solución in-app, el retorno **B2B** para el banco es directo: **reducir drásticamente la partida de dinero que el banco destina a pagar e indemnizar fraudes** bajo PSR/PSD3, costando apenas **0,50 € por usuario activo al mes**. A la vez, el comparador a 30 años vía MCP actúa como una máquina de captación de fondos con **CAC cero** (`150 €/año` recurrentes por cada `50.000 €` traspasados). Y como vía extra **B2C**, encaja directamente dentro del **Plan Premium de MyInvestor**.*
 >
@@ -124,7 +124,7 @@
 ### 5. Pregunta sobre Alucinaciones del LLM (Anthropic / Claude):
 **«¿Qué pasa si Claude se equivoca sumando comisiones o calculando el IRPF?»**
 - **Respuesta ganadora:**  
-  *"No puede equivocarse porque **Claude tiene prohibido hacer matemáticas en nuestra arquitectura**. Aplicamos el principio de la *Jagged Frontier*: usamos `Claude Sonnet 4` exclusivamente para lo que hace mejor que nadie —leer el PDF del folleto DFI con Vision y extraer en un JSON tipado el ISIN y el porcentaje TER—. Ese JSON pasa a `financialEngine.js`, que es código determinista puro auditado con test suite (`30/30`), donde se calcula $V_f = C_0(1+r-\text{TER})^{30}$ y los tramos del IRPF 2025–2026 con **0,00 € de error**."*
+  *"No puede equivocarse porque **Claude tiene prohibido hacer matemáticas en nuestra arquitectura**. Aplicamos el principio de la *Jagged Frontier*: usamos `Claude Sonnet 5.5` exclusivamente para lo que hace mejor que nadie —leer el PDF del folleto DFI con Vision y extraer en un JSON tipado el ISIN y el porcentaje TER—. Ese JSON pasa a `financialEngine.js`, que es código determinista puro auditado con test suite (`30/30`), donde se calcula $V_f = C_0(1+r-\text{TER})^{30}$ y los tramos del IRPF 2025–2026 con **0,00 € de error**."*
 
 ### 6. Pregunta Regulatoria CNMV / MiFID II:
 **«Si le decís al cliente que su fondo del Santander es caro y que se pase a un indexado de MyInvestor, ¿no estáis haciendo asesoramiento financiero sin test de idoneidad?»**

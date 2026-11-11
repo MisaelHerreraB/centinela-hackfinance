@@ -534,6 +534,25 @@ body.mode-deaf .deaf-visual-alert {
   color: var(--ok-ink);
 }
 
+/* Estado neutro: falta un dato o no se ha podido analizar (no se inventa un veredicto) */
+.verdict-hero.PENDIENTE {
+  background: #f1f5f9;
+  border: 1.5px solid #94a3b8;
+  color: #334155;
+}
+
+.demo-data-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.58rem;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
 .verdict-eyebrow {
   font-size: 0.67rem;
   font-weight: 700;

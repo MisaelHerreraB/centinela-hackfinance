@@ -18,7 +18,7 @@ Un ahorrador pierde dinero de dos formas en el mismo instante crítico —**cuan
    * **Nivel 2 (Escucha Pasiva + PUSH):** En llamada activa, detecta señales de coacción y dispara automáticamente una notificación **PUSH (`Estafa` / `Caro` / `Ok`)**.
 2. **Output PUSH + Experiencia Visual Determinista (Cero Alucinación):**
    * 🔴 **ESTAFA (`PUSH + Banner Rojo "Creemos que es una estafa"`):** Detecta manipulación psicológica (5 fases *COLD / PreScam*), cruza la entidad con la **lista de alertas de la CNMV**, verifica discrepancia titular/IBAN (**SEPA VoP Reg. UE 2024/886**) y mide presión vocal (`WPM`).
-   * 🟠 **CARO (`PUSH + Banner "Producto Caro" + Gráfica de Crecimiento a 30 Años + Drill-In`):** Extrae el TER y comisiones de salida del folleto, consulta en tiempo real el **MCP de MyInvestor (`https://mcp.myinvestor.es/mcp`)** y dibuja una **Gráfica de Crecimiento a 30 Años (TER Caro vs. TER Barato / Índice MCP)** ($V_f = C_0(1+r-\text{TER})^{30}$, mostrando cómo `50.000 €` pasan de `128.165 €` al `1,80 %` a `213.649 €` en el índice MCP al `0,06 %`: **`+85.484 €`**). Al **pulsar la gráfica**, se despliega el panel **Drill-In** con los números a 10, 20 y 30 años y la exención fiscal (**0 € IRPF** vía fondo puente `FR0000447823` *AXA Trésor Court Terme*).
+   * 🟠 **CARO (`PUSH + Banner "Producto Caro" + Gráfica de Crecimiento a 30 Años + Drill-In`):** Extrae el TER y comisiones de salida del folleto, consulta en tiempo real el **MCP de MyInvestor (`https://mcp.myinvestor.es/mcp`)** y dibuja una **Gráfica de Crecimiento a 30 Años (TER Caro vs. TER Barato / Índice MCP)** ($V_f = C_0(1+r-\text{TER})^{30}$, mostrando cómo `50.000 €` pasan de `128.636 €` al `1,80 %` a `212.423 €` en el índice MCP al `0,06 %`: **`+83.787 €`**). Al **pulsar la gráfica**, se despliega el panel **Drill-In** con los números a 10, 20 y 30 años y la exención fiscal (**0 € IRPF** vía fondo puente `FR0000447823` *AXA Trésor Court Terme*).
    * 🟢 **OK / ADELANTE (`PUSH + Sello Verde`):** Sin alertas en CNMV y con comisiones competitivas frente al índice MCP.
 3. **Gobernanza y Salida In-App ("Mi Contrato" — Sin *Hard Block*):**
    * **En `ESTAFA` (Intercepción Explicable Sin *Hard Block*):** El banco no aplica un *hard block* que quite el control al cliente. Al darle a *Enviar*, abre una **pantalla adicional de explicabilidad** de por qué parece fraude con:
@@ -41,7 +41,7 @@ Un ahorrador pierde dinero de dos formas en el mismo instante crítico —**cuan
 
 ### 1. Clonar o descomprimir el proyecto
 ```bash
-cd centinela-app
+cd centinela-hackfinance
 ```
 
 ### 2. Configuración (`.env` opcional)
@@ -78,3 +78,24 @@ En la barra superior de la aplicación encontrarás los **3 botones oficiales de
 2. **`🟠 2. Fondo Caro en Oficina (TER 1,8%)`:** Analiza el DFI de un fondo tradicional de renta variable global al 1,80 %, consulta en vivo el **MCP de MyInvestor (`https://mcp.myinvestor.es/mcp`)**, calcula los **10.635 €** perdidos a 10 años frente a una cartera al 0,30 % (para 50.000 € al 5 % bruto) y deja preparado el traspaso exento de IRPF para **Firma In-App**.
 3. **`♿ 3. Accesibilidad (10s) / Adelante`:** Alterna entre **Voz + Texto**, **Modo Persona Sorda** y **Modo Baja Visión**.
 4. **Servidor MCP propio (`/mcp`):** Puedes consultar las 3 herramientas MCP nuevas (`verify_cnmv_and_iban`, `calculate_10y_fee_and_tax`, `enforce_client_contract`) mediante JSON-RPC en `POST http://localhost:3000/mcp`.
+
+### C. Tests de regresión y diagnóstico del MCP
+```bash
+npm test          # tests de regresión sin red: extracción real de documentos, detector, cliente MCP (con servidores simulados) y endpoints
+npm run check:mcp # comprueba con red real si la app usa el MCP de MyInvestor en vivo o tira de la copia guardada
+```
+
+---
+
+## 🔎 Transparencia: qué es real y qué es de demostración
+
+| Elemento | Estado en esta versión |
+| --- | --- |
+| Cálculo de comisiones, IRPF y traspasos | Real (motor determinista en código) |
+| Catálogo de fondos | MCP de MyInvestor en vivo; si no hay conexión, copia guardada (la app lo indica) |
+| Lectura de folletos | Claude (con clave) para fotos y PDF; sin clave, solo PDF con texto. Si no se encuentra la comisión, la app la pregunta: no la supone |
+| Transcripción de audio | ElevenLabs Scribe (con clave). Sin clave no se transcribe nada |
+| Lista de alertas CNMV e IBAN denunciados | **Ficticios, de demostración** (marcados en la app). En producción: lista oficial de la CNMV y verificación VoP del banco |
+| Velocidad del habla (WPM) | Medida con Scribe en audios reales; en el Acto 1 es un valor **simulado** y declarado |
+| Telemetría de llamada activa | No se mide en la web (requiere la app nativa) |
+| ISIN de los fondos de ejemplo del banco | Ficticios (`XX0000DEMO01`, `XX0000DEMO02`) |

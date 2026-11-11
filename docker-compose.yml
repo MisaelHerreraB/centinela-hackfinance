@@ -11,5 +11,6 @@ services:
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-}
       - MYINVESTOR_MCP_URL=${MYINVESTOR_MCP_URL:-https://mcp.myinvestor.es/mcp}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-sonnet-5-5}
       - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
     restart: unless-stopped

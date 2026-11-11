@@ -153,9 +153,15 @@ const server = http.createServer(async (req, res) => {
         entity_name = '',
         iban = '',
         claimed_product = '',
-        amount_eur = 9000,
-        speech_rate_wpm = null
+        amount_eur = 0,
+        speech_rate_wpm = null,
+        speech_rate_source = null
       } = body;
+
+      if (!String(text).trim() && !String(entity_name).trim() && !String(iban).trim() && !String(claimed_product).trim()) {
+        return sendJson(res, 400, { ok: false, error: 'No hay contenido que analizar (texto, entidad, IBAN o producto).' });
+      }
+      const amountEur = Math.max(0, Number(amount_eur) || 0);
 
       let mcpCheck = {
         mcp_status: 'SKIPPED',
@@ -174,26 +180,40 @@ const server = http.createServer(async (req, res) => {
         iban,
         claimed_product,
         product_exists_in_mcp: mcpCheck.exists_in_catalog,
-        amount_eur,
-        speech_rate_wpm
+        amount_eur: amountEur,
+        speech_rate_wpm,
+        speech_rate_source
       });
 
       const contractExecution = evaluateContractAction({
         verdict: fraudAnalysis.verdict,
-        amount_eur,
+        amount_eur: amountEur,
         beneficiary_name: entity_name || fraudAnalysis.cnmv_check?.entity || 'Interlocutor telefónico',
         iban: iban || fraudAnalysis.iban_check?.iban || '',
         fraud_analysis: fraudAnalysis
       });
 
+      // El motivo hablado sale de la señal más grave detectada, no de una frase fija
+      const topSignal = [...fraudAnalysis.signals].sort((a, b) => {
+        const rank = { CRITICA: 0, ALTA: 1, MEDIA: 2 };
+        return (rank[a.severity] ?? 3) - (rank[b.severity] ?? 3);
+      })[0];
       const spokenText =
         fraudAnalysis.verdict === 'ESTAFA'
-          ? `Cuelga ahora mismo, Carmen. Es una estafa. ${
+          ? `Cuelga ahora mismo, Carmen. Creemos que es una estafa. ${
               fraudAnalysis.cnmv_check?.flagged
-                ? `La entidad ${fraudAnalysis.cnmv_check.entity} está en la lista de alertas de la CNMV.`
-                : 'Te están presionando con una rentabilidad garantizada falsa.'
-            } Mi Contrato ha retenido la transferencia de ${Number(amount_eur).toLocaleString('es-ES')} euros y acabo de enviar una alerta al móvil de tu hijo Daniel.`
-          : `Verificación completada. No hay alertas en la CNMV ni señales de manipulación para esta consulta. Puedes continuar con tranquilidad.`;
+                ? `La entidad ${fraudAnalysis.cnmv_check.entity} está en la lista de alertas.`
+                : topSignal
+                  ? `${topSignal.label}.`
+                  : ''
+            } ${
+              amountEur > 0
+                ? `Mi Contrato ha retenido la transferencia de ${amountEur.toLocaleString('es-ES')} euros`
+                : 'Mi Contrato ha activado la pantalla de seguridad'
+            } y acabo de enviar una alerta al móvil de tu hijo Daniel.`
+          : fraudAnalysis.signals.length > 0
+            ? `No veo señales claras de estafa, pero ojo: ${fraudAnalysis.signals[0].label.charAt(0).toLowerCase()}${fraudAnalysis.signals[0].label.slice(1)}. ${fraudAnalysis.signals[0].explanation}`
+            : `Verificación completada. No hay alertas ni señales de manipulación para esta consulta. Puedes continuar con tranquilidad.`;
 
       return sendJson(res, 200, {
         ok: true,
@@ -204,7 +224,7 @@ const server = http.createServer(async (req, res) => {
           entity_name,
           iban,
           claimed_product,
-          amount_eur
+          amount_eur: amountEur
         },
         step_2_verdict: {
           verdict: fraudAnalysis.verdict,
@@ -226,7 +246,7 @@ const server = http.createServer(async (req, res) => {
         imageBase64 = null,
         imageMimeType = 'image/png',
         presetDocument = null,
-        amount_eur = 50000,
+        amount_eur = null,
         years = 10,
         gross_return_pct = 5.0
       } = body;
@@ -239,7 +259,23 @@ const server = http.createServer(async (req, res) => {
         presetDocument
       });
 
-      const finalAmount = Number(amount_eur || extractedDoc.amount_eur || 50000);
+      // Sin comisión legible no se calcula nada: se pide el dato en vez de inventarlo
+      if (!extractedDoc.extraction_complete) {
+        return sendJson(res, 200, {
+          ok: true,
+          needs_input: true,
+          total_latency_ms: Date.now() - t0,
+          step_1_input: extractedDoc,
+          message: extractedDoc.reason || 'No he podido leer la comisión anual del producto.',
+          ask_user: extractedDoc.ask_user || '¿Qué comisión anual (TER) aparece en el folleto?',
+          spoken_text: `${extractedDoc.reason || 'No he podido leer la comisión anual del producto.'} ${extractedDoc.ask_user || ''}`.trim(),
+          state: getContractState()
+        });
+      }
+
+      const explicitAmount = Number(amount_eur) > 0 ? Number(amount_eur) : null;
+      const amountIsExample = !explicitAmount && !extractedDoc.amount_eur;
+      const finalAmount = explicitAmount || extractedDoc.amount_eur || 50000;
 
       // Paso 2A: Consultar en tiempo real el servidor MCP oficial de MyInvestor
       const mcpResult = await findCategoryAlternatives({
@@ -287,13 +323,14 @@ const server = http.createServer(async (req, res) => {
           ? ` Cuidado: el folleto incluye una comisión de salida del ${extractedDoc.exit_fee_pct}% fuera de ventana de liquidez.`
           : '';
 
+      const amountPhrase = amountIsExample
+        ? `Para un ejemplo de ${finalAmount.toLocaleString('es-ES')} euros`
+        : `Con ${finalAmount.toLocaleString('es-ES')} euros`;
       const spokenText =
         costAnalysis.verdict === 'CARO'
           ? `Atención, Carmen: en este producto pagas un ${extractedDoc.offered_ter_pct
               .toString()
-              .replace('.', ',')}% al año. Con ${finalAmount.toLocaleString(
-              'es-ES'
-            )} euros, en 10 años son unos ${lossRounded.toLocaleString(
+              .replace('.', ',')}% al año. ${amountPhrase}, en 10 años son unos ${lossRounded.toLocaleString(
               'es-ES'
             )} euros menos que con un producto de la misma categoría al 0,30% en MyInvestor, ${taxPhrase}.${exitPhrase} Ya tienes el traspaso preparado para firmar en la app.`
           : `Adelante, Carmen. Este producto tiene una comisión muy competitiva del ${extractedDoc.offered_ter_pct
@@ -302,6 +339,7 @@ const server = http.createServer(async (req, res) => {
 
       return sendJson(res, 200, {
         ok: true,
+        amount_is_example: amountIsExample,
         total_latency_ms: Date.now() - t0,
         step_1_input: extractedDoc,
         step_2_verdict: {
@@ -466,6 +504,12 @@ const server = http.createServer(async (req, res) => {
           toolOutput = calculateCostComparison(args);
         } else if (toolName === 'enforce_client_contract') {
           toolOutput = evaluateContractAction(args);
+        } else {
+          return sendJson(res, 200, {
+            jsonrpc: '2.0',
+            id: rpc.id,
+            error: { code: -32602, message: `Herramienta desconocida: ${toolName}` }
+          });
         }
         return sendJson(res, 200, {
           jsonrpc: '2.0',

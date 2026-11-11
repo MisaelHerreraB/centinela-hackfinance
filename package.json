@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node src/server.js",
-    "eval": "node src/evals/run_evals.js"
+    "eval": "node src/evals/run_evals.js",
+    "test": "node --test test/patch.test.js",
+    "check:mcp": "node scripts/check_mcp.js"
   },
   "keywords": [
     "myinvestor",
