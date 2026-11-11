@@ -17,16 +17,21 @@ Un ahorrador pierde dinero de dos formas en el mismo instante crítico —**cuan
    * **Nivel 1 (Bajo Demanda):** El cliente consulta puntualmente una llamada en altavoz, captura de SMS o foto/PDF del Documento de Datos Fundamentales (DFI).
    * **Nivel 2 (Escucha Pasiva + PUSH):** En llamada activa, detecta señales de coacción y dispara automáticamente una notificación **PUSH (`Estafa` / `Caro` / `Ok`)**.
 2. **Output PUSH + Experiencia Visual Determinista (Cero Alucinación):**
-   * 🔴 **ESTAFA (`PUSH + Banner Rojo "Creemos que es una estafa"`):** Detecta manipulación psicológica (5 fases *COLD / PreScam*), cruza la entidad con la **lista de alertas de la CNMV**, verifica discrepancia titular/IBAN (**SEPA VoP Reg. UE 2024/886**) y mide presión vocal (`WPM`).
+   * 🔴 **ESTAFA (`PUSH + Banner Rojo "Creemos que es una estafa"`):** Detecta manipulación psicológica (cinco fases de una estafa conversacional, inspiradas en Li et al., 2026), cruza la entidad con la **lista de alertas de la CNMV**, verifica discrepancia titular/IBAN (**SEPA VoP Reg. UE 2024/886**) y mide presión vocal (`WPM`).
    * 🟠 **CARO (`PUSH + Banner "Producto Caro" + Gráfica de Crecimiento a 30 Años + Drill-In`):** Extrae el TER y comisiones de salida del folleto, consulta en tiempo real el **MCP de MyInvestor (`https://mcp.myinvestor.es/mcp`)** y dibuja una **Gráfica de Crecimiento a 30 Años (TER Caro vs. TER Barato / Índice MCP)** ($V_f = C_0(1+r-\text{TER})^{30}$, mostrando cómo `50.000 €` pasan de `128.636 €` al `1,80 %` a `212.423 €` en el índice MCP al `0,06 %`: **`+83.787 €`**). Al **pulsar la gráfica**, se despliega el panel **Drill-In** con los números a 10, 20 y 30 años y la exención fiscal (**0 € IRPF** vía fondo puente `FR0000447823` *AXA Trésor Court Terme*).
    * 🟢 **OK / ADELANTE (`PUSH + Sello Verde`):** Sin alertas en CNMV y con comisiones competitivas frente al índice MCP.
 3. **Gobernanza y Salida In-App ("Mi Contrato" — Sin *Hard Block*):**
    * **En `ESTAFA` (Intercepción Explicable Sin *Hard Block*):** El banco no aplica un *hard block* que quite el control al cliente. Al darle a *Enviar*, abre una **pantalla adicional de explicabilidad** de por qué parece fraude con:
      1. Botón principal amigable: **`🎧 Consultar en Canal Oficial MyInvestor (Voz / Chat en vivo)`**.
      2. Botón secundario en **rojo clarito** (*"Seguir bajo mi responsabilidad — No recomendado"*), más alerta al **Familiar de Confianza (Daniel)**.
-   * **En `CARO`:** Tras pulsar la gráfica a 30 años (*Drill-In*), deja la orden de **Traspaso Exento de IRPF (0 €)** lista para **Firma In-App con FaceID**.
+   * **En `CARO`:** Tras pulsar la gráfica a 30 años (*Drill-In*), deja la orden de **Traspaso sin tributar en ese momento (0 € de IRPF hoy; se tributa al reembolsar)** lista para **Firma In-App con FaceID**.
    * **Caso de Negocio B2B + B2C (MyInvestor Premium):** El núcleo **B2B** reduce el dinero que el banco destina a reembolsar fraudes (PSR/PSD3) y capta patrimonio vía MCP a 30 años; como extra **B2C**, se integra en el **Plan MyInvestor Premium**.
-   * **Presentación y Documentación para el Equipo:** En la carpeta [`presentacion/`](./presentacion/) se incluyen el Pitch Deck de 10 diapositivas (`CENTINELA_PRESENTACION_PITCH_DECK.pdf`), el One-Pager Técnico (`CENTINELA_ONE_PAGER_TECNICO.pdf`) y el guion completo con bibliografía de papers (`CENTINELA_GUION_Y_PRESENTACION.md`).
+   * **Presentación y documentación (carpeta [`presentacion/`](./presentacion/)):**
+     * [`CENTINELA_PRESENTACION_V2.pptx`](./presentacion/CENTINELA_PRESENTACION_V2.pptx): la presentación (16 diapositivas y 3 de apéndice con fuentes y arquitectura).
+     * [`CENTINELA_ONE_PAGER_TECNICO.pdf`](./presentacion/CENTINELA_ONE_PAGER_TECNICO.pdf): resumen de una página (problema, solución y valor diferencial).
+     * [`CENTINELA_ARQUITECTURA.png`](./presentacion/CENTINELA_ARQUITECTURA.png): componentes y flujo de información.
+     * [`GUION_COMPLETO_V2.md`](./presentacion/GUION_COMPLETO_V2.md), [`GUION_MODO_ESCENARIO.md`](./presentacion/GUION_MODO_ESCENARIO.md) y [`PREGUNTAS_DEL_JURADO.md`](./presentacion/PREGUNTAS_DEL_JURADO.md): guion de la exposición, de la demo y respuestas a preguntas.
+     * `CENTINELA_PRESENTACION_PITCH_DECK.pdf` y `CENTINELA_GUION_Y_PRESENTACION.md` son la versión anterior de la presentación y del guion. Se conservan como historial; algunas citas de esos dos documentos se corrigieron después.
 
 ---
 

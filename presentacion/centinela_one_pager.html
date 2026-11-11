@@ -1,347 +1,153 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Centinela — Resumen Técnico y Propuesta de Valor</title>
+<meta charset="UTF-8" />
+<title>Centinela · Resumen de una página · Across the lake</title>
 <style>
-  @page {
-    size: A4 portrait;
-    margin: 7.5mm 10mm;
-  }
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: #0f172a;
-    background: #ffffff;
-    font-size: 7.6pt;
-    line-height: 1.21;
-  }
-  /* Header */
-  .header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #ffffff;
-    padding: 9px 14px;
-    border-radius: 7px;
-    margin-bottom: 7px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 3px solid #10b981;
-  }
-  .header strong {
-    color: #f8fafc;
-  }
-  .header-left h1 {
-    font-size: 14pt;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-    color: #ffffff;
-  }
-  .header-left h1 span {
-    color: #34d399;
-  }
-  .header-left p {
-    font-size: 8pt;
-    color: #cbd5e1;
-    margin-top: 2px;
-  }
-  .header-right {
-    text-align: right;
-    font-size: 7.4pt;
-    color: #cbd5e1;
-    line-height: 1.35;
-  }
-  .badge-stack {
-    display: inline-block;
-    background: rgba(52, 211, 153, 0.15);
-    color: #6ee7b7;
-    border: 1px solid rgba(52, 211, 153, 0.4);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-    font-size: 7.2pt;
-    margin-top: 3px;
-  }
-
-  /* Grid Layout */
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 7px;
-  }
-  .card {
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 7px 9px;
-    background: #f8fafc;
-  }
-  .card-white {
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 7px 9px;
-    background: #ffffff;
-  }
-  .section-title {
-    font-size: 8.8pt;
-    font-weight: 800;
-    color: #0f172a;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    border-bottom: 1.5px solid #e2e8f0;
-    padding-bottom: 2px;
-  }
-  .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #10b981;
-    display: inline-block;
-  }
-  .dot-blue { background: #2563eb; }
-  .dot-amber { background: #d97706; }
-  .dot-purple { background: #7c3aed; }
-
-  ul {
-    padding-left: 13px;
-  }
-  li {
-    margin-bottom: 2.5px;
-  }
-  li:last-child {
-    margin-bottom: 0;
-  }
-  strong {
-    color: #0f172a;
-  }
-  .header strong {
-    color: #ffffff;
-  }
-
-  /* Architecture Diagram Box */
-  .arch-box {
-    border: 1.5px solid #94a3b8;
-    border-radius: 7px;
-    padding: 7px 9px;
-    background: #f1f5f9;
-    margin-bottom: 7px;
-  }
-  .arch-flow {
-    display: grid;
-    grid-template-columns: 1.05fr 0.08fr 1.4fr 0.08fr 1.1fr;
-    align-items: stretch;
-    margin-top: 4px;
-  }
-  .arch-col {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 5px;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-  }
-  .arch-col h4 {
-    font-size: 8.2pt;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 4px;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 2px;
-  }
-  .arch-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13pt;
-    font-weight: bold;
-    color: #475569;
-  }
-  .pill {
-    display: inline-block;
-    font-size: 7.2pt;
-    font-weight: 700;
-    padding: 1.5px 5px;
-    border-radius: 3px;
-    margin-right: 3px;
-  }
-  .pill-red { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-  .pill-amber { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-  .pill-green { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-
-  /* Table */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 7.4pt;
-    margin-top: 2px;
-  }
-  th, td {
-    border: 1px solid #cbd5e1;
-    padding: 3px 5px;
-    text-align: left;
-    vertical-align: top;
-  }
-  th {
-    background: #e2e8f0;
-    font-weight: 700;
-    color: #1e293b;
-  }
-
-  .footer {
-    margin-top: 6px;
-    padding-top: 5px;
-    border-top: 1px solid #cbd5e1;
-    display: flex;
-    justify-content: space-between;
-    font-size: 7.4pt;
-    color: #475569;
-  }
-  code {
-    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
-    background: #e2e8f0;
-    padding: 1px 4px;
-    border-radius: 3px;
-    font-size: 7.6pt;
-  }
+  /* Una sola cara A4. Se imprime a PDF con scripts/build_pdfs.sh */
+  @page { size: A4; margin: 0; }
+  :root { --ink: #10131a; --text: #2c3240; --dim: #667085; --line: #dfe3ea; --soft: #f4f6fa; --accent: #4c5ce0; --red: #d92d20; --orange: #c2610c; --green: #12803c; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { width: 210mm; height: 297mm; padding: 10mm 13mm 8mm; font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--text); font-size: 8.7pt; line-height: 1.33; -webkit-print-color-adjust: exact; print-color-adjust: exact; display: flex; flex-direction: column; gap: 3.3mm; overflow: hidden; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--ink); padding-bottom: 3mm; }
+  .brand { display: flex; align-items: center; gap: 3mm; }
+  .brand svg { width: 11mm; height: 11mm; fill: none; stroke: var(--accent); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  h1 { margin: 0; font-size: 22pt; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
+  .tagline { font-size: 10.5pt; color: var(--accent); font-weight: 600; margin-top: 1mm; }
+  .meta { text-align: right; font-size: 8.4pt; color: var(--dim); line-height: 1.45; }
+  .meta b { color: var(--ink); }
+  h2 { margin: 0 0 1.3mm; font-size: 7.6pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+  p { margin: 0; }
+  b { color: var(--ink); }
+  .cols { display: grid; gap: 4mm; }
+  .c2 { grid-template-columns: 1fr 1fr; }
+  .c3 { grid-template-columns: repeat(3, 1fr); }
+  .c4 { grid-template-columns: repeat(4, 1fr); }
+  .box { background: var(--soft); border-radius: 2.6mm; padding: 2.3mm 3mm; }
+  .box h3 { margin: 0 0 0.6mm; font-size: 10pt; color: var(--ink); }
+  .num { font-size: 16pt; font-weight: 800; letter-spacing: -0.02em; line-height: 1.08; color: var(--ink); margin-bottom: 0.6mm; }
+  .num small { display: block; font-size: 7.8pt; font-weight: 600; letter-spacing: 0; color: var(--dim); }
+  .red { color: var(--red); } .orange { color: var(--orange); } .green { color: var(--green); }
+  .box h3.red { color: var(--red); } .box h3.orange { color: var(--orange); } .box h3.green { color: var(--green); } .num.green { color: var(--green); }
+  .verdict { border-left: 0; }
+  .verdict h3 { font-size: 11pt; }
+  .flow { display: grid; grid-template-columns: 22mm repeat(4, 1fr); gap: 1.6mm 0; align-items: stretch; }
+  .flow .lab { font-size: 8pt; font-weight: 700; color: var(--ink); align-self: center; padding-right: 2mm; }
+  .step { position: relative; border: 1.2px solid var(--line); border-radius: 2.2mm; padding: 1.4mm 2.2mm; margin-right: 4.4mm; font-size: 7.7pt; line-height: 1.28; background: #fff; }
+  .step b { display: block; font-size: 8.3pt; }
+  .step.ext { border-style: dashed; border-color: var(--accent); }
+  .step.int { border-color: var(--green); }
+  .flow .step:nth-child(5)::after, .flow .step:nth-child(10)::after { display: none; }
+  .flow .step:nth-child(5), .flow .step:nth-child(10) { margin-right: 0; }
+  .step::after { content: "→"; position: absolute; right: -4mm; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: 10pt; }
+  .legend { font-size: 7.2pt; color: var(--dim); margin-top: 1.4mm; }
+  .legend i { display: inline-block; width: 3.4mm; height: 2.2mm; border-radius: 0.6mm; vertical-align: -0.2mm; margin: 0 1mm 0 2.5mm; border: 1.2px solid var(--green); }
+  .legend i.e { border: 1.2px dashed var(--accent); margin-left: 0; }
+  ul { margin: 0; padding-left: 4mm; }
+  li { margin-bottom: 0.7mm; }
+  .honest { border: 1.2px solid var(--line); border-radius: 2.6mm; padding: 2.1mm 3mm; font-size: 8pt; }
+  footer { margin-top: auto; border-top: 1px solid var(--line); padding-top: 1.8mm; font-size: 6.9pt; color: var(--dim); line-height: 1.4; }
+  footer b { color: var(--text); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 7.4pt; color: var(--ink); }
 </style>
 </head>
 <body>
 
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-left">
-      <h1><span>CENTINELA</span> · Antes de firmar, pregúntale</h1>
-      <p>Cortafuegos Financiero Multimodal, Auditor de Costes vía MCP y Gobernanza Programable In-App</p>
-    </div>
-    <div class="header-right">
-      <div><strong>HackFinance 2026 (BEST UC3M)</strong> · Equipo <em>Across the lake</em></div>
-      <div class="badge-stack">Claude Vision &amp; Tools · MCP MyInvestor · ElevenLabs Scribe/TTS · Motor Determinista</div>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 4.5 5.4v5.8c0 4.700 3.200 8.800 7.500 10.300 4.300-1.500 7.500-5.600 7.500-10.300V5.400L12 2.500Z"/><path d="m8.700 12 2.300 2.300 4.400-4.600"/></svg>
+    <div>
+      <h1>Centinela</h1>
+      <div class="tagline">Antes de firmar, pregúntale.</div>
     </div>
   </div>
+  <div class="meta">
+    <b>Equipo Across the lake</b> · HackFinance 2026 (BEST UC3M)<br />
+    Misael Herrera · Dante Pérez · Keneth Ruiz · Iván Rodríguez · Xander<br />
+    MyInvestor (MCP) · Claude · ElevenLabs
+  </div>
+</header>
 
-  <!-- ROW 1: PROBLEMA + SOLUCIÓN PROPUESTA -->
-  <div class="grid-2">
-    <div class="card">
-      <div class="section-title"><span class="dot"></span> 1. Problemática Resuelta: El Instante de Firma</div>
-      <p style="margin-bottom:4px;">El ahorrador pierde patrimonio de <strong>dos formas en el mismo segundo crítico</strong> —cuando alguien le presiona por teléfono o en sucursal para que firme o transfiera— sin tener una segunda opinión técnica en tiempo real:</p>
-      <ul>
-        <li><strong>Vía Ilegal (Fraude por manipulación / Vishing):</strong> La transferencia fraudulenta media en España es de <strong>2.347 €</strong>, causada principalmente por manipulación psicológica del propio cliente (<em>Banco de España, 2025</em>). El usuario soporta el <strong>85 % de las pérdidas</strong> en pagos autorizados bajo engaño (<em>EBA-BCE, 2025</em>).</li>
-        <li><strong>Vía Legal (Productos caros e ilíquidos):</strong> En España hay <strong>450.000–482.000 M€</strong> en fondos de inversión (<em>INVERCO</em>), con techos legales de gestión del <strong>2,25 %</strong> (<em>CNMV</em>) y medias en banca tradicional del <strong>1,20 %–1,85 % TER</strong> frente al <strong>0,12 %–0,30 %</strong> indexado. El cliente firma sin calcular la pérdida compuesta a 10 años ni saber que puede traspasar fondos pagando <strong>0 € en IRPF</strong> (Art. 94 LIRPF).</li>
-      </ul>
+<section>
+  <h2>El problema</h2>
+  <div class="cols c2">
+    <div class="box">
+      <h3>Una llamada</h3>
+      <div class="num">2.347 € <small>de media por transferencia fraudulenta en España, +42 % en un año</small></div>
+      <p>Un falso bróker mete prisa para que el cliente transfiera hoy. En Europa, el cliente asume cerca del <b>85 %</b> de lo robado por transferencia.</p>
     </div>
-
-    <div class="card">
-      <div class="section-title"><span class="dot dot-blue"></span> 2. Solución Propuesta: Output PUSH + Gráfica 30 Años + Sin Hard Block</div>
-      <p style="margin-bottom:4px;">Integrado en la app de <strong>MyInvestor</strong> con <strong>2 niveles configurables de escucha pasiva</strong>, el output base es un <strong>PUSH inmediato (<code>Estafa</code> / <code>Caro</code> / <code>Ok</code>)</strong> + experiencia visual in-app:</p>
-      <ul>
-        <li><span class="pill pill-red">ESTAFA</span> <strong>Escucha Pasiva + PUSH + Banner Rojo + Intercepción Explicable (Sin <em>Hard Block</em>):</strong> Al pulsar <em>Enviar</em>, abre una pantalla adicional que explica por qué parece fraude, conecta en un clic con el <strong>Canal Oficial en Tiempo Real (Voz / Chat)</strong> e incluye un botón en <strong>rojo clarito</strong> (<em>Seguir</em>) sin quitarle el control al cliente.</li>
-        <li><span class="pill pill-amber">CARO</span> <strong>PUSH + Banner "Caro" + Gráfica a 30 Años (TER Caro vs. Índice MCP) + <em>Drill-In</em>:</strong> Compara visualmente sin leer texto el crecimiento a <strong>30 años</strong> de <code>50.000 €</code> (<code>128.636 €</code> al 1,80 % vs. <code>212.423 €</code> al 0,06 % índice MCP: <strong>+83.787 €</strong>); al pulsar la gráfica despliega los números (<em>drill-in</em>) y el <strong>traspaso 0 € IRPF</strong>.</li>
-        <li><span class="pill pill-green">OK</span> <strong>PUSH Verde + Sello In-App:</strong> Verifica registro oficial y TER competitivo contra índice MCP sin fricción.</li>
-      </ul>
+    <div class="box">
+      <h3>Una firma</h3>
+      <div class="num">+83.787 € <small>de diferencia en 30 años, con 50.000 €, entre pagar un 1,80 % y un 0,06 %</small></div>
+      <p>Su banco de siempre le vende un fondo caro que «no parece nada». Los fondos pasivos son de media un <b>60-80 % más baratos</b> que los activos.</p>
     </div>
   </div>
+</section>
 
-  <!-- ROW 2: ARQUITECTURA TÉCNICA -->
-  <div class="arch-box">
-    <div class="section-title" style="border-bottom-color:#cbd5e1;"><span class="dot dot-purple"></span> 3. Arquitectura Técnica: Separación Semántico-Determinista ("Jagged Frontier")</div>
-    <p style="font-size:8pt; margin-bottom:4px;">Siguiendo el principio de la <em>Frontera Dentada</em>, <strong>ninguna cifra financiera ni fiscal sale del LLM</strong>. Claude interpreta lenguaje/visión y extrae los datos; las herramientas se ejecutan en código; el cálculo a 30 años y las reglas bancarias se ejecutan en código determinista auditado:</p>
-
-    <div class="arch-flow">
-      <!-- Col 1 -->
-      <div class="arch-col">
-        <h4>1. Escucha Pasiva (2 Niveles) &amp; PUSH</h4>
-        <ul style="font-size:7.8pt;">
-          <li><strong>2 Niveles de Invasividad:</strong> <em>Nivel 1 (Bajo Demanda)</em> al consultar una oferta; <em>Nivel 2 (Escucha Pasiva en Llamada)</em> que dispara <strong>PUSH (<code>Estafa / Caro / Ok</code>)</strong> + Banner In-App.</li>
-          <li><strong>Audio &amp; Visión Documental:</strong> <code>ElevenLabs Scribe</code> (&gt;175 WPM) + telemetría en llamada (<em>BioCatch</em>) + <code>Claude Vision</code> para extraer ISIN, TER y liquidez del PDF DFI.</li>
-          <li><strong>Accesibilidad Dual:</strong> Voz (<code>ElevenLabs TTS</code>) + modos <strong>Persona Sorda</strong> y <strong>Baja Visión</strong>.</li>
-        </ul>
-      </div>
-
-      <div class="arch-arrow">➔</div>
-
-      <!-- Col 2 -->
-      <div class="arch-col">
-        <h4>2. Comparador MCP a 30 Años &amp; Motor Anti-Fraude</h4>
-        <ul style="font-size:7.8pt;">
-          <li><strong>Comparación a 30 Años vía MCP (TER vs. Índice):</strong> Consulta en vivo el <code>Model Context Protocol</code> de MyInvestor y proyecta curvas compuestas a <strong>10, 20 y 30 años</strong> (<i>V<sub>f</sub> = C<sub>0</sub>(1 + r &minus; TER)<sup>30</sup></i>) enfrentando el fondo caro contra el <strong>índice MCP (0,06 %)</strong> y cartera indexada (0,30 %).</li>
-          <li><strong>Kill-Chain Anti-Fraude &amp; SEPA VoP:</strong> Cruza alertas <strong>CNMV</strong>, verifica titular/IBAN (<strong>SEPA VoP Reg. UE 2024/886</strong>), detecta las 5 fases <em>PreScam</em> (<em>ACL 2025</em>) y trampas de desbloqueo fiscal (<em>USENIX SOUPS</em>).</li>
-          <li><strong>Motor Fiscal (Art. 94 LIRPF):</strong> Tramos <strong>IRPF (19 %–30 %)</strong> y traspaso vía fondo puente exento (<strong>0 € IRPF</strong>).</li>
-        </ul>
-      </div>
-
-      <div class="arch-arrow">➔</div>
-
-      <!-- Col 3 -->
-      <div class="arch-col">
-        <h4>3. Gobernanza y Salida In-App ("Mi Contrato")</h4>
-        <ul style="font-size:7.8pt;">
-          <li><strong>En <code>ESTAFA</code> (Pantalla Explicable, Sin <em>Hard Block</em>):</strong> Al pulsar <em>Enviar</em>, lleva a una pantalla de explicabilidad del fraude con botón principal al <strong>Canal Oficial en Tiempo Real (Voz / Chat)</strong> y botón en <strong>rojo clarito</strong> (<em>Seguir</em>) que preserva el control del cliente.</li>
-          <li><strong>En <code>CARO</code> (Gráfica 30 Años + <em>Drill-In</em>):</strong> <strong>PUSH</strong> + Banner <em>"Caro"</em> + <strong>Gráfica In-App a 30 años</strong>; al pulsar la gráfica abre el desglose numérico (<em>drill-in</em>) y la orden de traspaso <strong>0 € IRPF</strong>.</li>
-          <li><strong>Trazabilidad:</strong> Alerta a <strong>Familiar de Confianza</strong> + <code>Audit Log</code> <strong>SHA-256</strong>.</li>
-        </ul>
-      </div>
-    </div>
+<section>
+  <h2>La solución: una segunda opinión dentro de la app de MyInvestor</h2>
+  <p style="margin-bottom:1.5mm">El cliente le enseña a Centinela lo que le ofrecen (una llamada, un SMS o el folleto de un fondo) y en segundos recibe una de tres respuestas:</p>
+  <div class="cols c3">
+    <div class="box verdict"><h3 class="red">Estafa</h3><p>Le explica por qué lo parece, le pone al banco al teléfono y avisa a un familiar de confianza. <b>No bloquea su dinero:</b> la decisión es suya y queda registrada.</p></div>
+    <div class="box verdict"><h3 class="orange">Caro</h3><p>Lee la comisión del folleto, busca en vivo el fondo indexado más barato de esa categoría y le enseña la diferencia en una gráfica a 30 años.</p></div>
+    <div class="box verdict"><h3 class="green">Adelante</h3><p>Sin señales de estafa y con una comisión razonable, le deja seguir. Tres modos de accesibilidad: voz y texto, persona sorda y baja visión.</p></div>
   </div>
+</section>
 
-  <!-- ROW 3: TABLA TÉCNICA DE MÓDULOS + VALOR DIFERENCIAL Y VIABILIDAD -->
-  <div class="grid-2" style="margin-bottom:4px;">
-    <div class="card-white">
-      <div class="section-title"><span class="dot dot-amber"></span> 4. Especificación de Componentes y Validación</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Componente</th>
-            <th>Implementación y Métrica Verificable</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>IA Frontera (Lenguaje, Visión y Audio)</strong></td>
-            <td><code>Claude</code> (Structured Outputs + Tool Use) + <code>ElevenLabs</code> (Scribe STT + Streaming TTS). Cero llamadas telefónicas entrantes para no entrenar al cliente en vectores de <em>vishing</em>.</td>
-          </tr>
-          <tr>
-            <td><strong>Integración MCP (30 Años vs. Índice)</strong></td>
-            <td>Conexión directa al <strong>MCP de MyInvestor</strong> para comparar fondos a 30 años en base a TER contra índice + cruce con lista negra <strong>CNMV</strong> y <strong>SEPA VoP</strong>.</td>
-          </tr>
-          <tr>
-            <td><strong>Suite de Pruebas (30 Casos Reales)</strong></td>
-            <td>Benchmark automatizado sobre <strong>30 escenarios</strong> (100 % precisión: estafas CNMV, folletos DFI caros con gráfica a 30 años y productos limpios) en <code>~1ms</code> determinista.</td>
-          </tr>
-          <tr>
-            <td><strong>Despliegue</strong></td>
-            <td>Entorno reproducible en un comando con <code>docker compose up</code>.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="card-white">
-      <div class="section-title"><span class="dot"></span> 5. Caso de Negocio: B2B (Ahorro en Fraudes) + B2C (MyInvestor Premium)</div>
-      <ul>
-        <li><strong>Caso de Negocio Principal B2B (Reducción del Gasto Bancario en Fraudes):</strong>
-          <br>• El retorno directo para el banco es <strong>reducir el dinero destinado a reembolsar fraudes</strong> (bajo presión de <strong>PSR / PSD3 y SEPA VoP Reg. UE 2024/886</strong>), interceptando el pago antes de salir con explicabilidad y derivación al canal oficial por solo <strong>~0,50 €/usuario activo/mes</strong>.
-          <br>• <strong>Captación de AUM vía MCP (30 años):</strong> La gráfica de crecimiento a 30 años contra el índice convierte ofertas caras de otros bancos en traspasos hacia MyInvestor (<strong>150 €/año</strong> recurrentes cada 50.000 €).</li>
-        <li><strong>Capa Extra B2C (Plan MyInvestor Premium):</strong>
-          <br>• Integrable como ventaja diferencial dentro del <strong>Plan Premium de MyInvestor</strong> (escucha pasiva Nivel 2 con PUSH, comparador visual a 30 años con <em>drill-in</em> y escudo familiar).</li>
-        <li><strong>Encaje Regulatorio (MiFID II Art. 24 &amp; PSD2/PSR):</strong> No aplica un <em>hard block</em> ilegal sobre el dinero del cliente y compara objetivamente costes ex-ante frente al índice oficial.</li>
-      </ul>
-    </div>
+<section>
+  <h2>Cómo funciona: la IA entiende, el código decide</h2>
+  <div class="flow">
+    <div class="lab">Llamada o mensaje</div>
+    <div class="step ext"><b>ElevenLabs Scribe</b>transcribe y mide el ritmo</div>
+    <div class="step ext"><b>Claude</b>señala las tácticas y cita la frase literal</div>
+    <div class="step int"><b>Validador de citas</b>descarta lo que no está en el texto</div>
+    <div class="step int"><b>Motor de reglas</b>pesos fijos: estafa o adelante</div>
+    <div class="lab">Folleto de un fondo</div>
+    <div class="step ext"><b>Claude</b>lee la comisión y la categoría</div>
+    <div class="step int"><b>Comprobación</b>sin comisión, se para aquí</div>
+    <div class="step ext"><b>MCP de MyInvestor</b>fondo indexado más barato</div>
+    <div class="step int"><b>Motor financiero</b>proyección a 30 años: caro o adelante</div>
   </div>
+  <div class="legend"><i class="e"></i>servicio externo <i></i>código de Centinela · El modelo no decide el veredicto ni calcula un solo euro. Si un servicio externo falla, Centinela sigue solo con reglas, con la voz del navegador o con una copia guardada del catálogo, y lo indica.</div>
+</section>
 
-  <!-- FOOTER -->
-  <div class="footer">
-    <div><strong>Centinela</strong> · HackFinance 2026 (BEST UC3M · Madrid Engineering Week)</div>
-    <div><strong>Fuentes:</strong> BdE (2025) · EBA-BCE (2025) · Reg. UE 2024/886 (SEPA VoP) · ACL 2025 (PreScam) · USENIX SOUPS · BioCatch (2025) · Barber, Odean &amp; Zheng (Fee Salience) · Art. 94 LIRPF</div>
+<section>
+  <h2>Lo que hemos medido</h2>
+  <div class="cols c4">
+    <div class="box"><div class="num">30 / 30</div><p>casos de nuestra batería propia.</p></div>
+    <div class="box"><div class="num green">12 → 26</div><p>aciertos en 27 mensajes nunca vistos, al sumar Claude a las reglas. Sin falsas alarmas.</p></div>
+    <div class="box"><div class="num">&lt; 1 ms</div><p>con reglas. Con Claude, 3,1 s de media.</p></div>
+    <div class="box"><div class="num">85</div><p>pruebas automáticas. Node.js sin dependencias.</p></div>
   </div>
+</section>
+
+<section class="cols c2">
+  <div>
+    <h2>Valor diferencial</h2>
+    <ul>
+      <li><b>Mira la conversación, no solo la operación.</b> Actúa antes de que el cliente llegue a la pantalla de pago.</li>
+      <li><b>Cada alerta se puede auditar:</b> una señal, una cita literal y un peso fijo.</li>
+      <li><b>Datos reales:</b> los fondos y sus comisiones vienen del MCP de MyInvestor en cada consulta.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Viabilidad y siguientes pasos</h2>
+    <ul>
+      <li><b>Lo paga el banco:</b> menos fraude que reembolsar y más traspasos de fondos. En Reino Unido, con reembolso obligatorio desde 2024, ya se devuelve el 88 % del dinero estafado.</li>
+      <li><b>Piloto:</b> audio real de llamadas, lista de advertencias de la CNMV en vivo y verificación del beneficiario del banco.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="honest">
+  <b>Qué es real y qué es demostración.</b> Son reales el motor de reglas, el análisis de Claude, los cálculos, la lectura de folletos, los datos de fondos y la voz y la transcripción de ElevenLabs. Son de demostración la llamada (audio sintético), la entidad, el IBAN, la lista de alertas y el móvil del familiar. Los 27 mensajes de prueba son pocos: una indicación, no una prueba estadística. La proyección supone un 5 % anual antes de comisiones.
+</section>
+
+<footer>
+  <b>Probarlo:</b> <code>npm start</code> y abrir <code>http://localhost:3000/escenario.html</code> · <b>Código:</b> github.com/MisaelHerreraB/centinela-hackfinance<br />
+  <b>Fuentes:</b> Banco de España, Memoria de Supervisión 2025 (1.er semestre de 2025) · EBA y BCE, 2025 Report on Payment Fraud (EEE, 2024) · ESMA, Costs and Performance of EU Retail Investment Products 2025 (marzo de 2026) · Payment Systems Regulator, panel del 1.er trimestre de 2026 (estafas cubiertas por la norma) · MCP de MyInvestor (fondo al 0,06 %) · Mediciones propias del 11 de noviembre de 2026 (<code>npm run eval</code>, <code>npm run eval:holdout</code>, <code>npm test</code>).
+</footer>
 
 </body>
 </html>
