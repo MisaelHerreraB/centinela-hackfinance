@@ -2,7 +2,7 @@
 
 Para la presentación `CENTINELA_PRESENTACION_V2.pptx` (19 diapositivas: 16 de exposición y 3 de apéndice) y la demo en modo escenario (`/escenario.html`).
 
-**Duración:** unos 6 minutos (algo menos de 5 hablando, más los silencios de la demo). Al final hay una versión de 4 minutos. Cronometradlo en el ensayo: es una estimación.
+**Duración:** unos 6 minutos (algo menos de 5 hablando, más los silencios de la demo). Al final hay una versión de 4 minutos. Cronometradlo en el ensayo: es una estimación. **Preguntad a la organización cuánto tiempo tenéis:** no lo hemos visto escrito en las bases, y nuestras notas internas daban por hecho 5 minutos de exposición y 3 de demo.
 
 **Reparto:**
 - **A** cuenta el problema, el porqué ahora, el negocio y el cierre.
@@ -14,6 +14,7 @@ Para la presentación `CENTINELA_PRESENTACION_V2.pptx` (19 diapositivas: 16 de e
 2. Chrome con `http://localhost:3000/escenario.html`, en pantalla completa (tecla `F`), en el acto 1, paso 1. Servidor recién arrancado con `npm start`.
 3. Volumen del portátil alto: en la demo se oye al estafador y a Centinela.
 4. Probar el cambio entre las dos ventanas (`Cmd + Tab`).
+5. Con la wifi de la sala, ejecutar `npm run check:mcp`. Tiene que acabar en «El MCP funciona en vivo con la app». Si no, en el acto 2 la pantalla dirá «caché»: en ese caso decid «el catálogo de MyInvestor», sin «en vivo».
 
 ---
 
@@ -152,7 +153,7 @@ Quitad esto y el resto se queda igual:
 | «El 85 % en España» | «El 85 %, según el informe europeo de la EBA y el BCE» |
 | «Traspaso exento de impuestos» | «Sin pagar impuestos por el cambio; se tributa al reembolsar» |
 | «MyInvestor es la primera entidad de Europa con MCP» | «MyInvestor abrió su catálogo a la IA en junio de 2026» |
-| «Centinela mide la velocidad del habla» | «En la demo el ritmo es el del guion; con audio real lo mediría ElevenLabs» |
+| «El estafador hablaba a 182 palabras por minuto», como si fuera una llamada real | «ElevenLabs Scribe mide el ritmo: 182 palabras por minuto en el audio de la demo, que es sintético» |
 | «Detecta cualquier estafa» | «30 de 30 en nuestros casos y 26 de 27 en una muestra pequeña de casos nuevos» |
 
 | «El 88 % de los usuarios ignora los avisos genéricos (BIT y FCA)» | No lo digáis: esa cifra no aparece en ninguna fuente. Usad el ensayo de Ontario y el BIT (10 % frente a 31 %) |

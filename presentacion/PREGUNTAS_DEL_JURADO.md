@@ -129,7 +129,7 @@ No, y a propósito. Centinela analiza lo que se dice, no quién lo dice. Eso es 
 ElevenLabs Scribe devuelve cada palabra con su marca de tiempo, y el código calcula las palabras por minuto. El ritmo se muestra como información, pero no cambia la puntuación de riesgo: hablar rápido no es una estafa.
 
 ### ¿Con qué está hecho? ¿Escala?
-Node.js sin ninguna dependencia externa, unas 6.000 líneas, con Docker. Tiene 85 pruebas automáticas. Es un prototipo de hackathon que corre en un portátil: no lo hemos probado con carga. El motor de reglas no guarda estado, así que esa parte escala sin más; lo que habría que dimensionar son las llamadas al modelo.
+Node.js sin ninguna dependencia externa, unas 7.000 líneas de JavaScript de aplicación (unas 11.000 contando pruebas y scripts), con Docker. Tiene 85 pruebas automáticas. Es un prototipo de hackathon que corre en un portátil: no lo hemos probado con carga. El motor de reglas no guarda estado, así que esa parte escala sin más; lo que habría que dimensionar son las llamadas al modelo.
 
 ### ¿Dónde están las claves? ¿Es seguro?
 Las claves están en un archivo local que no se sube al repositorio. El servidor solo escucha en la propia máquina, rechaza peticiones de otros orígenes y solo acepta cambiar claves desde el mismo ordenador. Hay topes de gasto para Claude y para ElevenLabs.
