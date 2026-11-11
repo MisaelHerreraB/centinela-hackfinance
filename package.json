@@ -4,11 +4,11 @@
   "description": "Centinela: Antes de firmar, pregúntale — Cortafuegos financiero multimodal, auditor de costes conectado al MCP real de MyInvestor y gobernanza programable In-App (HackFinance 2026 - Across the lake)",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node src/server.js",
-    "eval": "node src/evals/run_evals.js",
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "dev": "node --env-file-if-exists=.env src/server.js",
+    "eval": "node --env-file-if-exists=.env src/evals/run_evals.js",
     "test": "node --test test/patch.test.js",
-    "check:mcp": "node scripts/check_mcp.js"
+    "check:mcp": "node --env-file-if-exists=.env scripts/check_mcp.js"
   },
   "keywords": [
     "myinvestor",

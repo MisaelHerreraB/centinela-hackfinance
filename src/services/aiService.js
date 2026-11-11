@@ -218,7 +218,7 @@ Texto/Contexto adicional: ${text}`
         body: JSON.stringify({
           model: CLAUDE_MODEL,
           max_tokens: 700,
-          temperature: 0,
+          // Sin temperature: claude-sonnet-5-5 rechaza ese parámetro con HTTP 400
           messages: [{ role: 'user', content: contentBlocks }]
         }),
         signal: controller.signal
