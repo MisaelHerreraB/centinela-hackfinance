@@ -52,6 +52,41 @@ function getClaudeUsage() {
   return JSON.parse(JSON.stringify(claudeUsageByModel));
 }
 
+/**
+ * Envía una petición a /v1/messages. Si la API rechaza (HTTP 400) los parámetros opcionales de
+ * "pensamiento" (output_config.effort / thinking), reintenta UNA vez sin ellos y lo recuerda para ese
+ * modelo: así un cambio de la API en esos parámetros no deja la demo sin Claude.
+ */
+const claudeOptionalParamsRejected = new Set();
+function withoutOptionalParams(body) {
+  const { output_config, thinking, ...rest } = body;
+  return rest;
+}
+async function postClaudeMessages(body, signal) {
+  const send = (payload) =>
+    fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': runtimeAnthropicKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(payload),
+      signal
+    });
+  const hasOptional = Boolean(body.output_config || body.thinking);
+  if (hasOptional && claudeOptionalParamsRejected.has(body.model)) return send(withoutOptionalParams(body));
+  const response = await send(body);
+  if (response.status !== 400 || !hasOptional) return response;
+  const errText = await response.text().catch(() => '');
+  if (/output_config|effort|thinking/i.test(errText) && reserveClaudeCall()) {
+    claudeOptionalParamsRejected.add(body.model);
+    console.warn(`[Centinela] ${body.model} rechazó output_config/thinking; se reintenta sin esos parámetros.`);
+    return send(withoutOptionalParams(body));
+  }
+  return new Response(errText, { status: 400 });
+}
+
 // Solo para tests y scripts de medición: fija el tope y pone el contador a cero.
 function setClaudeCallLimit(limit) {
   claudeCallLimit = Math.max(0, Math.floor(Number(limit) || 0));
@@ -265,23 +300,17 @@ Texto/Contexto adicional: ${text}`
 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 20000);
-      const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': runtimeAnthropicKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
+      const response = await postClaudeMessages(
+        {
           model: CLAUDE_MODEL,
           // Sonnet 5.5 y Haiku 5.5 devuelven 400 con temperature/top_p/top_k: no se envían.
           // Los tokens de "thinking" cuentan dentro de max_tokens, por eso se deja margen.
           max_tokens: 2000,
           ...claudeThinkingParams(CLAUDE_MODEL),
           messages: [{ role: 'user', content: contentBlocks }]
-        }),
-        signal: controller.signal
-      });
+        },
+        controller.signal
+      );
       clearTimeout(timer);
 
       if (response.ok) {
@@ -757,17 +786,15 @@ async function pingClaude(model = CLAUDE_CALL_MODEL, timeoutMs = 15000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': runtimeAnthropicKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
+    const response = await postClaudeMessages(
+      {
         model,
         max_tokens: 300,
         ...claudeThinkingParams(model),
         messages: [{ role: 'user', content: 'Responde únicamente con la palabra: OK' }]
-      }),
-      signal: controller.signal
-    });
+      },
+      controller.signal
+    );
     if (!response.ok) {
       const errBody = await response.text().catch(() => '');
       return { ok: false, reason: `HTTP_${response.status} ${errBody.slice(0, 300)}`.trim(), latency_ms: Date.now() - t0 };
@@ -815,14 +842,8 @@ async function analyzeCallWithClaude({ text = '', model = CLAUDE_CALL_MODEL, tim
   try {
     for (let round = 1; round <= CLAUDE_CALL_MAX_ROUNDS; round++) {
       if (!reserveClaudeCall()) return fail('CLAUDE_BUDGET_EXHAUSTED');
-      const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': runtimeAnthropicKey,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
+      const response = await postClaudeMessages(
+        {
           model,
           max_tokens: 2000,
           system: CALL_SYSTEM_PROMPT,
@@ -830,9 +851,9 @@ async function analyzeCallWithClaude({ text = '', model = CLAUDE_CALL_MODEL, tim
           tool_choice: { type: 'auto' },
           ...claudeThinkingParams(model),
           messages
-        }),
-        signal: controller.signal
-      });
+        },
+        controller.signal
+      );
       usage.requests += 1;
       if (!response.ok) {
         const errBody = await response.text().catch(() => '');

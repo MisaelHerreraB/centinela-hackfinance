@@ -303,6 +303,7 @@ async function runScenario1Scam() {
     await new Promise((r) => setTimeout(r, 200));
   }
 
+  showAnalyzing();
   const res = await fetch('/api/analyze-call', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -434,6 +435,12 @@ function continueFraudWithOverride(amountEur) {
       </div>
     `;
   }
+}
+
+// Con Claude el análisis de una llamada tarda unos segundos: se avisa mientras tanto.
+function showAnalyzing() {
+  const badge = document.getElementById('latency-badge');
+  if (badge) badge.textContent = '⏳ Analizando…';
 }
 
 function renderCallVerdict(data) {
@@ -936,6 +943,7 @@ async function runUnlockTaxExtortionCase() {
     Para <span class="hl-danger">liberar tus ganancias tienes que pagar antes el 15% de tasa de desbloqueo e impuesto previo para retirar</span>
     transfiriendo <strong>5.700 €</strong> hoy al IBAN <span class="hl-danger">LT60 3250 0811 9922 1100</span>.”
   `;
+  showAnalyzing();
   const res = await fetch('/api/analyze-call', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -957,6 +965,7 @@ async function runSmishingQuickCase() {
     “AVISO URGENTE MYINVESTOR: Su cuenta sufre <span class="hl-danger">bloqueo inminente</span>.
     <span class="hl-danger">Pincha en este enlace myinvestor-seguridad.com</span> e introduce tu <span class="hl-danger">código SMS</span>.”
   `;
+  showAnalyzing();
   const res = await fetch('/api/analyze-call', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1105,6 +1114,7 @@ async function processLiveSpokenInput(transcript, extra = {}) {
     const data = await res.json().catch(() => ({ ok: false, error: `Error HTTP ${res.status}` }));
     renderDocumentVerdict(data);
   } else {
+    showAnalyzing();
     const res = await fetch('/api/analyze-call', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

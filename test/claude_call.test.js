@@ -387,6 +387,26 @@ test('Si Claude contesta con texto y sin report_scam_signals, se le pide una vez
   assert.equal(ko.usage.requests, 3, 'como máximo 3 rondas');
 });
 
+test('Si la API rechaza output_config/thinking con un 400, se reintenta una vez sin ellos y se recuerda', async () => {
+  const rejected = { status: 400, json: { type: 'error', error: { type: 'invalid_request_error', message: 'output_config.effort: Extra inputs are not permitted' } } };
+  mock.script = [rejected, report(EMPTY), report(EMPTY)];
+  const first = await ai.analyzeCallWithClaude({ text: LEGIT, model: 'claude-modelo-antiguo' });
+  assert.equal(first.ok, true);
+  assert.ok(mock.bodies[0].body.output_config, 'el primer intento lleva effort');
+  assert.equal(mock.bodies[1].body.output_config, undefined, 'el reintento va sin effort');
+  assert.equal(mock.bodies[1].body.tools.length, 3, 'lo demás no cambia');
+  const second = await ai.analyzeCallWithClaude({ text: LEGIT, model: 'claude-modelo-antiguo' });
+  assert.equal(second.ok, true);
+  assert.equal(mock.bodies.length, 3, 'la segunda vez ya no se prueba con effort');
+  assert.equal(mock.bodies[2].body.output_config, undefined);
+  // Un 400 por otro motivo no se reintenta
+  mock.script = [{ status: 400, json: { type: 'error', error: { type: 'invalid_request_error', message: 'tools.0: bad schema' } } }];
+  const other = await ai.analyzeCallWithClaude({ text: LEGIT });
+  assert.equal(other.ok, false);
+  assert.match(other.reason, /HTTP_400/);
+  assert.match(other.reason, /bad schema/);
+});
+
 test('Una negativa del modelo (stop_reason "refusal") no rompe nada: solo reglas', async () => {
   mock.script = [{ status: 200, json: { content: [], stop_reason: 'refusal', usage: { input_tokens: 10, output_tokens: 0 } } }];
   const { json } = await post('/api/analyze-call', { text: PARAPHRASE });
