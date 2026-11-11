@@ -230,6 +230,7 @@ async function synthesizeSpeech(text, { model = TTS_MODEL, voiceId = VOICE_ID, v
     usage.tts_chars += clean.length;
     writeCache(ttsCachePath(clean + settingsKey, voiceId, model), audioBuffer);
     appendLedger({ kind: 'tts', model, voice_id: voiceId, chars: clean.length, credits });
+    lastError = null;
     return { ok: true, audioBuffer, contentType: 'audio/mpeg', source: 'LIVE', model, chars: clean.length, credits_estimated: credits, latency_ms: Date.now() - t0 };
   } catch (err) {
     return failure(errorReason(err));
@@ -266,7 +267,8 @@ async function transcribeAudio({ audioBase64, mimeType = 'audio/webm', durationS
     return { ok: false, provider: code.split(' ')[0], code, model: STT_MODEL, text: '', reason: message, fallback: 'WEB_SPEECH_API', ...extra };
   };
   if (!audioBase64) return fallback('NO_AUDIO', 'No se ha recibido audio.');
-  const buffer = Buffer.from(String(audioBase64).replace(/^data:[^;]+;base64,/, ''), 'base64');
+  // La cabecera puede llevar parámetros ("data:audio/webm;codecs=opus;base64,..."): se quita hasta la coma.
+  const buffer = Buffer.from(String(audioBase64).replace(/^data:[^,]*,/, ''), 'base64');
   if (buffer.length === 0) return fallback('NO_AUDIO', 'No se ha recibido audio.');
   if (sttMode === 'off') return fallback('STT_OFF', 'La transcripción con ElevenLabs está desactivada (ELEVENLABS_STT=off).');
 
@@ -330,6 +332,7 @@ async function transcribeAudio({ audioBase64, mimeType = 'audio/webm', durationS
     };
     writeCache(cacheFile, JSON.stringify(result));
     appendLedger({ kind: 'stt', model: STT_MODEL, seconds: round1(audioSeconds), credits });
+    lastError = null;
     return { ...result, ok: true, cached: false, credits_estimated: credits, latency_ms: Date.now() - t0 };
   } catch (err) {
     return fallback(errorReason(err), 'No se pudo transcribir el audio (fallo de red o tiempo agotado).');

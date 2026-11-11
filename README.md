@@ -149,6 +149,19 @@ Todos dicen cuánto van a gastar **antes** de llamar, y lo ya generado no se vue
 | Audio de ejemplo de la llamada (277 caracteres, 17,1 s de audio) | 1,8 s | 277 |
 | Transcripción con `scribe_v2` del audio de ejemplo (17,1 s, 51 palabras) | 1,0 s | 95 |
 
+En la interfaz (mismo día, llamadas y SMS analizados con Claude Sonnet 5.5):
+
+| Flujo | Transcripción | Veredicto en pantalla | Voz tras el veredicto |
+| --- | --- | --- | --- |
+| Acto 1 con voz | no aplica (guion de texto) | 5,9 s tras el guion animado | 0,02 s (caché) |
+| Audio de ejemplo de la llamada | 0,01 s (caché) | 5,3 s | 0,02 s (caché) |
+| Micrófono, frase de estafa de 8 s | 0,8 s (Scribe, 44 créditos) | 5,9 s después de soltar | 0,6 s (Flash, 112 créditos) |
+| Micrófono, frase normal de 3 s | 0,7 s (Scribe, 18 créditos) | 3,9 s después de soltar | 0,4 s (Flash, 61 créditos) |
+
+Casi todo el tiempo hasta el veredicto es el análisis de Claude (2,9 s a 5,8 s); ElevenLabs añade menos de 1 s. Las dos pruebas del micrófono se hicieron inyectando un audio en la página como si fuera el micrófono (grabación real con `MediaRecorder` y transcripción real con Scribe), no con una persona hablando.
+
+Los avisos de "falta un dato" y los mensajes de error no gastan créditos de voz: solo suenan con ElevenLabs si ya estaban generados.
+
 El audio de ejemplo se transcribe sin errores y da **182 palabras por minuto**, medidas con las marcas de tiempo de Scribe (por encima del umbral de 175: "presión acústica alta"). Es una voz sintética generada a un ritmo un 15 % más rápido de lo normal, no una llamada real.
 
 Las consultas de saldo y de voz son opcionales: con una clave restringida a voz y transcripción (sin los permisos `user_read` y `voices_read`) los scripts lo indican como aviso y el saldo hay que mirarlo en la web de ElevenLabs.

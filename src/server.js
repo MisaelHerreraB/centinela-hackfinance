@@ -470,7 +470,8 @@ const server = http.createServer(async (req, res) => {
     // 8B. Síntesis de Voz con ElevenLabs (con fallback automático en cliente si no hay key)
     if (pathname === '/api/tts' && req.method === 'POST') {
       const body = await readJsonBody(req);
-      const ttsRes = await synthesizeSpeechElevenLabs(body.text || '');
+      // `cacheOnly: true` (avisos y mensajes de error): suena con ElevenLabs solo si ya está generado; nunca gasta.
+      const ttsRes = await synthesizeSpeechElevenLabs(body.text || '', { cacheOnly: body.cacheOnly === true });
       if (ttsRes.ok) {
         res.writeHead(200, {
           'Content-Type': 'audio/mpeg',

@@ -286,6 +286,29 @@ test('STT: tope de créditos, audio demasiado largo, error HTTP y falta de clave
   assert.match(noKey.reason, /clave de ElevenLabs/);
 });
 
+test('STT: el audio del micrófono llega bien aunque el tipo lleve parámetros (audio/webm;codecs=opus)', async () => {
+  const b64 = Buffer.from('grabacion-del-microfono').toString('base64');
+  const withCodecs = await stt({ audioBase64: `data:audio/webm;codecs=opus;base64,${b64}`, mimeType: 'audio/webm;codecs=opus', durationSec: 4 });
+  assert.equal(withCodecs.ok, true);
+  assert.match(calls('/v1/speech-to-text')[0].raw, /grabacion-del-microfono/, 'se envían los bytes del audio, no la cabecera data:');
+  assert.match(calls('/v1/speech-to-text')[0].raw, /filename="audio\.webm"/);
+  // El mismo audio enviado como base64 a secas es el mismo audio: sale de la caché
+  const raw = await stt({ audioBase64: b64, mimeType: 'audio/webm;codecs=opus' });
+  assert.equal(raw.cached, true);
+  assert.equal(calls('/v1/speech-to-text').length, 1);
+});
+
+test('TTS: los avisos (cacheOnly) nunca gastan créditos; solo suenan con ElevenLabs si ya estaban generados', async () => {
+  const post = (body) => fetch(`${BASE}/api/tts`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const miss = await (await post({ text: 'No se pudo transcribir el audio.', cacheOnly: true })).json();
+  assert.equal(miss.reason, 'CACHE_ONLY_MISS');
+  assert.equal(calls('/v1/text-to-speech/').length, 0);
+  await tts('Aviso ya generado.');
+  const hit = await post({ text: 'Aviso ya generado.', cacheOnly: true });
+  assert.match(hit.headers.get('content-type'), /audio\/mpeg/);
+  assert.equal(calls('/v1/text-to-speech/').length, 1);
+});
+
 test('STT: interruptor cache_only sirve lo ya transcrito y no llama para audios nuevos', async () => {
   await stt({ audioBase64: AUDIO, mimeType: 'audio/webm', durationSec: 12 });
   el.configure({ stt: 'cache_only' });

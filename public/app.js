@@ -37,7 +37,7 @@ function renderNeedsInput(title, message, extraJson = null) {
   document.getElementById('action-container').innerHTML =
     '<div style="color:var(--muted); font-weight:600;">Escribe el dato en la caja de texto o usa el micrófono para continuar.</div>';
   if (extraJson) document.getElementById('mcp-inspector-box').textContent = JSON.stringify(extraJson, null, 2);
-  speakMessage(message);
+  speakMessage(message, '', { cacheOnly: true }); // un aviso de "falta un dato" no gasta créditos de voz
 }
 
 const PRESET_DOCUMENTS = {
@@ -243,7 +243,7 @@ function setVoiceEngineTag(text) {
   if (tag) tag.textContent = text;
 }
 
-async function speakMessage(text, extraLowVisionDetails = '') {
+async function speakMessage(text, extraLowVisionDetails = '', { cacheOnly = false } = {}) {
   const fullText =
     currentAccessMode === 'LOW_VISION' && extraLowVisionDetails
       ? `${text} Lectura preventiva de Baja Visión antes de firmar: ${extraLowVisionDetails}`
@@ -272,7 +272,8 @@ async function speakMessage(text, extraLowVisionDetails = '') {
     const res = await fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: fullText })
+      // Los avisos de "falta un dato" o de error no gastan créditos: solo suenan con ElevenLabs si ya están en caché
+      body: JSON.stringify({ text: fullText, ...(cacheOnly ? { cacheOnly: true } : {}) })
     });
     if (mySeq !== voiceRequestSeq) return; // ya hay un mensaje más reciente
     const contentType = res.headers.get('content-type') || '';
@@ -1148,7 +1149,8 @@ async function transcribeAndAnalyze({ dataUrl, mimeType, durationSec = null, bro
     const sttRes = await fetch('/api/stt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ audioBase64: dataUrl, mimeType, ...(durationSec ? { durationSec } : {}) })
+      // Se envía solo el base64: el tipo que da el navegador puede llevar parámetros ("audio/webm;codecs=opus")
+      body: JSON.stringify({ audioBase64: String(dataUrl).slice(String(dataUrl).indexOf(',') + 1), mimeType, ...(durationSec ? { durationSec } : {}) })
     });
     sttData = await sttRes.json().catch(() => ({ ok: false, reason: `Error HTTP ${sttRes.status}` }));
   } catch (e) {
