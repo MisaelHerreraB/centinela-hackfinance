@@ -1,3 +1,6 @@
+// Primera línea: cargar .env ANTES de que ningún módulo lea process.env (las claves nunca se imprimen).
+require('./config/loadEnv').loadEnv();
+
 /**
  * Servidor Principal de Centinela (HTTP + API REST + Cliente MCP MyInvestor + Servidor MCP Propio)
  */
@@ -24,6 +27,7 @@ const {
   getAiStatus,
   CLAUDE_CENTINELA_TOOLS,
   extractFinancialOfferWithClaude,
+  analyzeCallWithClaude,
   transcribeAudioWithElevenLabsScribe,
   synthesizeSpeechElevenLabs
 } = require('./services/aiService');
@@ -155,13 +159,16 @@ const server = http.createServer(async (req, res) => {
         claimed_product = '',
         amount_eur = 0,
         speech_rate_wpm = null,
-        speech_rate_source = null
+        speech_rate_source = null,
+        // Por defecto Claude analiza el texto si hay clave (también en los botones de la demo).
+        // `useClaude: false` fuerza el análisis solo con reglas.
+        useClaude = true
       } = body;
 
       if (!String(text).trim() && !String(entity_name).trim() && !String(iban).trim() && !String(claimed_product).trim()) {
         return sendJson(res, 400, { ok: false, error: 'No hay contenido que analizar (texto, entidad, IBAN o producto).' });
       }
-      const amountEur = Math.max(0, Number(amount_eur) || 0);
+      let amountEur = Math.max(0, Number(amount_eur) || 0);
 
       let mcpCheck = {
         mcp_status: 'SKIPPED',
@@ -170,26 +177,74 @@ const server = http.createServer(async (req, res) => {
         matches: []
       };
 
-      if (claimed_product) {
-        mcpCheck = await verifyProductExistsInMyInvestor(claimed_product);
+      // Claude (si hay clave) y la comprobación MCP del producto van en paralelo para no sumar latencias.
+      // Sin clave, sin texto o con useClaude:false no se llama a Claude: el flujo es el de solo reglas.
+      const claudeWanted = useClaude !== false && Boolean(String(text).trim()) && getAiStatus().claude_configured;
+      const [claudeRes, mcpRes] = await Promise.all([
+        claudeWanted ? analyzeCallWithClaude({ text: String(text) }) : Promise.resolve(null),
+        claimed_product ? verifyProductExistsInMyInvestor(claimed_product) : Promise.resolve(null)
+      ]);
+      if (mcpRes) mcpCheck = mcpRes;
+      const claudeOk = Boolean(claudeRes && claudeRes.ok);
+
+      // Datos que Claude ha leído en el texto y el validador ha comprobado: solo rellenan huecos,
+      // nunca pisan lo que ya venía en la petición. El importe lo calcula el código a partir de la cita.
+      const effectiveEntity = entity_name || (claudeOk && claudeRes.entity_name) || '';
+      const effectiveIban = iban || (claudeOk && claudeRes.iban) || '';
+      let amountSource = amountEur > 0 ? 'REQUEST' : null;
+      if (amountEur === 0 && claudeOk && claudeRes.amount_eur > 0) {
+        amountEur = claudeRes.amount_eur;
+        amountSource = 'CITA_VALIDADA_DE_CLAUDE';
       }
 
       const fraudAnalysis = analyzeFraudRisk({
         text,
-        entity_name,
-        iban,
+        entity_name: effectiveEntity,
+        iban: effectiveIban,
         claimed_product,
         product_exists_in_mcp: mcpCheck.exists_in_catalog,
         amount_eur: amountEur,
         speech_rate_wpm,
-        speech_rate_source
+        speech_rate_source,
+        ai_signals: claudeOk ? claudeRes.signals : null
       });
+      // Si se intentó usar Claude y falló (timeout, HTTP, tope...), se dice: el veredicto es solo de reglas.
+      fraudAnalysis.claude_error = claudeRes && !claudeRes.ok ? claudeRes.reason : null;
+
+      const claudeAnalysis = claudeRes
+        ? {
+            used: claudeOk,
+            model: claudeRes.model,
+            latency_ms: claudeRes.latency_ms,
+            rounds: claudeRes.rounds || claudeRes.usage?.requests || 0,
+            error: claudeOk ? null : claudeRes.reason,
+            signals_accepted: claudeOk ? claudeRes.signals : [],
+            discarded_by_validator: claudeOk ? claudeRes.discarded : [],
+            extracted: claudeOk
+              ? {
+                  entity_name: claudeRes.entity_name,
+                  iban: claudeRes.iban,
+                  amount_eur_quote: claudeRes.amount_eur_quote,
+                  amount_eur_parsed_by_code: claudeRes.amount_eur,
+                  claimed_product: claudeRes.claimed_product
+                }
+              : null,
+            read_only_tool_calls: claudeRes.tool_calls || [],
+            usage: claudeRes.usage
+          }
+        : {
+            used: false,
+            error: null,
+            reason: useClaude === false ? 'DESACTIVADO_EN_LA_PETICION' : !String(text).trim() ? 'SIN_TEXTO' : 'SIN_CLAVE_DE_CLAUDE'
+          };
+      const aiNow = getAiStatus();
+      claudeAnalysis.budget = { calls_used: aiNow.claude_calls_used, calls_max: aiNow.claude_calls_max, exhausted: aiNow.claude_budget_exhausted };
 
       const contractExecution = evaluateContractAction({
         verdict: fraudAnalysis.verdict,
         amount_eur: amountEur,
-        beneficiary_name: entity_name || fraudAnalysis.cnmv_check?.entity || 'Interlocutor telefónico',
-        iban: iban || fraudAnalysis.iban_check?.iban || '',
+        beneficiary_name: effectiveEntity || fraudAnalysis.cnmv_check?.entity || 'Interlocutor telefónico',
+        iban: effectiveIban || fraudAnalysis.iban_check?.iban || '',
         fraud_analysis: fraudAnalysis
       });
 
@@ -224,11 +279,14 @@ const server = http.createServer(async (req, res) => {
           entity_name,
           iban,
           claimed_product,
-          amount_eur: amountEur
+          amount_eur: amountEur,
+          amount_source: amountSource
         },
         step_2_verdict: {
           verdict: fraudAnalysis.verdict,
+          analysis_engine: fraudAnalysis.analysis_engine,
           fraud_analysis: fraudAnalysis,
+          claude_analysis: claudeAnalysis,
           mcp_verification: mcpCheck
         },
         step_3_action: contractExecution,

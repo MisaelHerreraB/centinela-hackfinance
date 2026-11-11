@@ -141,6 +141,37 @@ const MANIPULATION_PATTERNS = [
   }
 ];
 
+// Señales que solo puede aportar el análisis de lenguaje (Claude). El peso lo fija este motor, no el modelo.
+const AI_ONLY_SIGNALS = {
+  SUPLANTACION_ENTIDAD: {
+    label: 'Se hace pasar por una entidad, autoridad o persona de confianza',
+    cognitive_bias: 'Sesgo de Autoridad y Confianza Suplantada (Impersonation Fraud)',
+    weight: 40,
+    explanation: 'Quien llama o escribe aparenta ser alguien de confianza. Compruébalo siempre por el canal oficial que ya conoces, nunca por el que te indican en el mensaje.'
+  },
+  INSTRUCCION_OCULTA: {
+    label: 'El mensaje intenta dar órdenes al asistente para que lo dé por bueno',
+    cognitive_bias: 'Inyección de instrucciones (Prompt Injection) contra el verificador',
+    weight: 30,
+    explanation: 'Un mensaje legítimo no necesita pedirle a tu asistente que ignore sus comprobaciones. Centinela trata el texto como un dato, no como una orden.'
+  },
+  OTRA: {
+    label: 'Otra táctica de manipulación detectada',
+    cognitive_bias: 'Señal adicional identificada por el análisis de lenguaje',
+    weight: 10,
+    explanation: 'Señal adicional identificada por el análisis de lenguaje. Por sí sola no indica una estafa.'
+  }
+};
+
+// Tipos de señal que se aceptan de Claude: los de las reglas (mismo peso que la regla) + los tres anteriores.
+const AI_SIGNAL_TYPES = [...MANIPULATION_PATTERNS.map((p) => p.id), ...Object.keys(AI_ONLY_SIGNALS)];
+
+function aiSignalDefinition(type) {
+  const rule = MANIPULATION_PATTERNS.find((p) => p.id === type);
+  if (rule) return { label: rule.label, cognitive_bias: rule.cognitive_bias, weight: rule.weight, explanation: rule.explanation };
+  return AI_ONLY_SIGNALS[type] || null;
+}
+
 function normalizeText(str = '') {
   return String(str)
     .toLowerCase()
@@ -234,7 +265,9 @@ function analyzeFraudRisk({
   product_exists_in_mcp = true,
   amount_eur = 0,
   speech_rate_wpm = null,
-  speech_rate_source = null
+  speech_rate_source = null,
+  // Señales de Claude YA VALIDADAS (cita literal comprobada en el texto). null/undefined = no se usó Claude.
+  ai_signals = null
 }) {
   const combinedText = `${text} ${entity_name} ${claimed_product}`;
   const signals = [];
@@ -251,7 +284,34 @@ function analyzeFraudRisk({
         label: pattern.label,
         cognitive_bias: pattern.cognitive_bias,
         evidence: match[0],
-        explanation: pattern.explanation
+        explanation: pattern.explanation,
+        source: 'RULES'
+      });
+    }
+  }
+
+  // 1B. Señales aportadas por Claude (ya validadas). Solo pueden AÑADIR: nunca quitan una señal de las reglas.
+  // Pesan lo mismo que la regla equivalente y un mismo tipo no se cuenta dos veces.
+  const claudeUsed = Array.isArray(ai_signals);
+  if (claudeUsed) {
+    for (const ai of ai_signals) {
+      const def = ai && aiSignalDefinition(ai.type);
+      if (!def) continue;
+      const existing = signals.find((s) => s.type === ai.type);
+      if (existing) {
+        if (existing.source === 'RULES') existing.confirmed_by_claude = true;
+        continue;
+      }
+      riskScore += def.weight;
+      signals.push({
+        type: ai.type,
+        severity: def.weight >= 40 ? 'ALTA' : 'MEDIA',
+        label: def.label,
+        cognitive_bias: def.cognitive_bias,
+        evidence: ai.evidence_quote,
+        explanation: def.explanation,
+        claude_explanation: ai.explanation || null,
+        source: 'CLAUDE'
       });
     }
   }
@@ -266,7 +326,8 @@ function analyzeFraudRisk({
       label: `Entidad alertada por la CNMV: ${cnmvCheck.entity}`,
       cognitive_bias: 'Suplantación de Autoridad Financiera Regulada',
       evidence: cnmvCheck.warning_date,
-      explanation: cnmvCheck.reason
+      explanation: cnmvCheck.reason,
+      source: 'RULES'
     });
   }
 
@@ -282,7 +343,8 @@ function analyzeFraudRisk({
       label: `SEPA VoP ${ibanCheck.sepa_vop_status} · IBAN con ${ibanCheck.reports} denuncias (${ibanCheck.iban})`,
       cognitive_bias: 'Asimetría de Identidad de Beneficiario (SEPA Instant Payments Reg. UE 2024/886)',
       evidence: `Titular real: ${ibanCheck.registered_holder}`,
-      explanation: ibanCheck.note
+      explanation: ibanCheck.note,
+      source: 'RULES'
     });
   }
 
@@ -295,7 +357,8 @@ function analyzeFraudRisk({
       label: `IBAN extranjero (${ibanCheck.iban.slice(0, 2)}) sin verificar`,
       cognitive_bias: 'Verificación de beneficiario pendiente',
       evidence: ibanCheck.iban,
-      explanation: ibanCheck.note
+      explanation: ibanCheck.note,
+      source: 'RULES'
     });
   }
 
@@ -309,7 +372,8 @@ function analyzeFraudRisk({
       label: `Producto inexistente en catálogo oficial: "${claimed_product}"`,
       cognitive_bias: 'Efecto Halo de Marca Conocida (Product Spoofing)',
       evidence: '0 coincidencias en MCP MyInvestor',
-      explanation: 'El producto mencionado no existe en la base de datos oficial regulada.'
+      explanation: 'El producto mencionado no existe en la base de datos oficial regulada.',
+      source: 'RULES'
     });
   }
 
@@ -335,7 +399,7 @@ function analyzeFraudRisk({
 
   // 6. Máquina de Estados de la Kill-Chain Conversacional (5 Fases — Modelo COLD & PreScam Benchmark, 2025)
   const activeStages = new Set();
-  if (cnmvCheck.flagged || (claimed_product && product_exists_in_mcp === false) || signals.some((s) => s.type === 'ESCALADO_TRAS_MICRO_RETIRO_CEBO')) {
+  if (cnmvCheck.flagged || (claimed_product && product_exists_in_mcp === false) || signals.some((s) => s.type === 'ESCALADO_TRAS_MICRO_RETIRO_CEBO' || s.type === 'SUPLANTACION_ENTIDAD')) {
     activeStages.add(1);
   }
   if (signals.some((s) => s.type === 'URGENCIA_ARTIFICIAL')) {
@@ -402,6 +466,8 @@ function analyzeFraudRisk({
   return {
     verdict: isScam ? 'ESTAFA' : 'ADELANTE',
     risk_score: finalScore,
+    // 'RULES' = solo reglas · 'RULES+CLAUDE' = reglas + señales de Claude validadas (aunque Claude no encontrara ninguna)
+    analysis_engine: claudeUsed ? 'RULES+CLAUDE' : 'RULES',
     signals,
     cnmv_check: cnmvCheck,
     iban_check: ibanCheck,
@@ -420,6 +486,8 @@ module.exports = {
   CNMV_WARNING_ENTITIES,
   REPORTED_IBANS,
   MANIPULATION_PATTERNS,
+  AI_ONLY_SIGNALS,
+  AI_SIGNAL_TYPES,
   checkCnmvWarning,
   checkIbanStatus,
   analyzeFraudRisk

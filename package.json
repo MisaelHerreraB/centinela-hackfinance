@@ -7,8 +7,10 @@
     "start": "node src/server.js",
     "dev": "node src/server.js",
     "eval": "node src/evals/run_evals.js",
-    "test": "node --test test/patch.test.js",
-    "check:mcp": "node scripts/check_mcp.js"
+    "eval:holdout": "node src/evals/run_holdout.js",
+    "test": "node --test test/patch.test.js test/claude_call.test.js test/load_env.test.js",
+    "check:mcp": "node scripts/check_mcp.js",
+    "smoke:claude": "node scripts/smoke_claude.js"
   },
   "keywords": [
     "myinvestor",

@@ -6,6 +6,8 @@
  * (3) que una búsqueda real devuelve fondos y (4) si la app los usaría en vivo o tiraría de caché.
  */
 
+require('../src/config/loadEnv').loadEnv();
+
 const {
   DEFAULT_MCP_URL,
   listMyInvestorTools,
