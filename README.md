@@ -72,6 +72,16 @@ Evalúa 10 casos de `ESTAFA`, 10 casos de `CARO` y 10 casos de `ADELANTE`, midie
 npm run eval
 ```
 
+### A2. Medir casos que el motor no ha visto (reglas frente a reglas + Claude)
+`src/evals/cases_nuevos.js` tiene 12 mensajes que no están en la batería de 30: 8 estafas con otros guiones (Bizum inverso, «hijo en apuros», falso policía...) y 4 mensajes normales. El motor de reglas solo reconoce los guiones que ya conoce; con `ANTHROPIC_API_KEY`, Claude señala las tácticas citando la frase literal y `src/engine/semanticSignals.js` decide el veredicto con reglas fijas.
+```bash
+npm run eval:nuevos
+```
+Resultado del 11-nov-2026 con `claude-sonnet-5-5`: solo reglas **4/12**, reglas + lectura de Claude **12/12**. Son 12 casos escritos por el equipo: una muestra pequeña.
+
+### A3. Modo escenario (demo para presentar): `http://localhost:3000/escenario.html`
+La misma demo contada paso a paso en un iPhone simulado, con el motor real detrás. Teclas y guion en [`presentacion/GUION_MODO_ESCENARIO.md`](./presentacion/GUION_MODO_ESCENARIO.md).
+
 ### B. Probar los 3 Escenarios de la Demo en Vivo en el Navegador (`http://localhost:3000`)
 En la barra superior de la aplicación encontrarás los **3 botones oficiales de la demo de 3 minutos**:
 1. **`🔴 1. Falso Bróker (Estafa 9.000 €)`:** Simula la llamada en altavoz de *Quantum Ibérica* prometiendo un 12 % garantizado. Verás avanzar la transcripción, encenderse las alertas de CNMV e IBAN reportado, a **Mi Contrato** reteniendo los 9.000 € y la notificación llegando en vivo al **móvil de Daniel** en la columna derecha.

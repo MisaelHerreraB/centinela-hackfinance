@@ -7,7 +7,8 @@
     "start": "node --env-file-if-exists=.env src/server.js",
     "dev": "node --env-file-if-exists=.env src/server.js",
     "eval": "node --env-file-if-exists=.env src/evals/run_evals.js",
-    "test": "node --test test/patch.test.js",
+    "eval:nuevos": "node --env-file-if-exists=.env src/evals/run_nuevos.js",
+    "test": "node --test test/patch.test.js test/semantic.test.js",
     "check:mcp": "node --env-file-if-exists=.env scripts/check_mcp.js"
   },
   "keywords": [

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Centinela · Modo escenario</title>
+  <link rel="stylesheet" href="/escenario.css" />
+</head>
+<body data-tone="neutral">
+
+  <!-- ========================================================================
+       MODO ESCENARIO: la misma demo, contada en el móvil de Carmen.
+       Los veredictos, señales, cifras y la gráfica salen de la API real
+       (/api/analyze-call, /api/analyze-document, /api/sign-transfer).
+       ======================================================================== -->
+  <div class="stage">
+
+    <!-- Izquierda: qué está pasando (pocas palabras, muy grandes) -->
+    <aside class="caption">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z"/></svg>
+        <span>Centinela</span><em>en la app de MyInvestor</em>
+      </div>
+      <div class="act-tag" id="act-tag"></div>
+      <h1 id="headline"></h1>
+      <p id="subline"></p>
+      <form class="challenge" id="challenge" hidden>
+        <textarea id="challenge-text" rows="3" placeholder="Escribe o dicta aquí lo que diría el estafador…"></textarea>
+        <div class="challenge-row">
+          <button type="submit" class="go">Analizar</button>
+          <span id="challenge-chips"></span>
+        </div>
+      </form>
+      <div class="verdict" id="verdict" hidden></div>
+    </aside>
+
+    <!-- Centro: el iPhone de Carmen -->
+    <main class="center">
+      <div class="phone-wrap" id="phone-wrap">
+        <div class="phone" id="phone">
+          <div class="display">
+            <div class="statusbar">
+              <span class="clock">10:42</span>
+              <span class="sys">5G <i class="bat"></i></span>
+            </div>
+            <div class="island" id="island">
+              <span class="island-dot"></span>
+              <span class="island-text" id="island-text"></span>
+              <span class="wave"><i></i><i></i><i></i><i></i><i></i></span>
+            </div>
+            <div class="view" id="view"></div>
+            <div class="push" id="push"></div>
+            <div class="sheet" id="sheet"></div>
+            <div class="flash" id="flash"></div>
+            <div class="homebar"></div>
+          </div>
+        </div>
+      </div>
+      <div class="trio" id="trio" hidden></div>
+    </main>
+
+    <!-- Derecha: lo que detecta el motor, en vivo -->
+    <aside class="engine">
+      <div class="engine-title" id="engine-title"></div>
+      <div class="gauge" id="gauge" hidden>
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="g-track" cx="60" cy="60" r="50"/>
+          <circle class="g-fill" id="g-fill" cx="60" cy="60" r="50"/>
+        </svg>
+        <div class="g-num"><b id="g-num">0</b><span>riesgo</span></div>
+        <div class="chain" id="chain"></div>
+      </div>
+      <ul class="signals" id="signals"></ul>
+      <div class="daniel" id="daniel" hidden>
+        <div class="daniel-label">Móvil de Daniel, su hijo</div>
+        <div class="mini-phone" id="mini-phone">
+          <div class="mini-clock">10:42</div>
+          <div class="mini-notif" id="mini-notif"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="hud">
+    <span class="hud-note" id="hud-note">Personas y entidades de ejemplo · veredictos del motor real</span>
+    <nav class="hud-acts" id="hud-acts"></nav>
+    <span class="hud-keys"><kbd>→</kbd> sigue <kbd>←</kbd> atrás <kbd>1</kbd>–<kbd>4</kbd> actos <kbd>M</kbd> sonido <kbd>F</kbd> completa</span>
+  </footer>
+
+  <script src="/escenario.js"></script>
+</body>
+</html>

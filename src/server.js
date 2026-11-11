@@ -25,8 +25,10 @@ const {
   CLAUDE_CENTINELA_TOOLS,
   extractFinancialOfferWithClaude,
   transcribeAudioWithElevenLabsScribe,
-  synthesizeSpeechElevenLabs
+  synthesizeSpeechElevenLabs,
+  readScamTacticsWithClaude
 } = require('./services/aiService');
+const { TACTICS, applySemanticTactics } = require('./engine/semanticSignals');
 const { runBenchmark30 } = require('./evals/run_evals');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -174,7 +176,7 @@ const server = http.createServer(async (req, res) => {
         mcpCheck = await verifyProductExistsInMyInvestor(claimed_product);
       }
 
-      const fraudAnalysis = analyzeFraudRisk({
+      let fraudAnalysis = analyzeFraudRisk({
         text,
         entity_name,
         iban,
@@ -184,6 +186,27 @@ const server = http.createServer(async (req, res) => {
         speech_rate_wpm,
         speech_rate_source
       });
+
+      // Si las reglas no reconocen el guion, Claude lee las tácticas y el código decide (semanticSignals.js).
+      // Con preview solo se hace si se pide expresamente (semantic: true), para no frenar el análisis frase a frase.
+      const wantsSemantic = body.preview === true ? body.semantic === true : body.semantic !== false;
+      if (wantsSemantic && fraudAnalysis.verdict !== 'ESTAFA' && String(text).trim().length >= 40) {
+        const reading = await readScamTacticsWithClaude(text, TACTICS);
+        fraudAnalysis = reading.ok
+          ? applySemanticTactics(fraudAnalysis, text, reading.tactics, reading)
+          : { ...fraudAnalysis, semantic_reading: { used: false, reason: reading.reason } };
+      }
+
+      // Análisis en vivo frase a frase (modo escenario): solo el veredicto del motor,
+      // sin ejecutar Mi Contrato, sin avisar a Daniel y sin escribir en el Audit Log.
+      if (body.preview === true) {
+        return sendJson(res, 200, {
+          ok: true,
+          preview: true,
+          total_latency_ms: Date.now() - t0,
+          step_2_verdict: { verdict: fraudAnalysis.verdict, fraud_analysis: fraudAnalysis }
+        });
+      }
 
       const contractExecution = evaluateContractAction({
         verdict: fraudAnalysis.verdict,
