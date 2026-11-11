@@ -40,6 +40,18 @@ function reserveClaudeCall() {
   return true;
 }
 
+// Tokens consumidos por modelo desde el arranque (según el campo `usage` que devuelve la API).
+const claudeUsageByModel = {};
+function recordClaudeUsage(model, usage) {
+  const u = (claudeUsageByModel[model] = claudeUsageByModel[model] || { requests: 0, input_tokens: 0, output_tokens: 0 });
+  u.requests += 1;
+  u.input_tokens += Number(usage?.input_tokens) || 0;
+  u.output_tokens += Number(usage?.output_tokens) || 0;
+}
+function getClaudeUsage() {
+  return JSON.parse(JSON.stringify(claudeUsageByModel));
+}
+
 // Solo para tests y scripts de medición: fija el tope y pone el contador a cero.
 function setClaudeCallLimit(limit) {
   claudeCallLimit = Math.max(0, Math.floor(Number(limit) || 0));
@@ -274,6 +286,7 @@ Texto/Contexto adicional: ${text}`
 
       if (response.ok) {
         const data = await response.json();
+        recordClaudeUsage(CLAUDE_MODEL, data?.usage);
         const rawReply = (data?.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('\n');
         const jsonMatch = rawReply.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -734,6 +747,43 @@ async function runReadOnlyCallTool(name, input = {}, budgetMs = 3000) {
 }
 
 /**
+ * Llamada mínima para comprobar que la clave y el modelo funcionan (la usa `npm run smoke:claude`).
+ * La clave no sale de este módulo.
+ */
+async function pingClaude(model = CLAUDE_CALL_MODEL, timeoutMs = 15000) {
+  const t0 = Date.now();
+  if (!runtimeAnthropicKey) return { ok: false, reason: 'NO_KEY' };
+  if (!reserveClaudeCall()) return { ok: false, reason: 'CLAUDE_BUDGET_EXHAUSTED' };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': runtimeAnthropicKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model,
+        max_tokens: 300,
+        ...claudeThinkingParams(model),
+        messages: [{ role: 'user', content: 'Responde únicamente con la palabra: OK' }]
+      }),
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      return { ok: false, reason: `HTTP_${response.status} ${errBody.slice(0, 300)}`.trim(), latency_ms: Date.now() - t0 };
+    }
+    const data = await response.json();
+    recordClaudeUsage(model, data?.usage);
+    const reply = (data?.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(' ').trim();
+    return { ok: true, model: data?.model || model, reply: reply.slice(0, 40), stop_reason: data?.stop_reason, usage: data?.usage, latency_ms: Date.now() - t0 };
+  } catch (err) {
+    return { ok: false, reason: err && err.name === 'AbortError' ? `TIMEOUT_${timeoutMs}MS` : `NETWORK_ERROR ${err.message}`, latency_ms: Date.now() - t0 };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Analiza una transcripción o SMS con Claude + herramientas de solo lectura.
  * Devuelve { ok:true, signals (validadas), discarded, entity_name, iban, amount_eur, ... }
  * o { ok:false, reason } si no hay clave, se agota el tiempo (8 s en total), falla la API o se alcanza el tope.
@@ -789,6 +839,7 @@ async function analyzeCallWithClaude({ text = '', model = CLAUDE_CALL_MODEL, tim
         return fail(`HTTP_${response.status} ${errBody.slice(0, 200)}`.trim());
       }
       const data = await response.json();
+      recordClaudeUsage(model, data?.usage);
       usage.input_tokens += Number(data?.usage?.input_tokens) || 0;
       usage.output_tokens += Number(data?.usage?.output_tokens) || 0;
       if (data?.stop_reason === 'refusal') return fail('CLAUDE_REFUSAL');
@@ -843,6 +894,8 @@ module.exports = {
   validateClaudeReport,
   parseAmountFromQuote,
   runReadOnlyCallTool,
+  pingClaude,
+  getClaudeUsage,
   setClaudeCallLimit,
   normalizeExtraction,
   setRuntimeKeys,
