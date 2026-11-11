@@ -14,15 +14,17 @@ Abre **http://localhost:3000/escenario.html** y pulsa **F** para pantalla comple
 
 También se puede avanzar tocando el botón principal de cada pantalla del móvil (contestar, enviar, la gráfica).
 
-Los veredictos, las señales, las cifras y la gráfica salen de la API en cada paso. La llamada, la cámara y Face ID son puesta en escena. Las personas, la entidad y el IBAN son de ejemplo, y la velocidad del habla (188 palabras/min) es la del guion, no una medición.
+Los veredictos, las señales, las cifras y la gráfica salen de la API en cada paso. La llamada, la cámara y Face ID son puesta en escena. Las personas, la entidad y el IBAN son de ejemplo, y la velocidad del habla (182 palabras/min) está medida en el audio grabado de la llamada, que es una voz sintética.
 
 ## Voces
 
-El estafador y Centinela hablan con voces distintas. La barra inferior muestra cuáles se están usando la primera vez que suena una.
+**La llamada del estafador es un audio grabado**, no una voz del navegador: `public/samples/llamada_falso_broker.mp3`, generado una vez con una voz masculina de ElevenLabs. Suena igual en cualquier ordenador, sin internet y sin clave. El texto aparece en pantalla a la vez que se oye, y el audio se pone en pausa mientras Centinela da su aviso. El ritmo que muestra la demo (182 palabras por minuto) es el que midió ElevenLabs Scribe en ese audio.
+
+Centinela sí habla con una voz generada en el momento. La barra inferior muestra cuál se está usando la primera vez que suena.
 
 **Elegid las voces de oído en el ordenador con el que vais a presentar:**
-- `V` pasa a la siguiente voz del estafador y dice una frase de prueba.
-- `Mayús + V` hace lo mismo con la voz de Centinela.
+- `Mayús + V` pasa a la siguiente voz de Centinela y dice una frase de prueba.
+- `V` hace lo mismo con la voz de reserva del estafador, que solo se usa si el audio grabado no carga.
 - La elección se guarda en ese navegador.
 
 Qué voces hay, de más a menos natural:

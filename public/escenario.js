@@ -170,6 +170,7 @@ let currentAudio = null;
 function hush() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (typeof callAudio !== 'undefined' && callAudio) { callAudio.pause(); callAudio = null; }
 }
 async function say(text, e, role = 'centinela') {
   if (muted || FAST || !text) return;
@@ -354,15 +355,36 @@ const viewClosing = `
   <div class="closing">${svg('shield')}<b>Antes de firmar, pregúntale.</b><span>Centinela · en tu app de MyInvestor</span></div>`;
 
 /* ---------- ACTO 1 · La llamada (veredicto real: /api/analyze-call) ---------- */
+// Mismo guion que el audio grabado (scripts/tts_sample_call.js): si cambia uno, hay que cambiar el otro.
 const PHRASES = [
   { parts: ['Hola Carmen, te llamo de ', ['Quantum Ibérica Capital'], '.'] },
-  { parts: ['Te activamos hoy el Bono VIP con un ', ['12 % anual garantizado, sin ningún riesgo'], '.'] },
-  { parts: ['Quedan las ', ['últimas plazas, solo hoy, en los próximos 15 minutos'], '.'] },
-  { parts: ['Transfiere ahora mismo ', ['9.000 euros'], ' al IBAN ', ['ES91 2100 0418 4502 0005 1332'], '.'], say: 'Transfiere ahora mismo nueve mil euros a la cuenta que te envío.' }
+  { parts: ['Te activamos hoy el Bono VIP con un ', ['12 % anual garantizado sin ningún riesgo'], '.'] },
+  { parts: ['Quedan las ', ['últimas plazas solo por hoy, en los próximos 15 minutos'], '.'] },
+  { parts: ['Transfiere ahora mismo ', ['9.000 euros'], ' a la cuenta que te acabo de enviar por mensaje.'] }
 ];
+/*
+ * La llamada del estafador es un audio real: public/samples/llamada_falso_broker.mp3, generado una vez con una
+ * voz de stock de ElevenLabs (npm run tts:sample). Scribe midió 182 palabras por minuto en ese audio.
+ * `spans` son el inicio y el fin de cada frase en segundos (pausas detectadas con ffmpeg silencedetect):
+ * sirven para que el texto aparezca a la vez que se oye. Si se regenera el audio, hay que volver a medirlos.
+ */
+const CALL_AUDIO = { src: '/samples/llamada_falso_broker.mp3', duration: 17.16, wpm: 182, spans: [[0, 2.61], [3.13, 7.58], [8.38, 11.95], [12.34, 16.86]] };
+let callAudio = null;
+function loadCallAudio() {
+  if (muted || FAST) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const audio = new Audio(CALL_AUDIO.src);
+    audio.preload = 'auto';
+    const giveUp = setTimeout(() => resolve(null), 2500);
+    audio.addEventListener('canplaythrough', () => { clearTimeout(giveUp); resolve(audio); }, { once: true });
+    audio.addEventListener('error', () => { clearTimeout(giveUp); resolve(null); }, { once: true });
+    audio.load();
+  });
+}
 const plain = (p) => p.parts.map((x) => (Array.isArray(x) ? x[0] : x)).join('');
 const SCAM_IBAN = 'ES9121000418450200051332';
-const WPM = 188; // velocidad del guion; con audio real la mide ElevenLabs Scribe en /api/stt
+const WPM = CALL_AUDIO.wpm; // ritmo medido por Scribe en el audio grabado; es también el ritmo al que se escribe el texto sin audio
+let rateSource = 'DEMO_SIMULADO';
 
 const SIGNAL_UI = {
   ENTIDAD_ALERTA_CNMV: (s, fa) => ['bank', 'En la lista de alertas de la CNMV', fa.cnmv_check && fa.cnmv_check.entity],
@@ -379,16 +401,38 @@ function renderFraud(fa) {
     addSignal(s.type, icon, title, sub, s.severity === 'CRITICA' ? 'crítica' : 'alta');
   }
 }
-async function typeBubble(phrase, e) {
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  $('bubbles').appendChild(bubble);
+function phraseWords(phrase) {
   const words = [];
   for (const part of phrase.parts) {
     const marked = Array.isArray(part);
     for (const w of (marked ? part[0] : part).split(/(?<=\s)/)) if (w) words.push(marked ? `<mark>${esc(w)}</mark>` : esc(w));
   }
-  const voice = say(phrase.say || plain(phrase), e, 'estafador');
+  return words;
+}
+/** Escribe una frase. Con el audio grabado, cada palabra aparece cuando se oye; sin él, la dice la voz del navegador. */
+async function typeBubble(phrase, e, index) {
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  $('bubbles').appendChild(bubble);
+  const words = phraseWords(phrase);
+  if (callAudio) {
+    const k = (callAudio.duration || CALL_AUDIO.duration) / CALL_AUDIO.duration;
+    const [start, end] = CALL_AUDIO.spans[index].map((t) => t * k);
+    let shown = 0;
+    while (shown < words.length) {
+      const t = callAudio.ended ? end : callAudio.currentTime;
+      const due = t < start ? 0 : Math.min(words.length, Math.ceil(((t - start) / (end - start)) * words.length));
+      if (due > shown) {
+        shown = due;
+        bubble.innerHTML = words.slice(0, shown).join('');
+      }
+      if (shown < words.length) await sleep(50, e);
+    }
+    // espera al final real de la frase, para no cortar la última palabra si después entra Centinela
+    while (callAudio && !callAudio.ended && callAudio.currentTime < end + 0.12) await sleep(40, e);
+    return;
+  }
+  const voice = say(plain(phrase), e, 'estafador');
   for (let i = 1; i <= words.length; i++) {
     bubble.innerHTML = words.slice(0, i).join('');
     await sleep(60000 / WPM, e);
@@ -426,7 +470,14 @@ const ACT1 = {
       setIsland('Centinela escuchando');
       $('engine-title').textContent = 'Lo que detecta Centinela';
       setRisk(0);
-      $('wpm').innerHTML = `Ritmo del guion: <b>${WPM} palabras/min</b> (simulado)`;
+      callAudio = await loadCallAudio();
+      if (e !== epoch) { callAudio = null; throw new Cancelled(); }
+      if (callAudio) {
+        try { await callAudio.play(); } catch (err) { callAudio = null; } // sin permiso para sonar: se usa la voz del navegador
+      }
+      rateSource = callAudio ? 'AUDIO_DE_EJEMPLO_MEDIDO_CON_SCRIBE' : 'DEMO_SIMULADO';
+      $('wpm').innerHTML = callAudio ? `Ritmo de la llamada: <b>${WPM} palabras/min</b> (medido en este audio)` : `Ritmo del guion: <b>${WPM} palabras/min</b>`;
+      if (callAudio) $('hud-note').textContent = `Llamada: audio grabado con voz de ElevenLabs · Centinela: ${shortVoice(voiceFor('centinela'))}`;
       const t0 = Date.now();
       every(1000, () => {
         const s = Math.floor((Date.now() - t0) / 1000);
@@ -435,16 +486,15 @@ const ACT1 = {
       });
       let heard = '';
       let pushed = false;
-      for (const phrase of PHRASES) {
-        await typeBubble(phrase, e);
+      for (const [index, phrase] of PHRASES.entries()) {
+        await typeBubble(phrase, e, index);
         heard += (heard ? ' ' : '') + plain(phrase);
         const data = await api('/api/analyze-call', {
           preview: true,
           useClaude: false, // frase a frase solo con reglas: responde al instante
           text: heard,
-          iban: heard.includes('IBAN') ? SCAM_IBAN : '',
           speech_rate_wpm: WPM,
-          speech_rate_source: 'DEMO_SIMULADO'
+          speech_rate_source: rateSource
         });
         if (e !== epoch) throw new Cancelled();
         const fa = data.step_2_verdict.fraud_analysis;
@@ -452,10 +502,14 @@ const ACT1 = {
         if (!pushed && fa.risk_score >= 80) {
           pushed = true;
           firePush(fa, data.total_latency_ms);
+          // El estafador se queda en pausa mientras habla Centinela, para que se entiendan los dos
+          if (callAudio) callAudio.pause();
           await say('Carmen, creemos que es una estafa. No envíes dinero.', e, 'centinela');
+          if (callAudio && e === epoch) callAudio.play().catch(() => {});
         }
-        await sleep(350, e);
+        if (!callAudio) await sleep(350, e);
       }
+      callAudio = null;
     },
     async () => {
       setCaption(ACT1.tag, 'Aun así, va a enviar el dinero.', 'Con el estafador al teléfono, Carmen abre la transferencia.');
@@ -470,7 +524,7 @@ const ACT1 = {
         iban: SCAM_IBAN,
         amount_eur: 9000,
         speech_rate_wpm: WPM,
-        speech_rate_source: 'DEMO_SIMULADO'
+        speech_rate_source: rateSource
       });
       if (e !== epoch) throw new Cancelled();
       S.call = data;

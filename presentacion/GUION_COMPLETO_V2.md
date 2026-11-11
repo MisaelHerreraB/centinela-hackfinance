@@ -98,9 +98,28 @@ Para la presentación `CENTINELA_PRESENTACION_V2.pptx` (17 diapositivas) y la de
 | ▶ **Diapositiva 15** · Siguientes pasos | A | «Hoy tenemos una demo que funciona con el MCP real. El siguiente paso es un piloto con audio real de llamadas y con la lista de la CNMV en vivo. Y después, dentro de la app.» |
 | ▶ **Diapositiva 16** · Cierre | A | «Centinela. Antes de firmar, pregúntale. Gracias.» *(Y callad.)* |
 
-La **diapositiva 17** (fuentes) no se proyecta. Está para las preguntas.
+Las **diapositivas 17 y 18** (fuentes) no se proyectan. Están para las preguntas.
 
 ---
+
+## Datos de investigación reciente (opcionales)
+
+Son frases de apoyo con estudios de 2024 a 2026. Cada cifra se comprobó dos veces en su fuente original el 11 de noviembre de 2026. Usad como mucho dos o tres en toda la exposición: el jurado pidió menos números. El resto sirve para las preguntas.
+
+| Cuándo decirla | Frase | Fuente |
+|---|---|---|
+| **Diapositiva 6** · ¿Por qué ahora? | «Y ya no podemos pedirle al cliente que lo detecte de oído: en un estudio de Berkeley, la gente tomó una voz clonada por la persona real cerca del 80 % de las veces.» | Barrington, Cooper y Farid, *Scientific Reports*, marzo de 2025 |
+| **Diapositiva 6** · alternativa | «En un estudio de este año, un agente de inteligencia artificial consiguió que le hicieran caso el 46 % de los participantes, frente al 18 % de los estafadores humanos. Y los filtros de seguridad comerciales no detectaron ninguna conversación de ese tipo de estafa.» | Gressel y otros, USENIX Security 2026. Fueron 22 participantes y estafas románticas por chat, no llamadas |
+| **Demo, acto 1, paso 5** o **diapositiva 10** | «Avisar en el momento funciona: en un ensayo con más de 2.000 personas, el consejo genérico redujo un 10 % el dinero enviado a estafas. La alerta justo al decidir, un 31 %.» | Ontario Securities Commission y Behavioural Insights Team, septiembre de 2024. Era una inversión simulada |
+| **Diapositiva 5** · La firma | «Según el supervisor europeo, los fondos indexados son de media entre un 60 y un 80 % más baratos que los activos. Y a diez años, solo el 12 % de los fondos activos de bolsa consigue batir a sus equivalentes indexados.» | ESMA, marzo de 2026; Morningstar, mediados de 2026 (el dato exacto es 11,9 %) |
+| **Diapositiva 12** · La IA entiende. El código calcula | «Un documento de trabajo de la CNMV de este año lo llama la trampa de la fluidez: el texto de un modelo suena coherente aunque los números estén mal. Por eso aquí la IA no calcula ni un euro.» | Crisóstomo y Mykhalyuk, documento de trabajo n.º 96 de la CNMV, marzo de 2026. Es opinión de los autores, no de la CNMV |
+| **Diapositiva 14** · ¿Quién gana? | «En Reino Unido el banco está obligado a reembolsar desde octubre de 2024, y ya devuelve el 88 % del dinero estafado. Prevenir es más barato que pagar.» | Payment Systems Regulator, panel del primer trimestre de 2026. Cubre las estafas dentro del ámbito de la norma |
+
+Si preguntan por la base científica, hay más en la diapositiva 18:
+- **Un modelo que escucha la llamada detecta casi todas las estafas, pero da falsas alarmas en tiempo real** (Shen y otros, CHI EA 2025; llamadas en chino). Es el motivo por el que en Centinela decide el código y no el modelo.
+- **Las estafas avanzan por fases** (Li y otros, 2026: cinco fases en 49 casos reales por chat). Nuestras cinco fases se inspiran en ese trabajo; no son idénticas.
+- **Retiro pequeño como cebo y «tasas» para retirar** (Oak y Shafiq, SOUPS 2025: 26 entrevistas a víctimas).
+- **Una pantalla con opciones de cancelar, posponer o llamar al banco redujo un 81 % las víctimas** en un experimento de la Universidad de Nottingham (2023). Ese mismo diseño también frenó un 12 % de pagos legítimos: conviene decirlo si preguntan por las falsas alarmas.
 
 ## Si la demo falla
 
@@ -135,5 +154,13 @@ Quitad esto y el resto se queda igual:
 | «MyInvestor es la primera entidad de Europa con MCP» | «MyInvestor abrió su catálogo a la IA en junio de 2026» |
 | «Centinela mide la velocidad del habla» | «En la demo el ritmo es el del guion; con audio real lo mediría ElevenLabs» |
 | «Detecta cualquier estafa» | «30 de 30 en nuestros casos y 26 de 27 en una muestra pequeña de casos nuevos» |
+
+| «El 88 % de los usuarios ignora los avisos genéricos (BIT y FCA)» | No lo digáis: esa cifra no aparece en ninguna fuente. Usad el ensayo de Ontario y el BIT (10 % frente a 31 %) |
+| «Las preguntas reducen el fraude más de un 60 % (BIT y FCA)» | No lo digáis: tampoco existe. El dato real más parecido es el experimento de Nottingham (81 %) |
+| «Las cinco fases del marco COLD» | «Las cinco fases del estudio de Li y otros, de 2026» |
+| «Un estudio de USENIX sobre falsos brókers» | «Un estudio de SOUPS 2025 sobre estafas de inversión con 26 víctimas» |
+| «PreScam demuestra que…» | «PreScam, un trabajo de 2026 todavía sin revisión por pares…» |
+| «El reembolso redujo el fraude un 21 % en Reino Unido» | «Tras el reembolso obligatorio, el fraude por transferencia inmediata fue un 21 % menor que en 2023» |
+| «La CNMV dice que…» (sobre la trampa de la fluidez) | «Un documento de trabajo de la CNMV…» |
 
 Las personas, la entidad y la cuenta de la demo son de ejemplo. Si preguntan, decidlo sin rodeos.
