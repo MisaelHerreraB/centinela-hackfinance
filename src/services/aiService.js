@@ -561,7 +561,49 @@ function compactAlnum(str = '') {
   return String(str).toUpperCase().replace(/[\s.\-]/g, '');
 }
 
-// El número se saca de la cita con código (no de Claude): "9.000 euros", "5 700 €", "3000,50", "12 mil euros".
+// Números escritos con letra, como los transcribe Scribe al dictar ("nueve mil euros", "dos mil quinientos").
+const SPANISH_NUMBER_WORDS = {
+  un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10,
+  once: 11, doce: 12, trece: 13, catorce: 14, quince: 15, dieciseis: 16, diecisiete: 17, dieciocho: 18, diecinueve: 19,
+  veinte: 20, veintiun: 21, veintiuno: 21, veintiuna: 21, veintidos: 22, veintitres: 23, veinticuatro: 24, veinticinco: 25,
+  veintiseis: 26, veintisiete: 27, veintiocho: 28, veintinueve: 29, treinta: 30, cuarenta: 40, cincuenta: 50, sesenta: 60,
+  setenta: 70, ochenta: 80, noventa: 90, cien: 100, ciento: 100, doscientos: 200, trescientos: 300, cuatrocientos: 400,
+  quinientos: 500, seiscientos: 600, setecientos: 700, ochocientos: 800, novecientos: 900
+};
+function parseSpanishNumberWords(text = '') {
+  const tokens = String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z]+/g) || [];
+  let best = null;
+  let total = 0;
+  let current = 0;
+  let inNumber = false;
+  const close = () => {
+    if (inNumber && total + current > 0 && best === null) best = total + current;
+    total = 0;
+    current = 0;
+    inNumber = false;
+  };
+  for (const token of tokens) {
+    if (SPANISH_NUMBER_WORDS[token] !== undefined) {
+      current += SPANISH_NUMBER_WORDS[token];
+      inNumber = true;
+    } else if (token === 'mil') {
+      total += (current || 1) * 1000;
+      current = 0;
+      inNumber = true;
+    } else if (token === 'y' && inNumber) {
+      continue;
+    } else if (token === 'millon' || token === 'millones') {
+      return null; // fuera del alcance de este lector: mejor no dar cifra que dar una equivocada
+    } else {
+      close();
+    }
+  }
+  close();
+  return best;
+}
+
+// El número se saca de la cita con código (no de Claude): "9.000 euros", "5 700 €", "3000,50", "12 mil euros",
+// "nueve mil euros".
 function parseAmountFromQuote(quote = '') {
   const q = String(quote);
   const mil = q.match(/(\d+(?:[.,]\d+)?)\s*mil\b/i);
@@ -570,7 +612,7 @@ function parseAmountFromQuote(quote = '') {
     return Number.isFinite(n) && n > 0 ? Math.round(n * 1000) : null;
   }
   const m = q.match(/\d{1,3}(?:[.\s]\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?/);
-  if (!m) return null;
+  if (!m) return parseSpanishNumberWords(q);
   const n = parseFloat(m[0].replace(/[.\s]/g, '').replace(',', '.'));
   return Number.isFinite(n) && n > 0 ? n : null;
 }

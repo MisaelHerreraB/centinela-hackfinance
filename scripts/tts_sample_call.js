@@ -37,7 +37,7 @@ const SCRIPT =
   console.log(`Guion (${SCRIPT.length} caracteres):\n  "${SCRIPT}"\n`);
   const voice = await el.getVoice(SAMPLE_VOICE_ID); // consulta gratuita
   if (voice.ok) console.log(`Voz: ${voice.name} (${voice.category || 'sin categoría'}) · ${SAMPLE_VOICE_ID}`);
-  else console.log(`Aviso: no he podido comprobar la voz ${SAMPLE_VOICE_ID} (${voice.reason}). Si falla, pon otra voz de stock en ELEVENLABS_SAMPLE_VOICE_ID.`);
+  else console.log(/missing the permission/.test(voice.reason) ? `Voz ${SAMPLE_VOICE_ID}: no se puede comprobar con esta clave (le falta el permiso "voices_read"). Es una voz de stock de ElevenLabs.` : `Aviso: no he podido comprobar la voz ${SAMPLE_VOICE_ID} (${voice.reason}). Si falla, pon otra voz de stock en ELEVENLABS_SAMPLE_VOICE_ID.`);
   if (voice.ok && voice.category && !['premade', 'default'].includes(String(voice.category).toLowerCase())) {
     console.log(`La voz ${SAMPLE_VOICE_ID} es de tipo "${voice.category}", no de stock. Usa una voz de la biblioteca estándar. No se ha gastado nada.\n`);
     process.exitCode = 1;

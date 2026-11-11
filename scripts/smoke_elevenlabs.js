@@ -34,18 +34,22 @@ const line = (label, value) => console.log(`${String(label).padEnd(26)} ${value}
   line('Modelos:', `voz dinámica ${status.tts_model} · voz precacheada ${status.tts_model_precache} · transcripción ${status.stt_model}`);
   line('Tope por arranque:', `${status.credits_max} créditos estimados`);
 
+  // Saldo y voz son consultas gratuitas y OPCIONALES: una clave restringida (solo voz y transcripción) no puede
+  // hacerlas. Eso es un aviso, no un fallo: lo que cuenta es que la voz y la transcripción funcionen.
+  let warnings = 0;
+  const optional = (label, res, okText, permission) => {
+    if (res.ok) return line(label, okText);
+    if (/missing_permissions|missing the permission/.test(res.reason)) {
+      warnings += 1;
+      return line(label, `no disponible: la clave no tiene el permiso "${permission}" (se activa en ElevenLabs > API Keys > editar la clave)`);
+    }
+    failures += 1;
+    return line(label, `FALLO · ${res.reason}`);
+  };
   const before = await el.getSubscription();
-  if (before.ok) line('Saldo de la cuenta:', `${before.credits_left} créditos de ${before.credits_limit} (plan ${before.tier})`);
-  else {
-    failures += 1;
-    line('Saldo de la cuenta:', `FALLO · ${before.reason}`);
-  }
+  optional('Saldo de la cuenta:', before, before.ok ? `${before.credits_left} créditos de ${before.credits_limit} (plan ${before.tier})` : '', 'user_read');
   const voice = await el.getVoice();
-  if (voice.ok) line('Voz disponible:', `sí · ${voice.name} (${voice.category || 'sin categoría'})`);
-  else {
-    failures += 1;
-    line('Voz disponible:', `FALLO · ${voice.reason}`);
-  }
+  optional('Voz disponible:', voice, voice.ok ? `sí · ${voice.name} (${voice.category || 'sin categoría'})` : '', 'voices_read');
 
   const hasSample = fs.existsSync(SAMPLE);
   const sampleBytes = hasSample ? fs.readFileSync(SAMPLE) : null;
@@ -103,7 +107,8 @@ const line = (label, value) => console.log(`${String(label).padEnd(26)} ${value}
     const real = before.ok ? after.credits_used - before.credits_used : null;
     line('   Saldo de la cuenta:', `${after.credits_left} créditos de ${after.credits_limit}${real !== null ? ` (gasto real de esta prueba según ElevenLabs: ${real})` : ''}`);
   }
-  console.log(failures === 0 ? '\n✅ smoke:elevenlabs en verde\n' : `\n❌ smoke:elevenlabs con ${failures} fallo(s)\n`);
+  if (!after.ok) line('   Saldo de la cuenta:', 'no se puede consultar con esta clave; míralo en elevenlabs.io > Subscription');
+  console.log(failures === 0 ? `\n✅ smoke:elevenlabs en verde${warnings ? ` (${warnings} aviso(s) por permisos de la clave)` : ''}\n` : `\n❌ smoke:elevenlabs con ${failures} fallo(s)\n`);
   process.exitCode = failures === 0 ? 0 : 1;
 })().catch((err) => {
   console.error(`\n❌ Error inesperado: ${err.message}\n`);

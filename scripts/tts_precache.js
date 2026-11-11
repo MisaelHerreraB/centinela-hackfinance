@@ -54,7 +54,7 @@ const el = require('../src/services/elevenLabsService');
   }
   const sub = await el.getSubscription();
   if (sub.ok) console.log(`Saldo de la cuenta: ${sub.credits_left} créditos de ${sub.credits_limit} (plan ${sub.tier}).`);
-  else console.log(`No he podido consultar el saldo (${sub.reason}).`);
+  else console.log(/missing the permission/.test(sub.reason) ? 'Saldo: no se puede consultar con esta clave (le falta el permiso "user_read").' : `No he podido consultar el saldo (${sub.reason}).`);
 
   if (!(await confirmSpend(`\n¿Generar ${pending.length} frase(s) gastando ~${credits} créditos de ElevenLabs?`))) {
     console.log('Cancelado. No se ha gastado nada.\n');

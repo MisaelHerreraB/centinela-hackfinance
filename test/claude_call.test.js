@@ -272,6 +272,23 @@ test('Un IBAN o un importe que no están en el texto se descartan; el importe v�
   assert.equal(good.json.step_1_input.amount_source, 'CITA_VALIDADA_DE_CLAUDE');
 });
 
+test('El importe dictado con letra ("nueve mil euros", como lo transcribe Scribe) lo calcula el código', async () => {
+  assert.equal(ai.parseAmountFromQuote('nueve mil euros'), 9000);
+  assert.equal(ai.parseAmountFromQuote('dos mil quinientos euros'), 2500);
+  assert.equal(ai.parseAmountFromQuote('mil euros'), 1000);
+  assert.equal(ai.parseAmountFromQuote('ciento cincuenta mil euros'), 150000);
+  assert.equal(ai.parseAmountFromQuote('treinta y cinco euros'), 35);
+  assert.equal(ai.parseAmountFromQuote('veintiún mil euros'), 21000);
+  assert.equal(ai.parseAmountFromQuote('dos millones de euros'), null, 'fuera de alcance: no se da cifra');
+  assert.equal(ai.parseAmountFromQuote('muchos euros'), null);
+  assert.equal(ai.parseAmountFromQuote('9.000 euros'), 9000, 'con cifras sigue igual');
+  const text = 'Transfiere ahora mismo nueve mil euros a la cuenta que te acabo de enviar por mensaje.';
+  mock.script = [report({ ...EMPTY, amount_eur_quote: 'nueve mil euros' })];
+  const { json } = await post('/api/analyze-call', { text });
+  assert.equal(json.step_1_input.amount_eur, 9000);
+  assert.equal(json.step_1_input.amount_source, 'CITA_VALIDADA_DE_CLAUDE');
+});
+
 test('Una explicación de Claude con una cifra que no está en el texto no se muestra', async () => {
   const v = ai.validateClaudeReport(
     { signals: [{ type: 'URGENCIA_ARTIFICIAL', evidence_quote: 'Decídase esta misma tarde', explanation: 'Podría perder 20.000 euros.' }] },

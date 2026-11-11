@@ -140,6 +140,19 @@ Todos dicen cuánto van a gastar **antes** de llamar, y lo ya generado no se vue
 
 **Cuánto se gasta** (verificado en la documentación y la página de precios de ElevenLabs, nov-2026): voz con `eleven_multilingual_v2`, 1 crédito por carácter; con `eleven_flash_v2_5`, 0,5; transcripción con Scribe, unos 330 créditos por minuto de audio (5,5 por segundo). Una frase hablada típica de Centinela (230 caracteres) cuesta unos 115 créditos con Flash; una frase de 8 s al micrófono, unos 45. El gasto estimado de la sesión está en `GET /api/state` → `ai_status.elevenlabs`, y cada llamada de pago queda anotada en `.cache/elevenlabs/ledger.jsonl`.
 
+**Medido con la API real el 11-nov-2026** (`bash scripts/medir_elevenlabs.sh`):
+
+| Operación | Latencia | Créditos estimados |
+| --- | --- | --- |
+| Voz dinámica (`eleven_flash_v2_5`, frase de 51 caracteres) | 0,3 s | 26 |
+| Voz precacheada (`eleven_multilingual_v2`, frases de 50 a 472 caracteres) | 0,4 s a 1,4 s | 1 por carácter (1.532 las seis frases de la demo) |
+| Audio de ejemplo de la llamada (277 caracteres, 17,1 s de audio) | 1,8 s | 277 |
+| Transcripción con `scribe_v2` del audio de ejemplo (17,1 s, 51 palabras) | 1,0 s | 95 |
+
+El audio de ejemplo se transcribe sin errores y da **182 palabras por minuto**, medidas con las marcas de tiempo de Scribe (por encima del umbral de 175: "presión acústica alta"). Es una voz sintética generada a un ritmo un 15 % más rápido de lo normal, no una llamada real.
+
+Las consultas de saldo y de voz son opcionales: con una clave restringida a voz y transcripción (sin los permisos `user_read` y `voices_read`) los scripts lo indican como aviso y el saldo hay que mirarlo en la web de ElevenLabs.
+
 **Para ensayar sin gastar:** pon en `.env` `ELEVENLABS_TTS=cache_only` (y, si no quieres gastar al usar el micrófono, `ELEVENLABS_STT=cache_only`). Los botones de la demo y el audio de ejemplo siguen sonando con ElevenLabs desde la caché, también sin red; todo lo demás usa la voz y el reconocimiento del navegador. El día de la demo, vuelve a `on`.
 
 **Medición fuera de muestra** (`src/evals/casos_fuera_de_muestra.txt`, 15 estafas y 12 mensajes legítimos que no están en el benchmark de 30 casos):
