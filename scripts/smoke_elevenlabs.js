@@ -67,6 +67,13 @@ const line = (label, value) => console.log(`${String(label).padEnd(26)} ${value}
     failures += 1;
     line('   Resultado:', `FALLO · ${tts.reason}`);
   }
+  if (tts.ok) {
+    // Para poder ESCUCHAR la voz de Centinela en español antes de precachear nada más
+    const listen = path.join(el.CACHE_DIR, 'prueba_voz_centinela.mp3');
+    fs.mkdirSync(el.CACHE_DIR, { recursive: true });
+    fs.writeFileSync(listen, tts.audioBuffer);
+    line('   Para escucharla:', path.relative(process.cwd(), listen));
+  }
 
   if (hasSample) {
     console.log('\n2) Transcripción (Speech-to-Text, Scribe) del audio de ejemplo');
