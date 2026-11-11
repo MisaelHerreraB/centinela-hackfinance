@@ -1,6 +1,6 @@
 # Guion completo: qué decimos y qué se ve en cada momento
 
-Para la presentación `CENTINELA_PRESENTACION_V2.pptx` (17 diapositivas) y la demo en modo escenario (`/escenario.html`).
+Para la presentación `CENTINELA_PRESENTACION_V2.pptx` (19 diapositivas: 16 de exposición y 3 de apéndice) y la demo en modo escenario (`/escenario.html`).
 
 **Duración:** unos 6 minutos (algo menos de 5 hablando, más los silencios de la demo). Al final hay una versión de 4 minutos. Cronometradlo en el ensayo: es una estimación.
 
@@ -98,7 +98,7 @@ Para la presentación `CENTINELA_PRESENTACION_V2.pptx` (17 diapositivas) y la de
 | ▶ **Diapositiva 15** · Siguientes pasos | A | «Hoy tenemos una demo que funciona con el MCP real. El siguiente paso es un piloto con audio real de llamadas y con la lista de la CNMV en vivo. Y después, dentro de la app.» |
 | ▶ **Diapositiva 16** · Cierre | A | «Centinela. Antes de firmar, pregúntale. Gracias.» *(Y callad.)* |
 
-Las **diapositivas 17 y 18** (fuentes) no se proyectan. Están para las preguntas.
+Las **diapositivas 17 y 18** (fuentes) y la **19** (diagrama de cómo fluye la información) no se proyectan. Están para las preguntas: la 19 sirve para cualquier pregunta técnica sobre cómo funciona por dentro.
 
 ---
 

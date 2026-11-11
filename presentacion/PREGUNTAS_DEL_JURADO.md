@@ -141,7 +141,7 @@ Las reglas están escritas en español. La lectura de Claude funciona en otros i
 
 ## 4. El flujo en el código
 
-Por si piden que lo expliquéis paso a paso o que enseñéis dónde está.
+Por si piden que lo expliquéis paso a paso o que enseñéis dónde está. Proyectad la **diapositiva 19**, que tiene el diagrama completo (también está en `CENTINELA_ARQUITECTURA.png`), y recorredla de izquierda a derecha.
 
 ### Una llamada o un mensaje (`POST /api/analyze-call`)
 

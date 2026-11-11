@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" font-family="-apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif" role="img" aria-label="Diagrama de componentes y flujo de información de Centinela">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#6B7285"/></marker>
+  <radialGradient id="glow" cx="88%" cy="6%" r="55%"><stop offset="0" stop-color="#6D7CFF" stop-opacity="0.22"/><stop offset="1" stop-color="#6D7CFF" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1920" height="1080" fill="#07080C"/><rect width="1920" height="1080" fill="url(#glow)"/>
+<text x="60" y="78" font-size="40" font-weight="800" fill="#FFFFFF">Centinela: cómo fluye la información</text>
+<text x="60" y="114" font-size="19" fill="#8E95A3">La IA entiende. El código comprueba, calcula y decide.</text>
+<rect x="1150" y="58" width="34" height="22" rx="6" fill="#12142A" stroke="#6D7CFF" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1194" y="75" font-size="15" fill="#C9CED8">Servicio externo (API)</text>
+<rect x="1400" y="58" width="34" height="22" rx="6" fill="#0F1A15" stroke="#30D158" stroke-width="2"/>
+<text x="1444" y="75" font-size="15" fill="#C9CED8">Código de Centinela</text>
+<rect x="1640" y="58" width="34" height="22" rx="6" fill="#15171E" stroke="#2A2E3A" stroke-width="2"/>
+<text x="1684" y="75" font-size="15" fill="#C9CED8">Entrada o salida</text>
+<circle cx="68" cy="185" r="6" fill="#FF453A"/>
+<text x="84" y="190" font-size="14" font-weight="700" letter-spacing="2.2" fill="#C9CED8">CAMINO 1 · UNA LLAMADA O UN MENSAJE</text>
+<rect x="60" y="220" width="210" height="110" rx="16" fill="#15171E" stroke="#2A2E3A" stroke-width="2"/>
+<text x="78" y="256" font-size="22" font-weight="700" fill="#FFFFFF">Llamada</text>
+<text x="78" y="284" font-size="16" fill="#C9CED8">audio o micrófono</text>
+<rect x="60" y="390" width="210" height="110" rx="16" fill="#15171E" stroke="#2A2E3A" stroke-width="2"/>
+<text x="78" y="426" font-size="22" font-weight="700" fill="#FFFFFF">SMS o WhatsApp</text>
+<text x="78" y="454" font-size="16" fill="#C9CED8">texto</text>
+<rect x="330" y="220" width="230" height="110" rx="16" fill="#12142A" stroke="#6D7CFF" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="348" y="244" font-size="12" font-weight="700" letter-spacing="1" fill="#6D7CFF">SERVICIO EXTERNO</text>
+<text x="348" y="274" font-size="22" font-weight="700" fill="#FFFFFF">ElevenLabs Scribe</text>
+<text x="348" y="302" font-size="16" fill="#C9CED8">Transcribe y mide el ritmo</text>
+<rect x="620" y="340" width="230" height="160" rx="16" fill="#12142A" stroke="#6D7CFF" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="638" y="364" font-size="12" font-weight="700" letter-spacing="1" fill="#6D7CFF">SERVICIO EXTERNO</text>
+<text x="638" y="394" font-size="22" font-weight="700" fill="#FFFFFF">Claude</text>
+<text x="638" y="422" font-size="16" fill="#C9CED8">Señala las tácticas</text>
+<text x="638" y="444" font-size="16" fill="#C9CED8">y cita la frase literal</text>
+<text x="638" y="484" font-size="13" fill="#8E95A3">Consulta alertas y catálogo</text>
+<rect x="905" y="340" width="240" height="160" rx="16" fill="#0F1A15" stroke="#30D158" stroke-width="2"/>
+<text x="923" y="364" font-size="12" font-weight="700" letter-spacing="1" fill="#30D158">CÓDIGO DE CENTINELA</text>
+<text x="923" y="394" font-size="22" font-weight="700" fill="#FFFFFF">Validador de citas</text>
+<text x="923" y="422" font-size="16" fill="#C9CED8">Descarta toda cita que</text>
+<text x="923" y="444" font-size="16" fill="#C9CED8">no esté en el texto</text>
+<rect x="1200" y="220" width="250" height="280" rx="16" fill="#0F1A15" stroke="#30D158" stroke-width="2"/>
+<text x="1218" y="244" font-size="12" font-weight="700" letter-spacing="1" fill="#30D158">CÓDIGO DE CENTINELA</text>
+<text x="1218" y="274" font-size="22" font-weight="700" fill="#FFFFFF">Motor de reglas</text>
+<text x="1218" y="302" font-size="16" fill="#C9CED8">Patrones de estafa</text>
+<text x="1218" y="324" font-size="16" fill="#C9CED8">Lista de alertas e IBAN</text>
+<text x="1218" y="346" font-size="16" fill="#C9CED8">Un peso fijo por señal</text>
+<text x="1218" y="420" font-size="13" fill="#8E95A3">Decide:</text>
+<rect x="1218" y="432" width="83.6" height="28" rx="14" fill="#FF453A" fill-opacity="0.18" stroke="#FF453A" stroke-width="1.2"/>
+<text x="1259.8" y="451" font-size="13" font-weight="800" letter-spacing="0.6" text-anchor="middle" fill="#FF453A">ESTAFA</text>
+<rect x="1311.6" y="432" width="102.8" height="28" rx="14" fill="#30D158" fill-opacity="0.18" stroke="#30D158" stroke-width="1.2"/>
+<text x="1363" y="451" font-size="13" font-weight="800" letter-spacing="0.6" text-anchor="middle" fill="#30D158">ADELANTE</text>
+<path d="M270 275 L322 275" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="300" y="263" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">audio</text>
+<path d="M560 250 L1192 250" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="880" y="238" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">texto y ritmo: las reglas se aplican siempre</text>
+<path d="M445 330 L445 395 L612 395" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="528" y="385" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">texto</text>
+<path d="M270 445 L612 445" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="440" y="435" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">texto</text>
+<path d="M850 420 L897 420" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="878" y="526" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">tácticas + cita literal</text>
+<path d="M1145 420 L1192 420" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1172" y="526" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">señales comprobadas</text>
+<path d="M1450 290 L1502 290" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1480" y="208" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">veredicto y riesgo</text>
+<circle cx="68" cy="605" r="6" fill="#FF9F0A"/>
+<text x="84" y="610" font-size="14" font-weight="700" letter-spacing="2.2" fill="#C9CED8">CAMINO 2 · EL FOLLETO DE UN FONDO</text>
+<rect x="60" y="650" width="210" height="110" rx="16" fill="#15171E" stroke="#2A2E3A" stroke-width="2"/>
+<text x="78" y="686" font-size="22" font-weight="700" fill="#FFFFFF">Folleto</text>
+<text x="78" y="714" font-size="16" fill="#C9CED8">foto o PDF</text>
+<rect x="330" y="635" width="230" height="140" rx="16" fill="#12142A" stroke="#6D7CFF" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="348" y="659" font-size="12" font-weight="700" letter-spacing="1" fill="#6D7CFF">SERVICIO EXTERNO</text>
+<text x="348" y="689" font-size="22" font-weight="700" fill="#FFFFFF">Claude</text>
+<text x="348" y="717" font-size="16" fill="#C9CED8">Lee la comisión,</text>
+<text x="348" y="739" font-size="16" fill="#C9CED8">la categoría y el importe</text>
+<rect x="620" y="635" width="230" height="140" rx="16" fill="#0F1A15" stroke="#30D158" stroke-width="2"/>
+<text x="638" y="659" font-size="12" font-weight="700" letter-spacing="1" fill="#30D158">CÓDIGO DE CENTINELA</text>
+<text x="638" y="689" font-size="22" font-weight="700" fill="#FFFFFF">Comprobación</text>
+<text x="638" y="717" font-size="16" fill="#C9CED8">Limpia los números.</text>
+<text x="638" y="739" font-size="16" fill="#C9CED8">Sin comisión, se para aquí</text>
+<rect x="905" y="635" width="240" height="140" rx="16" fill="#12142A" stroke="#6D7CFF" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="923" y="659" font-size="12" font-weight="700" letter-spacing="1" fill="#6D7CFF">SERVICIO EXTERNO</text>
+<text x="923" y="689" font-size="22" font-weight="700" fill="#FFFFFF">MCP de MyInvestor</text>
+<text x="923" y="717" font-size="16" fill="#C9CED8">Fondo indexado más</text>
+<text x="923" y="739" font-size="16" fill="#C9CED8">barato de esa categoría</text>
+<rect x="1200" y="635" width="250" height="200" rx="16" fill="#0F1A15" stroke="#30D158" stroke-width="2"/>
+<text x="1218" y="659" font-size="12" font-weight="700" letter-spacing="1" fill="#30D158">CÓDIGO DE CENTINELA</text>
+<text x="1218" y="689" font-size="22" font-weight="700" fill="#FFFFFF">Motor financiero</text>
+<text x="1218" y="717" font-size="16" fill="#C9CED8">Proyección a 30 años</text>
+<text x="1218" y="739" font-size="16" fill="#C9CED8">e impuestos del traspaso</text>
+<text x="1218" y="772" font-size="13" fill="#8E95A3">Decide:</text>
+<rect x="1218" y="784" width="64.4" height="28" rx="14" fill="#FF9F0A" fill-opacity="0.18" stroke="#FF9F0A" stroke-width="1.2"/>
+<text x="1250.2" y="803" font-size="13" font-weight="800" letter-spacing="0.6" text-anchor="middle" fill="#FF9F0A">CARO</text>
+<rect x="1292.4" y="784" width="102.8" height="28" rx="14" fill="#30D158" fill-opacity="0.18" stroke="#30D158" stroke-width="1.2"/>
+<text x="1343.8000000000002" y="803" font-size="13" font-weight="800" letter-spacing="0.6" text-anchor="middle" fill="#30D158">ADELANTE</text>
+<path d="M270 705 L322 705" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="300" y="800" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">documento</text>
+<path d="M560 705 L612 705" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="590" y="800" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">datos del fondo</text>
+<path d="M850 705 L897 705" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="878" y="800" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">categoría</text>
+<path d="M1145 705 L1192 705" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1172" y="622" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">comisión del indexado</text>
+<path d="M735 775 L735 880 L1170 880 L1170 805 L1192 805" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="952" y="870" font-size="14" font-style="italic" text-anchor="middle" fill="#8E95A3">comisión del folleto e importe</text>
+<path d="M1450 705 L1480 705 L1480 320 L1502 320" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="1468" y="572" font-size="14" font-style="italic" text-anchor="end" fill="#8E95A3">veredicto y cifras</text>
+<rect x="1510" y="220" width="350" height="130" rx="16" fill="#0F1A15" stroke="#30D158" stroke-width="2"/>
+<text x="1528" y="244" font-size="12" font-weight="700" letter-spacing="1" fill="#30D158">CÓDIGO DE CENTINELA</text>
+<text x="1528" y="274" font-size="22" font-weight="700" fill="#FFFFFF">Mi Contrato</text>
+<text x="1528" y="302" font-size="16" fill="#C9CED8">Reglas que fija el cliente: límite</text>
+<text x="1528" y="324" font-size="16" fill="#C9CED8">por transferencia y familiar</text>
+<path d="M1685 350 L1685 392" fill="none" stroke="#6B7285" stroke-width="2.2" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<rect x="1510" y="400" width="350" height="500" rx="16" fill="#15171E" stroke="#2A2E3A" stroke-width="2"/>
+<text x="1528" y="436" font-size="22" font-weight="700" fill="#FFFFFF">Lo que recibe el cliente</text>
+<rect x="1528" y="458" width="83.6" height="28" rx="14" fill="#FF453A" fill-opacity="0.18" stroke="#FF453A" stroke-width="1.2"/>
+<text x="1569.8" y="477" font-size="13" font-weight="800" letter-spacing="0.6" text-anchor="middle" fill="#FF453A">ESTAFA</text>
+<rect x="1619.6" y="458" width="64.4" height="28" rx="14" fill="#FF9F0A" fill-opacity="0.18" stroke="#FF9F0A" stroke-width="1.2"/>
+<text x="1651.8" y="477" font-size="13" font-weight="800" letter-spacing="0.6" text-anchor="middle" fill="#FF9F0A">CARO</text>
+<rect x="1692" y="458" width="102.8" height="28" rx="14" fill="#30D158" fill-opacity="0.18" stroke="#30D158" stroke-width="1.2"/>
+<text x="1743.4" y="477" font-size="13" font-weight="800" letter-spacing="0.6" text-anchor="middle" fill="#30D158">ADELANTE</text>
+<circle cx="1536" cy="514" r="4" fill="#8E95A3"/>
+<text x="1552" y="520" font-size="17" font-weight="700" fill="#FFFFFF">Aviso en la app</text>
+<text x="1552" y="541" font-size="14" fill="#8E95A3">con el veredicto y los motivos</text>
+<circle cx="1536" cy="576" r="4" fill="#8E95A3"/>
+<text x="1552" y="582" font-size="17" font-weight="700" fill="#FFFFFF">Pantalla que explica el porqué</text>
+<text x="1552" y="603" font-size="14" fill="#8E95A3">no bloquea: el cliente decide</text>
+<circle cx="1536" cy="638" r="4" fill="#8E95A3"/>
+<text x="1552" y="644" font-size="17" font-weight="700" fill="#FFFFFF">Voz de Centinela</text>
+<text x="1552" y="665" font-size="14" fill="#8E95A3">ElevenLabs, o la voz del navegador</text>
+<circle cx="1536" cy="700" r="4" fill="#8E95A3"/>
+<text x="1552" y="706" font-size="17" font-weight="700" fill="#FFFFFF">Aviso al familiar de confianza</text>
+<text x="1552" y="727" font-size="14" fill="#8E95A3">si el cliente lo ha designado</text>
+<circle cx="1536" cy="762" r="4" fill="#8E95A3"/>
+<text x="1552" y="768" font-size="17" font-weight="700" fill="#FFFFFF">Gráfica a 30 años y traspaso</text>
+<text x="1552" y="789" font-size="14" fill="#8E95A3">solo en el camino del folleto</text>
+<circle cx="1536" cy="824" r="4" fill="#8E95A3"/>
+<text x="1552" y="830" font-size="17" font-weight="700" fill="#FFFFFF">Registro de cada decisión</text>
+<text x="1552" y="851" font-size="14" fill="#8E95A3">encadenado con SHA-256</text>
+<text x="60" y="934" font-size="14" font-weight="700" letter-spacing="2.2" fill="#C9CED8">SI ALGO FALLA, CENTINELA SIGUE</text>
+<rect x="60" y="950" width="332" height="74" rx="14" fill="#15171E" stroke="#2A2E3A" stroke-width="1.5"/>
+<text x="76" y="981" font-size="16" font-weight="700" fill="#FFFFFF">Claude no responde en 8 s</text>
+<text x="76" y="1004" font-size="14" fill="#8E95A3">El veredicto sale solo con reglas, y se indica</text>
+<rect x="412" y="950" width="332" height="74" rx="14" fill="#15171E" stroke="#2A2E3A" stroke-width="1.5"/>
+<text x="428" y="981" font-size="16" font-weight="700" fill="#FFFFFF">ElevenLabs no está disponible</text>
+<text x="428" y="1004" font-size="14" fill="#8E95A3">Habla y transcribe el navegador</text>
+<rect x="764" y="950" width="332" height="74" rx="14" fill="#15171E" stroke="#2A2E3A" stroke-width="1.5"/>
+<text x="780" y="981" font-size="16" font-weight="700" fill="#FFFFFF">El MCP no responde en 4,5 s</text>
+<text x="780" y="1004" font-size="14" fill="#8E95A3">Se usa una copia guardada del catálogo</text>
+<rect x="1116" y="950" width="332" height="74" rx="14" fill="#15171E" stroke="#2A2E3A" stroke-width="1.5"/>
+<text x="1132" y="981" font-size="16" font-weight="700" fill="#FFFFFF">Además: servidor MCP propio</text>
+<text x="1132" y="1004" font-size="14" fill="#8E95A3">Tres herramientas para otros asistentes</text>
+</svg>
