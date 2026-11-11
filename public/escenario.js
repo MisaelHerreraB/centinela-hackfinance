@@ -77,17 +77,59 @@ const sfx = {
   shutter: () => beep(1900, 0.05, 'square', 0.04)
 };
 
-let ttsServer = true; // se desactiva al primer aviso de que no hay clave de ElevenLabs
+/*
+ * Dos papeles, dos voces: el estafador (hombre, rápido) y Centinela (mujer, tranquila).
+ * Con clave de ElevenLabs cada papel usa su voz de ElevenLabs; sin clave, dos voces distintas del navegador.
+ * Si en el equipo solo hubiera una voz en español, se distinguen por el tono y la barra inferior lo avisa.
+ */
+const ROLES = {
+  centinela: { prefer: ['Mónica', 'Monica', 'Marisol', 'Paulina', 'Google español', 'Flo', 'Sandy', 'Shelley'], rate: 1.0, pitch: 1.05, label: 'Centinela' },
+  estafador: { prefer: ['Jorge', 'Juan', 'Diego', 'Carlos', 'Reed', 'Eddy', 'Rocko', 'Grandpa'], rate: 1.2, pitch: 0.8, label: 'estafador' }
+};
+let voiceCache = null;
+function spanishVoices() {
+  return 'speechSynthesis' in window ? window.speechSynthesis.getVoices().filter((v) => v.lang && /^es/i.test(v.lang)) : [];
+}
+function pickVoices() {
+  const es = spanishVoices();
+  if (!es.length) return { centinela: null, estafador: null, distinct: false };
+  const find = (names, not) => {
+    for (const name of names) {
+      const v = es.find((x) => x !== not && x.name.includes(name) && /es[-_]ES/i.test(x.lang)) || es.find((x) => x !== not && x.name.includes(name));
+      if (v) return v;
+    }
+    return null;
+  };
+  const centinela = find(ROLES.centinela.prefer) || es[0];
+  const estafador = find(ROLES.estafador.prefer, centinela) || es.find((v) => v !== centinela) || centinela;
+  return { centinela, estafador, distinct: centinela !== estafador };
+}
+function voiceFor(role) {
+  if (!voiceCache || !voiceCache.centinela) {
+    voiceCache = pickVoices();
+    if (voiceCache.centinela) {
+      const short = (v) => v.name.replace(/\s*\(.*$/, '');
+      $('hud-note').textContent = voiceCache.distinct
+        ? `Voces: estafador ${short(voiceCache.estafador)} · Centinela ${short(voiceCache.centinela)}`
+        : 'Solo hay una voz en español en este equipo: se distinguen por el tono';
+    }
+  }
+  return voiceCache[role];
+}
+// Chrome carga la lista de voces de forma asíncrona: se relee cuando llega
+if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = () => { voiceCache = null; };
+
+const ttsServer = { centinela: true, estafador: true }; // por papel: se desactiva si ElevenLabs no da audio para esa voz
 let currentAudio = null;
 function hush() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
 }
-async function say(text, e, rate = 1.05) {
+async function say(text, e, role = 'centinela') {
   if (muted || FAST || !text) return;
-  if (ttsServer) {
+  if (ttsServer[role]) {
     try {
-      const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+      const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, voice: role }) });
       if ((res.headers.get('Content-Type') || '').includes('audio')) {
         const blob = await res.blob();
         if (e !== epoch) return;
@@ -95,16 +137,17 @@ async function say(text, e, rate = 1.05) {
         await new Promise((done) => { currentAudio.onended = currentAudio.onerror = done; currentAudio.play().catch(done); });
         return;
       }
-      ttsServer = false;
-    } catch (err) { ttsServer = false; }
+      ttsServer[role] = false;
+    } catch (err) { ttsServer[role] = false; }
   }
   if (!('speechSynthesis' in window) || e !== epoch) return;
   await new Promise((done) => {
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'es-ES';
-    u.rate = rate;
-    const voice = window.speechSynthesis.getVoices().find((v) => v.lang && v.lang.startsWith('es'));
+    const voice = voiceFor(role);
+    u.lang = voice ? voice.lang : 'es-ES';
     if (voice) u.voice = voice;
+    u.rate = ROLES[role].rate;
+    u.pitch = ROLES[role].pitch;
     u.onend = u.onerror = done;
     window.speechSynthesis.speak(u);
     setTimeout(done, 14000);
@@ -306,7 +349,7 @@ async function typeBubble(phrase, e) {
     const marked = Array.isArray(part);
     for (const w of (marked ? part[0] : part).split(/(?<=\s)/)) if (w) words.push(marked ? `<mark>${esc(w)}</mark>` : esc(w));
   }
-  const voice = say(phrase.say || plain(phrase), e, 1.2);
+  const voice = say(phrase.say || plain(phrase), e, 'estafador');
   for (let i = 1; i <= words.length; i++) {
     bubble.innerHTML = words.slice(0, i).join('');
     await sleep(60000 / WPM, e);
@@ -370,7 +413,7 @@ const ACT1 = {
         if (!pushed && fa.risk_score >= 80) {
           pushed = true;
           firePush(fa, data.total_latency_ms);
-          await say('Carmen, creemos que es una estafa. No envíes dinero.', e);
+          await say('Carmen, creemos que es una estafa. No envíes dinero.', e, 'centinela');
         }
         await sleep(350, e);
       }
@@ -421,7 +464,7 @@ const ACT1 = {
         shake($('mini-phone'));
         sfx.ding();
       }
-      await say(data.spoken_text, e);
+      await say(data.spoken_text, e, 'centinela');
     },
     async () => {
       $('sheet').classList.remove('show');

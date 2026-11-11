@@ -16,6 +16,15 @@ También se puede avanzar tocando el botón principal de cada pantalla del móvi
 
 Los veredictos, las señales, las cifras y la gráfica salen de la API en cada paso. La llamada, la cámara y Face ID son puesta en escena. Las personas, la entidad y el IBAN son de ejemplo, y la velocidad del habla (188 palabras/min) es la del guion, no una medición.
 
+## Voces
+
+El estafador y Centinela hablan con voces distintas. La barra inferior muestra cuáles se están usando la primera vez que suena una.
+
+- **Sin clave de ElevenLabs:** voces del navegador. En un Mac, el estafador usa una voz masculina (Reed, o Jorge si está instalada) y Centinela usa Mónica. Para una voz masculina más natural: Ajustes del Sistema > Accesibilidad > Contenido leído > Voz del sistema > Gestionar voces > Español > Jorge.
+- **Con clave de ElevenLabs:** `ELEVENLABS_VOICE_ID` para Centinela y `ELEVENLABS_SCAMMER_VOICE_ID` para el estafador.
+
+Probad el sonido en el ordenador con el que vais a presentar: las voces disponibles cambian de un equipo a otro.
+
 ## Acto 1 · La llamada (unos 60 s)
 
 1. **Carmen, 68 años.** «Sus ahorros de toda la vida caben en su móvil.»

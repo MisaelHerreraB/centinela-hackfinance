@@ -12,6 +12,8 @@ const { verifyProductExistsInMyInvestor } = require('./mcpClient');
 let runtimeAnthropicKey = process.env.ANTHROPIC_API_KEY || '';
 let runtimeElevenLabsKey = process.env.ELEVENLABS_API_KEY || '';
 const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
+// Voz del estafador en el modo escenario: distinta de la de Centinela para que el público no las confunda.
+const SCAMMER_VOICE_ID = process.env.ELEVENLABS_SCAMMER_VOICE_ID || 'pNInz6obpgDQGcFmaJgB';
 // claude-sonnet-4-20250514 se retiró de la API el 15-jun-2026: cualquier llamada con ese id falla.
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
 const ANTHROPIC_BASE_URL = (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(/\/$/, '');
@@ -492,13 +494,14 @@ async function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'au
 /**
  * Síntesis de voz con ElevenLabs API (devuelve Buffer MP3 si hay API key configurada)
  */
-async function synthesizeSpeechElevenLabs(textToSpeak) {
+async function synthesizeSpeechElevenLabs(textToSpeak, role = 'centinela') {
+  const voiceId = role === 'estafador' ? SCAMMER_VOICE_ID : DEFAULT_VOICE_ID;
   if (!runtimeElevenLabsKey) {
     return { ok: false, reason: 'NO_ELEVENLABS_KEY' };
   }
   try {
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${DEFAULT_VOICE_ID}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       {
         method: 'POST',
         headers: {
