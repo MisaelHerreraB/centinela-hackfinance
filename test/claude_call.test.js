@@ -499,3 +499,22 @@ test('runReadOnlyCallTool: sin datos no marca nada; una herramienta desconocida 
   const unknown = await ai.runReadOnlyCallTool('enforce_client_contract', { verdict: 'ESTAFA' });
   assert.match(unknown.error, /no disponible/);
 });
+
+// =============================================================================
+// 7. Medición fuera de muestra
+// =============================================================================
+test('eval:holdout sin Claude mide solo las reglas y no falla; el conjunto tiene estafas y legítimos', async () => {
+  const { runHoldout } = require('../src/evals/run_holdout');
+  const { HOLDOUT_CASES, parseHoldout } = require('../src/evals/cases_holdout');
+  assert.ok(HOLDOUT_CASES.filter((c) => c.expected_verdict === 'ESTAFA').length >= 10);
+  assert.ok(HOLDOUT_CASES.filter((c) => c.expected_verdict === 'ADELANTE').length >= 10);
+  assert.deepEqual(parseHoldout('# nota\nESTAFA | uno | con barra\n\nADELANTE|dos\notra cosa'), [
+    { id: 'E01', expected_verdict: 'ESTAFA', text: 'uno | con barra' },
+    { id: 'L01', expected_verdict: 'ADELANTE', text: 'dos' }
+  ]);
+  const report = await runHoldout({ rulesOnly: true });
+  assert.equal(report.ok, true);
+  assert.equal(report.claude, null);
+  assert.equal(report.rules.total, HOLDOUT_CASES.length);
+  assert.equal(mock.bodies.length, 0, 'no se llama a Claude');
+});

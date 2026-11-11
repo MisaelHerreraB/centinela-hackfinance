@@ -1,0 +1,52 @@
+# Casos fuera de muestra para medir a Centinela (borrador del 11-nov)
+# Formato: ESTAFA | texto   o   ADELANTE | texto   (una por línea). Las líneas con # se ignoran.
+#
+# CÓMO SE HAN HECHO
+# - Las ESTAFAS están redactadas con palabras propias a partir de tipos de fraude REALES que han
+#   publicado INCIBE, la Policía Nacional, la CNMV y Maldita.es (no son copias literales).
+# - Los mensajes LEGÍTIMOS son situaciones normales, varias de ellas "trampa" (piden dinero o un código
+#   pero son de verdad) para medir los falsos positivos.
+# - AVISO: los redactó Claude, que había visto las reglas del detector. Para que la medición sea
+#   totalmente limpia, que alguien del equipo AÑADA al menos 5 estafas y 5 legítimos propios al final.
+
+# --- ESTAFAS ---
+# Smishing bancario con enlace (avisos de INCIBE)
+ESTAFA | BBVA informa: por motivos de seguridad hemos bloqueado el acceso a su banca online. Reactívelo hoy en bbva-reactivar.example
+ESTAFA | Estimado cliente, su tarjeta ha quedado limitada de forma temporal. Actualice sus datos en el siguiente enlace para seguir usandola
+# Smishing que pide llamar a un número y luego mover el dinero (INCIBE, sept-2025)
+ESTAFA | CaixaBank: se va a ejecutar una transferencia de 1.890 EUR desde su cuenta. Si usted no la ha solicitado llame urgentemente al 6XX XXX XXX
+ESTAFA | Le llamo del departamento de fraude de su banco. Para proteger su dinero mientras investigamos, tiene que pasarlo a una cuenta que le vamos a abrir a su nombre. Apunte el número
+# Familiar en apuros (Policía Nacional, Guardia Civil, Maldita.es)
+ESTAFA | Hola mama se me ha roto el movil y este es mi numero nuevo, no puedo llamar solo escribir. Guardalo porfa
+ESTAFA | Mamá tengo que pagar una cosa ahora y no llevo la tarjeta encima, me haces una transferencia de 950 y mañana te lo devuelvo? Es urgente
+ESTAFA | Papá he tenido un golpe con el coche y la grúa no me deja irme si no pago, mándame 600 euros a esta cuenta que es de un amigo, no le digas nada a mamá que se asusta
+# Recuperación de inversiones perdidas (CNMV: "fraudes sobre engaños anteriores")
+ESTAFA | Somos un despacho especializado en recuperar dinero perdido en plataformas de inversión. Hemos localizado sus 12.000 euros; para liberarlos solo tiene que abonar antes los gastos de gestión de 800 euros
+# Falso técnico informático (CNMV)
+ESTAFA | Buenos días, soy del servicio técnico, su ordenador está enviando errores a nuestro servidor. Instale este programa para que pueda conectarme y revisarlo, y luego entre en su banco para comprobar que todo está bien
+# Anuncios con famosos falsos (deepfake) y plataformas de inversión (CNMV, 2026)
+ESTAFA | Como ha explicado el famoso presentador en el vídeo, con solo 250 euros la plataforma de inteligencia artificial invierte por ti y la mayoría de usuarios recupera la inversión en una semana. Plazas limitadas
+ESTAFA | Tu gestor personal te escribe: el mercado cripto va a dispararse este viernes. Si metes hoy 3.000 te garantizo que en un mes los doblas, yo nunca he fallado una predicción
+# Cuentas de trading "financiadas" ligadas a cursos (CNMV)
+ESTAFA | Apúntate a nuestro curso de trading por 499 euros y te damos una cuenta financiada de 50.000 para operar. Los alumnos ganan desde el primer mes, inscripción solo hasta medianoche
+# Suplantación de una entidad autorizada (CNMV)
+ESTAFA | Le llamamos de Valoria Patrimonio, entidad registrada en la CNMV. Le ofrecemos un depósito exclusivo al 9 por ciento anual para clientes seleccionados, pero necesitamos la transferencia esta semana a nuestra cuenta en Chipre
+# Multas, Hacienda y paquetería (Policía Nacional, INCIBE, 2026)
+ESTAFA | DGT: tiene una sanción pendiente de pago. Evite el recargo abonándola en las próximas 24 horas desde este enlace
+ESTAFA | Agencia Tributaria: tiene derecho a una devolución de 214,50 EUR. Para recibirla confirme los datos de su tarjeta en el formulario
+
+# --- LEGÍTIMOS ---
+ADELANTE | Mamá, te he hecho un Bizum de 40 euros por la cena del sábado
+ADELANTE | Su recibo de la comunidad de 85,20 euros se cargará el día 5. Puede consultarlo en la app de su banco
+ADELANTE | Hola papá, soy yo desde mi móvil de siempre, llego tarde a comer que hay atasco
+ADELANTE | Buenos días Carmen, soy Lucía, su gestora de la oficina. Si le viene bien, el martes revisamos juntas su plan de pensiones en la sucursal. No hace falta que traiga nada
+ADELANTE | Tu paquete llegará mañana entre las 9 y las 14. Puedes seguirlo en la app de la tienda donde lo compraste
+ADELANTE | Yo tengo un fondo indexado en MyInvestor que cobra muy poca comisión, pero ojo que puede bajar, a mí el año pasado me bajó un 8 por ciento unos meses
+ADELANTE | Tu código para confirmar la transferencia que acabas de iniciar es 482913. No lo compartas con nadie, ni siquiera con empleados del banco
+ADELANTE | Ya está disponible tu borrador de la renta. Consúltalo entrando tú mismo en la sede electrónica de la Agencia Tributaria
+ADELANTE | Le recordamos que en su banco tiene disponible un depósito a 12 meses al 2 por ciento TAE, cubierto por el Fondo de Garantía de Depósitos. Infórmese en su oficina
+ADELANTE | Oye, me devuelves los 20 euros del regalo de mamá cuando puedas? Te paso el Bizum como siempre
+ADELANTE | Su tarjeta caduca este mes. Le enviaremos la nueva a su domicilio habitual; actívela en un cajero con su PIN de siempre
+ADELANTE | Te dije que invertir en bolsa tiene riesgo, nadie te puede garantizar nada. Si quieres lo miramos juntos el domingo
+
+# --- AÑADIDOS POR EL EQUIPO (mínimo 5 y 5, sin mirar el código) ---
