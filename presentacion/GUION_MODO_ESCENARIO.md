@@ -20,10 +20,17 @@ Los veredictos, las señales, las cifras y la gráfica salen de la API en cada p
 
 El estafador y Centinela hablan con voces distintas. La barra inferior muestra cuáles se están usando la primera vez que suena una.
 
-- **Sin clave de ElevenLabs:** voces del navegador. En un Mac, el estafador usa una voz masculina (Reed, o Jorge si está instalada) y Centinela usa Mónica. Para una voz masculina más natural: Ajustes del Sistema > Accesibilidad > Contenido leído > Voz del sistema > Gestionar voces > Español > Jorge.
-- **Con clave de ElevenLabs:** `ELEVENLABS_VOICE_ID` para Centinela y `ELEVENLABS_SCAMMER_VOICE_ID` para el estafador.
+**Elegid las voces de oído en el ordenador con el que vais a presentar:**
+- `V` pasa a la siguiente voz del estafador y dice una frase de prueba.
+- `Mayús + V` hace lo mismo con la voz de Centinela.
+- La elección se guarda en ese navegador.
 
-Probad el sonido en el ordenador con el que vais a presentar: las voces disponibles cambian de un equipo a otro.
+Qué voces hay, de más a menos natural:
+1. **ElevenLabs** (con `ELEVENLABS_API_KEY` en `.env`): las mejores. `ELEVENLABS_VOICE_ID` es la de Centinela y `ELEVENLABS_SCAMMER_VOICE_ID` la del estafador.
+2. **Voces de Google en Chrome** («Google español» y «Google español de Estados Unidos»): naturales, las dos de mujer, y necesitan internet. Son las que se usan por defecto en Chrome.
+3. **Voces «mejoradas» de macOS**: gratis, hay que descargarlas. Ajustes del Sistema > Accesibilidad > Contenido leído > Voz del sistema > Gestionar voces > Español. «Jorge» es de hombre y la demo la usa sola para el estafador en cuanto esté instalada.
+4. **Voces estándar de macOS** (Mónica, Paulina): aceptables.
+5. **Voces sintéticas** (Reed, Eddy, Rocko...): suenan robóticas. Solo se usan si no hay otra cosa.
 
 ## Acto 1 · La llamada (unos 60 s)
 

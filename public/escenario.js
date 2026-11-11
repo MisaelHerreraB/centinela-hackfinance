@@ -83,41 +83,87 @@ const sfx = {
  * Si en el equipo solo hubiera una voz en español, se distinguen por el tono y la barra inferior lo avisa.
  */
 const ROLES = {
-  centinela: { prefer: ['Mónica', 'Monica', 'Marisol', 'Paulina', 'Google español', 'Flo', 'Sandy', 'Shelley'], rate: 1.0, pitch: 1.05, label: 'Centinela' },
-  estafador: { prefer: ['Jorge', 'Juan', 'Diego', 'Carlos', 'Reed', 'Eddy', 'Rocko', 'Grandpa'], rate: 1.2, pitch: 0.8, label: 'estafador' }
+  // Orden de preferencia: primero las voces naturales (las de Google en Chrome y las «mejoradas» de macOS),
+  // después las estándar. Las sintéticas antiguas (ROBOTIC) solo se usan si no hay otra cosa.
+  centinela: { prefer: ['Google español', 'Mónica', 'Monica', 'Marisol', 'Paulina'], rate: 1.0, pitch: 1.0, sample: 'Carmen, creemos que es una estafa. No envíes dinero.' },
+  estafador: { prefer: ['Jorge', 'Carlos', 'Diego', 'Juan', 'Google español de Estados Unidos', 'Paulina', 'Mónica', 'Monica'], rate: 1.2, pitch: 0.9, sample: 'Hola Carmen, te llamo de Quantum Ibérica Capital. Quedan las últimas plazas.' }
 };
+const ROBOTIC = /^(Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley)\b/;
+const VOICE_KEY = 'centinela-voces';
+const voiceId = (v) => (v ? `${v.name}|${v.lang}` : ''); // se compara por nombre: el navegador puede devolver objetos nuevos
 let voiceCache = null;
+let voicePrefs = {};
+try { voicePrefs = JSON.parse(localStorage.getItem(VOICE_KEY) || '{}') || {}; } catch (err) { voicePrefs = {}; }
+
+/** Voces en español, de más a menos natural. */
 function spanishVoices() {
-  return 'speechSynthesis' in window ? window.speechSynthesis.getVoices().filter((v) => v.lang && /^es/i.test(v.lang)) : [];
+  if (!('speechSynthesis' in window)) return [];
+  const rank = (v) => (ROBOTIC.test(v.name) ? 3 : /Google/.test(v.name) || /mejorada|premium|enhanced/i.test(v.name) ? 0 : /es[-_]ES/i.test(v.lang) ? 1 : 2);
+  return window.speechSynthesis.getVoices().filter((v) => v.lang && /^es/i.test(v.lang)).sort((a, b) => rank(a) - rank(b));
 }
 function pickVoices() {
   const es = spanishVoices();
   if (!es.length) return { centinela: null, estafador: null, distinct: false };
   const find = (names, not) => {
     for (const name of names) {
-      const v = es.find((x) => x !== not && x.name.includes(name) && /es[-_]ES/i.test(x.lang)) || es.find((x) => x !== not && x.name.includes(name));
+      // el nombre exacto o con sufijo entre paréntesis («Mónica (mejorada)»); así «Google español»
+      // no coge «Google español de Estados Unidos». La lista ya viene ordenada de más a menos natural.
+      const v = es.find((x) => voiceId(x) !== voiceId(not) && !ROBOTIC.test(x.name) && (x.name === name || x.name.startsWith(`${name} (`)));
       if (v) return v;
     }
     return null;
   };
-  const centinela = find(ROLES.centinela.prefer) || es[0];
-  const estafador = find(ROLES.estafador.prefer, centinela) || es.find((v) => v !== centinela) || centinela;
-  return { centinela, estafador, distinct: centinela !== estafador };
+  const saved = (role) => es.find((v) => v.name === voicePrefs[role]) || null; // la que eligió el equipo con la tecla V
+  const centinela = saved('centinela') || find(ROLES.centinela.prefer) || es[0];
+  const savedScammer = saved('estafador');
+  const estafador = (savedScammer && voiceId(savedScammer) !== voiceId(centinela) ? savedScammer : null) || find(ROLES.estafador.prefer, centinela) || es.find((v) => voiceId(v) !== voiceId(centinela)) || centinela;
+  return { centinela, estafador, distinct: voiceId(centinela) !== voiceId(estafador) };
+}
+const shortVoice = (v) => (v ? v.name.replace(/\s*\(.*$/, '').replace('de Estados Unidos', 'EE. UU.') + (/\(/.test(v.name) && !/es[-_]ES/i.test(v.lang) ? ` (${v.lang})` : '') : 'ninguna');
+function showVoices() {
+  if (!voiceCache || !voiceCache.centinela) return;
+  $('hud-note').textContent = voiceCache.distinct
+    ? `Voces: estafador ${shortVoice(voiceCache.estafador)} · Centinela ${shortVoice(voiceCache.centinela)} · V para cambiar`
+    : 'Las dos voces son la misma: pulsa V para cambiar la del estafador';
 }
 function voiceFor(role) {
   if (!voiceCache || !voiceCache.centinela) {
     voiceCache = pickVoices();
-    if (voiceCache.centinela) {
-      const short = (v) => v.name.replace(/\s*\(.*$/, '');
-      $('hud-note').textContent = voiceCache.distinct
-        ? `Voces: estafador ${short(voiceCache.estafador)} · Centinela ${short(voiceCache.centinela)}`
-        : 'Solo hay una voz en español en este equipo: se distinguen por el tono';
-    }
+    showVoices();
   }
   return voiceCache[role];
 }
 // Chrome carga la lista de voces de forma asíncrona: se relee cuando llega
 if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = () => { voiceCache = null; };
+
+function speakBrowser(text, role, done = () => {}) {
+  const u = new SpeechSynthesisUtterance(text);
+  const voice = voiceFor(role);
+  u.lang = voice ? voice.lang : 'es-ES';
+  if (voice) u.voice = voice;
+  u.rate = ROLES[role].rate;
+  u.pitch = ROLES[role].pitch;
+  u.onend = u.onerror = done;
+  window.speechSynthesis.speak(u);
+}
+/** Tecla V: pasa a la siguiente voz del estafador (Mayús + V: la de Centinela), la guarda y dice una frase de prueba. */
+function cycleVoice(role) {
+  const es = spanishVoices();
+  if (!es.length) { $('hud-note').textContent = 'Este navegador no tiene voces en español'; return; }
+  const other = voiceFor(role === 'estafador' ? 'centinela' : 'estafador');
+  const options = es.filter((v) => voiceId(v) !== voiceId(other)); // nunca la misma voz que el otro papel
+  if (!options.length) return;
+  const current = voiceId(voiceFor(role));
+  const next = options[(options.findIndex((v) => voiceId(v) === current) + 1) % options.length];
+  voicePrefs[role] = next.name;
+  try { localStorage.setItem(VOICE_KEY, JSON.stringify(voicePrefs)); } catch (err) { /* sin almacenamiento: vale para esta sesión */ }
+  voiceCache = null;
+  voiceFor(role);
+  $('hud-note').textContent = `${role === 'estafador' ? 'Estafador' : 'Centinela'}: ${shortVoice(next)} (${options.findIndex((v) => voiceId(v) === voiceId(next)) + 1} de ${options.length})${ROBOTIC.test(next.name) ? ' · sintética' : ''}`;
+  ttsServer[role] = false; // al elegir una voz del navegador, ese papel deja de pedir audio a ElevenLabs
+  window.speechSynthesis.cancel();
+  if (!muted) speakBrowser(ROLES[role].sample, role);
+}
 
 const ttsServer = { centinela: true, estafador: true }; // por papel: se desactiva si ElevenLabs no da audio para esa voz
 let currentAudio = null;
@@ -142,14 +188,7 @@ async function say(text, e, role = 'centinela') {
   }
   if (!('speechSynthesis' in window) || e !== epoch) return;
   await new Promise((done) => {
-    const u = new SpeechSynthesisUtterance(text);
-    const voice = voiceFor(role);
-    u.lang = voice ? voice.lang : 'es-ES';
-    if (voice) u.voice = voice;
-    u.rate = ROLES[role].rate;
-    u.pitch = ROLES[role].pitch;
-    u.onend = u.onerror = done;
-    window.speechSynthesis.speak(u);
+    speakBrowser(text, role, done);
     setTimeout(done, 14000);
   });
 }
@@ -813,7 +852,7 @@ function prev() {
 }
 
 document.addEventListener('keydown', (ev) => {
-  if (ev.target.closest('textarea, input')) {
+  if (ev.target.closest && ev.target.closest('textarea, input')) {
     if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); $('challenge').requestSubmit(); }
     if (ev.key === 'Escape') ev.target.blur();
     return; // al escribir, las teclas no mueven la demo
@@ -824,6 +863,8 @@ document.addEventListener('keydown', (ev) => {
   else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(k)) { ev.preventDefault(); prev(); }
   else if (['1', '2', '3', '4'].includes(k)) go(Number(k) - 1, 0);
   else if (k === 'r' || k === 'R') go(act, 0);
+  else if (k === 'v') cycleVoice('estafador');
+  else if (k === 'V') cycleVoice('centinela');
   else if (k === 'm' || k === 'M') { muted = !muted; if (muted) hush(); $('hud-note').textContent = muted ? 'Sonido apagado' : 'Sonido encendido'; }
   else if (k === 'f' || k === 'F') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); }
   else if (k === 'h' || k === 'H') document.body.classList.toggle('clean');
