@@ -2,8 +2,8 @@
 /**
  * Medición "fuera de muestra": reglas solas frente a reglas + Claude.
  * Uso:
- *   npm run eval:holdout                                  (modelo de ANTHROPIC_CALL_MODEL, por defecto claude-haiku-5-5)
- *   npm run eval:holdout -- --model=claude-sonnet-5-5     (mismo conjunto con otro modelo)
+ *   npm run eval:holdout                                  (modelo de ANTHROPIC_CALL_MODEL, por defecto claude-sonnet-5-5)
+ *   npm run eval:holdout -- --model=claude-haiku-5-5      (mismo conjunto con otro modelo)
  *   npm run eval:holdout -- --rules-only                  (no llama a Claude)
  *
  * Los casos están en src/evals/cases_holdout.js y los escribió el equipo SIN mirar las reglas.

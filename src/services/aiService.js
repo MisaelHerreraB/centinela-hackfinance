@@ -18,8 +18,13 @@ const ANTHROPIC_BASE_URL = (process.env.ANTHROPIC_BASE_URL || 'https://api.anthr
 const CLAUDE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 let lastClaudeError = null;
 
-// Modelo para llamadas y SMS (texto corto: rápido y barato). Los folletos siguen con CLAUDE_MODEL.
-const CLAUDE_CALL_MODEL = process.env.ANTHROPIC_CALL_MODEL || 'claude-haiku-5-5';
+// Modelo para llamadas y SMS. Se empezó con claude-haiku-5-5 y se cambió a claude-sonnet-5-5 por la
+// medición fuera de muestra del 11-nov-2026 (npm run eval:holdout, 27 casos, una pasada por modelo):
+//   Haiku 5.5  -> 23/27 (estafas 12/15, legítimos 11/12, un falso positivo), latencia media 3,2 s
+//   Sonnet 5.5 -> 26/27 (estafas 14/15, legítimos 12/12),                    latencia media 3,1 s
+// Haiku falló tres casos que Sonnet acertó, con la misma latencia. Para volver a Haiku (unas 15 veces
+// más barato por análisis): ANTHROPIC_CALL_MODEL=claude-haiku-5-5.
+const CLAUDE_CALL_MODEL = process.env.ANTHROPIC_CALL_MODEL || 'claude-sonnet-5-5';
 // Presupuesto TOTAL (todas las rondas de herramientas) antes de responder solo con reglas.
 const CLAUDE_CALL_TIMEOUT_MS = Number(process.env.CLAUDE_CALL_TIMEOUT_MS) || 8000;
 const CLAUDE_CALL_MAX_ROUNDS = 3;

@@ -12,7 +12,7 @@ services:
       - MYINVESTOR_MCP_URL=${MYINVESTOR_MCP_URL:-https://mcp.myinvestor.es/mcp}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-sonnet-5-5}
-      - ANTHROPIC_CALL_MODEL=${ANTHROPIC_CALL_MODEL:-claude-haiku-5-5}
+      - ANTHROPIC_CALL_MODEL=${ANTHROPIC_CALL_MODEL:-claude-sonnet-5-5}
       - CLAUDE_MAX_CALLS=${CLAUDE_MAX_CALLS:-300}
       - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
     restart: unless-stopped

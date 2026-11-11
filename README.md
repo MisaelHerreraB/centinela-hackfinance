@@ -54,7 +54,7 @@ cp .env.example .env
 | Variable | Por defecto | Para qué |
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | vacío | Sin clave, la app funciona solo con reglas y con el lector de PDF de texto |
-| `ANTHROPIC_CALL_MODEL` | `claude-haiku-5-5` | Modelo que analiza llamadas y SMS |
+| `ANTHROPIC_CALL_MODEL` | `claude-sonnet-5-5` | Modelo que analiza llamadas y SMS (`claude-haiku-5-5` es más barato y algo menos preciso; ver la medición más abajo) |
 | `ANTHROPIC_MODEL` | `claude-sonnet-5-5` | Modelo que lee folletos (foto o PDF) |
 | `CLAUDE_MAX_CALLS` | `300` | Tope de peticiones a Claude por arranque. Al alcanzarlo, la app sigue solo con reglas y lo indica |
 
@@ -107,17 +107,22 @@ Con clave de Anthropic, `/api/analyze-call` envía la transcripción o el SMS a 
 ```bash
 npm run smoke:claude   # con la clave en .env: clave OK, 3 frases con Haiku 5.5 y Sonnet 5.5, folleto PDF (TER 1,80), llamadas y coste
 npm run eval:holdout   # casos fuera de muestra: reglas solas frente a reglas + Claude, con latencias
-npm run eval:holdout -- --model=claude-sonnet-5-5   # el mismo conjunto con otro modelo
+npm run eval:holdout -- --model=claude-haiku-5-5    # el mismo conjunto con otro modelo
 bash scripts/medir_claude.sh                         # los tres pasos seguidos; deja los resultados en fase2_logs/
 ```
 Sin clave, los dos primeros comandos terminan con un mensaje claro y no hacen ninguna llamada.
 
 **Medición fuera de muestra** (`src/evals/casos_fuera_de_muestra.txt`, 15 estafas y 12 mensajes legítimos que no están en el benchmark de 30 casos):
 
-| Motor | Aciertos | Estafas detectadas | Legítimos correctos |
-| --- | --- | --- | --- |
-| Solo reglas | 12/27 (44,4 %) | 0/15 | 12/12 |
-<!-- HOLDOUT_CLAUDE_ROWS -->
+| Motor | Aciertos | Estafas detectadas | Legítimos correctos | Latencia media (p95) | Coste estimado por análisis |
+| --- | --- | --- | --- | --- | --- |
+| Solo reglas | 12/27 (44,4 %) | 0/15 | 12/12 | 0,1 ms | 0 |
+| Reglas + Claude Haiku 5.5 | 23/27 (85,2 %) | 12/15 | 11/12 | 3,2 s (5,6 s) | ~0,0007 USD |
+| **Reglas + Claude Sonnet 5.5 (por defecto)** | **26/27 (96,3 %)** | **14/15** | **12/12** | **3,1 s (5,0 s)** | ~0,011 USD |
+
+Medido el 11-nov-2026 con la API real, una pasada por modelo (31 peticiones cada una; ningún caso cayó a "solo reglas" por fallo o timeout). Los resultados caso a caso están en `src/evals/results/`. Con solo 27 casos y una pasada, una diferencia de tres casos entre modelos es una indicación, no una prueba estadística. Se eligió Sonnet 5.5 porque Haiku falló tres casos que Sonnet acertó (dos estafas y un falso positivo) con la misma latencia. El caso que fallan los dos es un "hola mamá, este es mi número nuevo" que todavía no pide dinero.
+
+Otras latencias medidas ese día: folleto PDF con Sonnet 5.5, 1,9 s (TER 1,80 leído correctamente); Acto 1 completo en la interfaz, 5,0 s (dos rondas: Claude consulta `verify_cnmv_and_iban` antes de informar); texto libre en la interfaz, entre 1,9 s y 4,3 s.
 
 Limitación declarada en el propio archivo: esos casos los redactó Claude a partir de fraudes reales publicados por INCIBE, Policía Nacional, CNMV y Maldita.es, y quien los redactó había visto las reglas. Para añadir casos propios basta con escribirlos al final del `.txt` y volver a ejecutar `npm run eval:holdout`.
 

@@ -151,7 +151,7 @@ test('Una paráfrasis que las reglas NO detectan sale ESTAFA con Claude (RULES+C
   assert.deepEqual(fa.signals.map((s) => s.source), ['CLAUDE', 'CLAUDE', 'CLAUDE']);
   assert.equal(fa.signals[0].evidence, 'es imposible que pierda un céntimo');
   assert.equal(json.step_2_verdict.claude_analysis.used, true);
-  assert.equal(json.step_2_verdict.claude_analysis.model, 'claude-haiku-5-5');
+  assert.equal(json.step_2_verdict.claude_analysis.model, 'claude-sonnet-5-5');
   assert.equal(json.state.family_notifications.length, 1, 'el aviso a Daniel lo decide el motor, como siempre');
 });
 
@@ -169,12 +169,14 @@ test('Un mensaje legítimo sale ADELANTE aunque se analice con Claude', async ()
 // =============================================================================
 // 2. La petición a Claude: modelo, herramientas de solo lectura, sin parámetros prohibidos
 // =============================================================================
-test('La petición usa claude-haiku-5-5, tool_choice auto, sin temperature y SIN enforce_client_contract', async () => {
+test('La petición usa claude-sonnet-5-5 por defecto, tool_choice auto, sin temperature y SIN enforce_client_contract', async () => {
   mock.script = [report(EMPTY)];
   await post('/api/analyze-call', { text: LEGIT });
   assert.equal(mock.bodies.length, 1);
   const { body, headers } = mock.bodies[0];
-  assert.equal(body.model, 'claude-haiku-5-5');
+  assert.equal(body.model, 'claude-sonnet-5-5');
+  assert.deepEqual(body.thinking, { type: 'between_tools' });
+  assert.deepEqual(body.output_config, { effort: 'low' });
   assert.deepEqual(body.tool_choice, { type: 'auto' }); // Sonnet 5.5 rechaza "any"/"tool"
   assert.equal(body.temperature, undefined);
   assert.equal(body.top_p, undefined);
@@ -187,11 +189,12 @@ test('La petición usa claude-haiku-5-5, tool_choice auto, sin temperature y SIN
   assert.equal(headers['x-api-key'], 'sk-test-clave-falsa');
 });
 
-test('Con Sonnet 5.5 se envía thinking "between_tools" (no admite "disabled" ni tool_choice forzado)', async () => {
+test('Con Haiku 5.5 (ANTHROPIC_CALL_MODEL) no se envía "thinking" y sí tool_choice auto', async () => {
   mock.script = [report(EMPTY)];
-  const r = await ai.analyzeCallWithClaude({ text: LEGIT, model: 'claude-sonnet-5-5' });
+  const r = await ai.analyzeCallWithClaude({ text: LEGIT, model: 'claude-haiku-5-5' });
   assert.equal(r.ok, true);
-  assert.deepEqual(mock.bodies[0].body.thinking, { type: 'between_tools' });
+  assert.equal(r.model, 'claude-haiku-5-5');
+  assert.equal(mock.bodies[0].body.thinking, undefined);
   assert.deepEqual(mock.bodies[0].body.tool_choice, { type: 'auto' });
   assert.equal(mock.bodies[0].body.temperature, undefined);
 });

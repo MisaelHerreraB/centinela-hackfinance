@@ -205,7 +205,7 @@ function renderGlobalState(data) {
         </div>
         <div style="font-size:0.72rem; color:#9f1239; background:#ffe4e6; padding:6px 8px; border-radius:7px; margin-bottom:8px;">
           <strong>Señales:</strong> ${latest.signals.join(' · ')}<br/>
-          <strong>IBAN retenido:</strong> <code>${latest.iban_blocked}</code>
+          <strong>IBAN retenido:</strong> <code>${latest.iban_blocked || 'no se ha indicado ningún IBAN'}</code>
         </div>
         <button class="btn-cta-danger" style="padding:8px 12px; font-size:0.75rem;" onclick="activateKillSwitchFromDaniel()">
           🔒 Confirmar Bloqueo desde Móvil de Daniel
