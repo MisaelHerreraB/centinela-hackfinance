@@ -39,7 +39,9 @@ El mismo aviso en tres modos. Un paso más y sale el cierre con las cifras de es
 
 ## Reto (tecla 4), si el jurado quiere probar
 
-«Inventad una estafa que Centinela no haya visto.» Se escribe a la izquierda (o se pulsa un ejemplo) y Enter. Las reglas no la conocen; Claude señala las tácticas citando la frase literal y el código decide. Tarda entre uno y tres segundos y necesita `ANTHROPIC_API_KEY` y conexión. Sin clave, la pantalla lo dice y solo usa reglas.
+«Inventad una estafa que Centinela no haya visto.» Se escribe a la izquierda (o se pulsa un ejemplo) y Enter. Las reglas no la conocen; Claude señala las tácticas citando la frase literal y el código decide. Tarda entre 2 y 5 segundos y necesita `ANTHROPIC_API_KEY` y conexión. Sin clave, si Claude no responde o si se alcanza el tope de llamadas, la pantalla lo dice y solo usa reglas.
+
+Los actos 1 y 2 no esperan a Claude en la llamada: el guion del falso bróker ya lo reconocen las reglas, así que el aviso sale al instante. Claude se enseña en el reto.
 
 ## Si algo falla
 

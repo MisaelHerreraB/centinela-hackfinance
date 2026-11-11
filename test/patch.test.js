@@ -4,6 +4,8 @@
  * No usan red: levantan un MCP simulado y un Claude simulado en localhost.
  */
 
+process.env.CENTINELA_SKIP_DOTENV = '1'; // la clave real del equipo (.env) nunca entra en los tests
+
 const test = require('node:test');
 const { before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');

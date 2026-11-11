@@ -358,6 +358,7 @@ const ACT1 = {
         heard += (heard ? ' ' : '') + plain(phrase);
         const data = await api('/api/analyze-call', {
           preview: true,
+          useClaude: false, // frase a frase solo con reglas: responde al instante
           text: heard,
           iban: heard.includes('IBAN') ? SCAM_IBAN : '',
           speech_rate_wpm: WPM,
@@ -381,6 +382,7 @@ const ACT1 = {
     },
     async (e) => {
       const data = await api('/api/analyze-call', {
+        useClaude: false, // las reglas ya reconocen este guion; Claude se enseña en el reto (tecla 4)
         text: PHRASES.map(plain).join(' '),
         entity_name: 'Quantum Ibérica Capital',
         iban: SCAM_IBAN,
@@ -621,7 +623,7 @@ const ACT3 = {
       $('phone-wrap').hidden = false;
       setView(viewClosing, true);
       $('engine-title').textContent = 'En esta demo';
-      if (!S.call) S.call = await api('/api/analyze-call', { preview: true, text: PHRASES.map(plain).join(' '), iban: SCAM_IBAN });
+      if (!S.call) S.call = await api('/api/analyze-call', { preview: true, useClaude: false, text: PHRASES.map(plain).join(' '), iban: SCAM_IBAN });
       if (!S.doc) S.doc = await api('/api/analyze-document', { presetDocument: DFI_PRESET, amount_eur: DFI_PRESET.amount_eur, years: 10, gross_return_pct: 5 });
       if (e !== epoch) throw new Cancelled();
       const m = S.doc.step_2_verdict.cost_analysis.metrics;
@@ -665,25 +667,24 @@ async function runChallenge(text) {
   const t0 = performance.now();
   let data;
   try {
-    data = await api('/api/analyze-call', { preview: true, semantic: true, text });
+    data = await api('/api/analyze-call', { preview: true, text }); // con clave, Claude señala las tácticas y el código decide
   } catch (err) {
     data = null;
   }
   if (e !== epoch) return;
-  const sem = data && data.ok ? data.step_2_verdict.fraud_analysis.semantic_reading : null;
-  const secs = num((sem && sem.latency_ms ? sem.latency_ms : performance.now() - t0) / 1000, 1); // tiempo real de la llamada a Claude
+  const claude = (data && data.ok && data.step_2_verdict.claude_analysis) || { used: false };
+  const secs = num((claude.latency_ms ? claude.latency_ms : performance.now() - t0) / 1000, 1); // tiempo real de la llamada a Claude
   if (!data || !data.ok) {
     $('wait').textContent = (data && data.error) || 'No se pudo analizar. Revisa la conexión.';
     setIsland('');
     return;
   }
   const fa = data.step_2_verdict.fraud_analysis;
-  const reading = fa.semantic_reading;
-  const byClaude = Boolean(reading && reading.used && reading.tactics.length);
+  const byClaude = fa.signals.some((s) => s.source === 'CLAUDE');
   setRisk(fa.risk_score);
   const quotes = [];
   for (const s of fa.signals) {
-    const fromClaude = s.type.startsWith('LECTURA_');
+    const fromClaude = s.source === 'CLAUDE';
     if (fromClaude) quotes.push(s.evidence);
     const ui = SIGNAL_UI[s.type];
     const [icon, title, sub] = ui ? ui(s, fa) : ['warn', s.label, fromClaude ? `«${s.evidence}»` : s.evidence];
@@ -694,11 +695,12 @@ async function runChallenge(text) {
   const scam = fa.verdict === 'ESTAFA';
   setIsland(scam ? 'Posible estafa' : '', scam);
   setTone(scam ? 'red' : 'green');
-  const how = byClaude ? `leído por Claude en ${secs} s` : reading && reading.used === false ? 'solo reglas: falta la clave de Claude' : reading ? `Claude no ve tácticas · ${secs} s` : 'detectado por las reglas';
+  const whyNot = claude.reason === 'SIN_CLAVE_DE_CLAUDE' ? 'falta la clave de Claude' : claude.error === 'CLAUDE_BUDGET_EXHAUSTED' ? 'límite de llamadas a Claude alcanzado' : /^TIMEOUT/.test(claude.error || '') ? 'Claude no respondió a tiempo' : 'Claude no disponible';
+  const how = byClaude ? `leído por Claude en ${secs} s` : claude.used ? `Claude no ve tácticas · ${secs} s` : `solo reglas: ${whyNot}`;
   setVerdict(scam ? 'ESTAFA' : 'ADELANTE', how);
   showPush(scam ? 'red' : 'green', scam ? 'Creemos que es una estafa' : 'Sin señales de estafa', scam ? 'No envíes dinero ni des tus claves.' : 'Puedes seguir con tranquilidad.');
   if (scam) { shake($('phone')); sfx.alert(); } else sfx.ok();
-  if (!fa.signals.length) addSignal('none', 'check2', 'Ninguna táctica de estafa', 'Reglas y lectura de Claude, sin hallazgos', '', true);
+  if (!fa.signals.length) addSignal('none', 'check2', 'Ninguna táctica de estafa', claude.used ? 'Reglas y lectura de Claude, sin hallazgos' : 'Solo reglas, sin hallazgos', '', true);
 }
 const ACT4 = {
   tag: 'Reto · Ponedlo a prueba',

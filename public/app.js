@@ -205,7 +205,7 @@ function renderGlobalState(data) {
         </div>
         <div style="font-size:0.72rem; color:#9f1239; background:#ffe4e6; padding:6px 8px; border-radius:7px; margin-bottom:8px;">
           <strong>Señales:</strong> ${latest.signals.join(' · ')}<br/>
-          <strong>IBAN retenido:</strong> <code>${latest.iban_blocked}</code>
+          <strong>IBAN retenido:</strong> <code>${latest.iban_blocked || 'no se ha indicado ningún IBAN'}</code>
         </div>
         <button class="btn-cta-danger" style="padding:8px 12px; font-size:0.75rem;" onclick="activateKillSwitchFromDaniel()">
           🔒 Confirmar Bloqueo desde Móvil de Daniel
@@ -303,6 +303,7 @@ async function runScenario1Scam() {
     await new Promise((r) => setTimeout(r, 200));
   }
 
+  showAnalyzing();
   const res = await fetch('/api/analyze-call', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -436,6 +437,12 @@ function continueFraudWithOverride(amountEur) {
   }
 }
 
+// Con Claude el análisis de una llamada tarda unos segundos: se avisa mientras tanto.
+function showAnalyzing() {
+  const badge = document.getElementById('latency-badge');
+  if (badge) badge.textContent = '⏳ Analizando…';
+}
+
 function renderCallVerdict(data) {
   if (!data || !data.ok || !data.step_2_verdict) {
     renderNeedsInput('SIN CONTENIDO', (data && data.error) || 'No he recibido nada que analizar.');
@@ -450,7 +457,34 @@ function renderCallVerdict(data) {
   const mcpCheck = data.step_2_verdict.mcp_verification;
   const act = data.step_3_action;
 
-  document.getElementById('latency-badge').textContent = `⚡ ${data.total_latency_ms} ms`;
+  // [Tarea C] ¿Quién ha analizado el texto? Reglas solas o reglas + Claude (señales con cita literal validada).
+  const claudeInfo = data.step_2_verdict.claude_analysis || { used: false };
+  const usedClaude = v.analysis_engine === 'RULES+CLAUDE';
+  const claudeModelShort = String(claudeInfo.model || '').replace(/^claude-/, '');
+  const claudeFallbackNote = !v.claude_error
+    ? ''
+    : v.claude_error === 'CLAUDE_BUDGET_EXHAUSTED'
+      ? 'límite de llamadas a Claude alcanzado'
+      : /^TIMEOUT/.test(v.claude_error)
+        ? 'Claude no respondió a tiempo'
+        : 'Claude no disponible';
+  const engineTag = usedClaude
+    ? `<div class="engine-tag" style="display:inline-flex; align-items:center; gap:5px; margin:6px 0; padding:3px 9px; border-radius:999px; font-size:0.66rem; font-weight:700; background:#f5f0ff; color:#5b21b6; border:1px solid #ddd6fe;">
+        ✳️ Analizado con Claude${claudeModelShort ? ` (${escapeHtml(claudeModelShort)})` : ''} + reglas${claudeInfo.latency_ms ? ` · ${claudeInfo.latency_ms} ms` : ''}
+      </div>`
+    : `<div class="engine-tag" style="display:inline-flex; align-items:center; gap:5px; margin:6px 0; padding:3px 9px; border-radius:999px; font-size:0.66rem; font-weight:700; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;"${v.claude_error ? ` title="${escapeHtml(v.claude_error)}"` : ''}>
+        ⚙️ Solo reglas${claudeFallbackNote ? ` · ${claudeFallbackNote}` : ''}
+      </div>`;
+  const claudeBadge = (s) =>
+    s.source === 'CLAUDE'
+      ? ' <span style="display:inline-block; margin-left:4px; padding:1px 6px; border-radius:999px; font-size:0.60rem; font-weight:800; background:#f5f0ff; color:#5b21b6; border:1px solid #ddd6fe; vertical-align:middle;">Claude</span>'
+      : '';
+  const claudeQuote = (s) =>
+    s.source === 'CLAUDE' && s.evidence
+      ? `<div style="margin-top:3px; color:#5b21b6; font-style:italic;">Cita literal: «${escapeHtml(s.evidence)}»${s.claude_explanation ? ` — ${escapeHtml(s.claude_explanation)}` : ''}</div>`
+      : '';
+
+  document.getElementById('latency-badge').textContent = `⚡ ${data.total_latency_ms} ms${usedClaude ? ' · Claude + reglas' : ''}`;
 
   // 1. Disparar PUSH Notification nativa arriba del móvil (Output Base)
   if (v.verdict === 'ESTAFA') {
@@ -500,6 +534,7 @@ function renderCallVerdict(data) {
         </div>`
       : '';
     detailsBox.innerHTML = `
+      ${engineTag}
       ${killChainBadge}
       ${vopBadge}
       <div class="phone-signals">
@@ -507,8 +542,9 @@ function renderCallVerdict(data) {
           .map(
             (s) => `
           <div class="phone-signal-row">
-            <div style="font-weight:800; color:#991b1b;">⚠️ ${s.label}${demoTag(s)}</div>
+            <div style="font-weight:800; color:#991b1b;">⚠️ ${s.label}${demoTag(s)}${claudeBadge(s)}</div>
             <div style="color:#475569; margin-top:2px;">${s.explanation}</div>
+            ${claudeQuote(s)}
           </div>
         `
           )
@@ -517,6 +553,7 @@ function renderCallVerdict(data) {
     `;
   } else {
     detailsBox.innerHTML = `
+      ${engineTag}
       <div style="margin-top:8px; padding:9px; background:var(--ok-bg); border:1px solid var(--ok-border); border-radius:9px; font-size:0.75rem; color:var(--ok-ink); font-weight:600;">
         ✅ Sin alertas en la lista de demostración ni patrones claros de manipulación.
       </div>
@@ -524,7 +561,8 @@ function renderCallVerdict(data) {
         .map(
           (s) => `
         <div style="margin-top:6px; padding:7px 9px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; font-size:0.71rem; color:#92400e;">
-          <strong>Ojo:</strong> ${s.label}. ${s.explanation}
+          <strong>Ojo:</strong> ${s.label}${claudeBadge(s)}. ${s.explanation}
+          ${claudeQuote(s)}
         </div>`
         )
         .join('')}
@@ -558,6 +596,10 @@ function renderCallVerdict(data) {
     {
       verdict: v.verdict,
       risk_score: v.risk_score,
+      analysis_engine: v.analysis_engine,
+      claude_error: v.claude_error || null,
+      signals: v.signals.map((s) => ({ type: s.type, source: s.source, evidence: s.evidence })),
+      claude_analysis: claudeInfo,
       kill_chain_cold_prescam: v.kill_chain_progression,
       in_call_coercion_telemetry: v.in_call_telemetry,
       cnmv_check: v.cnmv_check,
@@ -901,6 +943,7 @@ async function runUnlockTaxExtortionCase() {
     Para <span class="hl-danger">liberar tus ganancias tienes que pagar antes el 15% de tasa de desbloqueo e impuesto previo para retirar</span>
     transfiriendo <strong>5.700 €</strong> hoy al IBAN <span class="hl-danger">LT60 3250 0811 9922 1100</span>.”
   `;
+  showAnalyzing();
   const res = await fetch('/api/analyze-call', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -922,6 +965,7 @@ async function runSmishingQuickCase() {
     “AVISO URGENTE MYINVESTOR: Su cuenta sufre <span class="hl-danger">bloqueo inminente</span>.
     <span class="hl-danger">Pincha en este enlace myinvestor-seguridad.com</span> e introduce tu <span class="hl-danger">código SMS</span>.”
   `;
+  showAnalyzing();
   const res = await fetch('/api/analyze-call', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1070,6 +1114,7 @@ async function processLiveSpokenInput(transcript, extra = {}) {
     const data = await res.json().catch(() => ({ ok: false, error: `Error HTTP ${res.status}` }));
     renderDocumentVerdict(data);
   } else {
+    showAnalyzing();
     const res = await fetch('/api/analyze-call', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
