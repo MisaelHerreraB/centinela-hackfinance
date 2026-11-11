@@ -52,6 +52,7 @@ const MIME_TYPES = {
   '.pdf': 'application/pdf',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.mp3': 'audio/mpeg',
   '.ico': 'image/x-icon'
 };
 
@@ -454,14 +455,16 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // 8. Transcripción de Audio con ElevenLabs Scribe (scribe_v1) + fallback Web Speech API
+    // 8. Transcripción de Audio con ElevenLabs Scribe (con caché y tope de créditos) + fallback Web Speech API
     if (pathname === '/api/stt' && req.method === 'POST') {
       const body = await readJsonBody(req);
       const sttRes = await transcribeAudioWithElevenLabsScribe({
         audioBase64: body.audioBase64,
-        mimeType: body.mimeType || 'audio/webm'
+        mimeType: body.mimeType || 'audio/webm',
+        durationSec: body.durationSec
       });
-      return sendJson(res, 200, sttRes);
+      const el = getAiStatus().elevenlabs;
+      return sendJson(res, 200, { ...sttRes, budget: { credits_used_estimated: el.credits_used_estimated, credits_max: el.credits_max, exhausted: el.budget_exhausted } });
     }
 
     // 8B. Síntesis de Voz con ElevenLabs (con fallback automático en cliente si no hay key)
@@ -470,11 +473,20 @@ const server = http.createServer(async (req, res) => {
       const ttsRes = await synthesizeSpeechElevenLabs(body.text || '');
       if (ttsRes.ok) {
         res.writeHead(200, {
-          'Content-Type': 'audio/mpeg'
+          'Content-Type': 'audio/mpeg',
+          'X-Centinela-TTS-Source': ttsRes.source, // CACHE (no gasta) | LIVE
+          'X-Centinela-TTS-Model': ttsRes.model,
+          'X-Centinela-TTS-Credits': String(ttsRes.credits_estimated || 0)
         });
         return res.end(ttsRes.audioBuffer);
       }
-      return sendJson(res, 200, { ok: false, fallback: 'WEB_SPEECH_API', reason: ttsRes.reason });
+      const el = getAiStatus().elevenlabs;
+      return sendJson(res, 200, {
+        ok: false,
+        fallback: 'WEB_SPEECH_API',
+        reason: ttsRes.reason,
+        budget: { credits_used_estimated: el.credits_used_estimated, credits_max: el.credits_max, exhausted: el.budget_exhausted }
+      });
     }
 
     // 9. Reiniciar estado de demo

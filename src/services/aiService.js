@@ -1,17 +1,16 @@
 /**
  * Servicio de IA Frontera: Claude (Anthropic Vision, PDF Document & Tool Use) +
  * [Tarea C] Claude también analiza llamadas y SMS con herramientas de solo lectura (ver analyzeCallWithClaude).
- * ElevenLabs (Scribe v1 STT + Multilingual v2 Streaming TTS)
+ * ElevenLabs (Scribe v2 STT + TTS Flash v2.5 / Multilingual v2; ver elevenLabsService.js)
  * Incluye extractor y transcripción determinista de respaldo para garantizar 0% de fallos en directo.
  */
 
 const { extractPdfText } = require('./pdfText');
 const { AI_SIGNAL_TYPES, checkCnmvWarning, checkIbanStatus } = require('../engine/fraudEngine');
 const { verifyProductExistsInMyInvestor } = require('./mcpClient');
+const elevenLabs = require('./elevenLabsService');
 
 let runtimeAnthropicKey = process.env.ANTHROPIC_API_KEY || '';
-let runtimeElevenLabsKey = process.env.ELEVENLABS_API_KEY || '';
-const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
 // claude-sonnet-4-20250514 se retiró de la API el 15-jun-2026: cualquier llamada con ese id falla.
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
 const ANTHROPIC_BASE_URL = (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(/\/$/, '');
@@ -207,13 +206,13 @@ const CLAUDE_CENTINELA_TOOLS = [
 
 function setRuntimeKeys({ anthropicKey, elevenLabsKey }) {
   if (typeof anthropicKey === 'string') runtimeAnthropicKey = anthropicKey.trim();
-  if (typeof elevenLabsKey === 'string') runtimeElevenLabsKey = elevenLabsKey.trim();
+  if (typeof elevenLabsKey === 'string') elevenLabs.setApiKey(elevenLabsKey);
 }
 
 function getAiStatus() {
   return {
     claude_configured: Boolean(runtimeAnthropicKey),
-    elevenlabs_configured: Boolean(runtimeElevenLabsKey),
+    elevenlabs_configured: elevenLabs.getStatus().configured,
     claude_model: CLAUDE_MODEL,
     claude_call_model: CLAUDE_CALL_MODEL,
     claude_last_error: lastClaudeError,
@@ -225,9 +224,12 @@ function getAiStatus() {
     // Herramientas que Claude recibe DE VERDAD al analizar llamadas/SMS (solo lectura + salida)
     claude_call_tools: CLAUDE_CALL_TOOLS.map((t) => t.name),
     elevenlabs_models: {
-      stt: 'scribe_v1',
-      tts: 'eleven_multilingual_v2'
-    }
+      stt: elevenLabs.STT_MODEL,
+      tts: elevenLabs.TTS_MODEL,
+      tts_precache: elevenLabs.TTS_MODEL_PRECACHE
+    },
+    // Créditos estimados, tope, interruptores y caché de ElevenLabs
+    elevenlabs: elevenLabs.getStatus()
   };
 }
 
@@ -424,111 +426,16 @@ Texto/Contexto adicional: ${text}`
 }
 
 /**
- * Transcripción de Audio con ElevenLabs Scribe STT (scribe_v1)
+ * ElevenLabs (voz y transcripción) vive en elevenLabsService.js, con control de gasto:
+ * tope de créditos por arranque, caché en disco e interruptores on | cache_only | off.
+ * Aquí solo se mantienen los nombres que ya usaba el servidor.
  */
-async function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'audio/webm' }) {
-  if (!audioBase64) {
-    return { ok: false, provider: 'NO_AUDIO', text: '', reason: 'No se ha recibido audio.' };
-  }
-  if (!runtimeElevenLabsKey) {
-    // Sin clave no hay transcripción: NUNCA se devuelve un texto inventado.
-    return {
-      ok: false,
-      provider: 'NO_ELEVENLABS_KEY',
-      model: 'scribe_v1',
-      text: '',
-      reason: 'Para transcribir audios hace falta la clave de ElevenLabs (botón API Keys).'
-    };
-  }
-
-  try {
-    const cleanBase64 = audioBase64.replace(/^data:[^;]+;base64,/, '');
-    const buffer = Buffer.from(cleanBase64, 'base64');
-    const blob = new Blob([buffer], { type: mimeType });
-    const formData = new FormData();
-    formData.append('file', blob, 'call_audio.webm');
-    formData.append('model_id', 'scribe_v1');
-    formData.append('language_code', 'spa');
-
-    const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
-      method: 'POST',
-      headers: {
-        'xi-api-key': runtimeElevenLabsKey
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP_${response.status}`);
-    }
-    const data = await response.json();
-    const words = Array.isArray(data.words) ? data.words.filter((w) => w.type === 'word' || w.text) : [];
-    let speechRateWpm = null;
-    if (words.length >= 2) {
-      const startSec = Number(words[0].start ?? 0);
-      const endSec = Number(words[words.length - 1].end ?? 0);
-      const durationMin = Math.max(0.05, (endSec - startSec) / 60);
-      speechRateWpm = Math.round(words.length / durationMin);
-    }
-    return {
-      ok: true,
-      provider: 'ELEVENLABS_SCRIBE_LIVE_API',
-      model: 'scribe_v1',
-      text: data.text || '',
-      speech_rate_wpm: speechRateWpm,
-      speech_rate_source: speechRateWpm ? 'ELEVENLABS_SCRIBE' : null,
-      word_count: words.length
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      provider: 'FALLBACK_AFTER_ERROR',
-      reason: `No se pudo transcribir el audio (${err.message}).`,
-      text: ''
-    };
-  }
+function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'audio/webm', durationSec = null } = {}) {
+  return elevenLabs.transcribeAudio({ audioBase64, mimeType, durationSec });
 }
 
-/**
- * Síntesis de voz con ElevenLabs API (devuelve Buffer MP3 si hay API key configurada)
- */
-async function synthesizeSpeechElevenLabs(textToSpeak) {
-  if (!runtimeElevenLabsKey) {
-    return { ok: false, reason: 'NO_ELEVENLABS_KEY' };
-  }
-  try {
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${DEFAULT_VOICE_ID}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'xi-api-key': runtimeElevenLabsKey,
-          'Accept': 'audio/mpeg'
-        },
-        body: JSON.stringify({
-          text: textToSpeak,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.65,
-            similarity_boost: 0.80
-          }
-        })
-      }
-    );
-
-    if (!response.ok) {
-      return { ok: false, reason: `HTTP_${response.status}` };
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    return {
-      ok: true,
-      audioBuffer: Buffer.from(arrayBuffer),
-      contentType: 'audio/mpeg'
-    };
-  } catch (err) {
-    return { ok: false, reason: err.message };
-  }
+function synthesizeSpeechElevenLabs(textToSpeak, options = {}) {
+  return elevenLabs.synthesizeSpeech(textToSpeak, options);
 }
 
 // =============================================================================

@@ -5,6 +5,7 @@
  */
 
 process.env.CENTINELA_SKIP_DOTENV = '1'; // la clave real del equipo (.env) nunca entra en los tests
+process.env.ELEVENLABS_CACHE_DIR = require('path').join(require('os').tmpdir(), `centinela-el-cache-${process.pid}`); // nunca la caché real
 
 const test = require('node:test');
 const { before, after, beforeEach } = require('node:test');

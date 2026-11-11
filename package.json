@@ -8,9 +8,12 @@
     "dev": "node src/server.js",
     "eval": "node src/evals/run_evals.js",
     "eval:holdout": "node src/evals/run_holdout.js",
-    "test": "node --test test/patch.test.js test/claude_call.test.js test/load_env.test.js",
+    "test": "node --test test/patch.test.js test/claude_call.test.js test/load_env.test.js test/elevenlabs.test.js",
     "check:mcp": "node scripts/check_mcp.js",
-    "smoke:claude": "node scripts/smoke_claude.js"
+    "smoke:claude": "node scripts/smoke_claude.js",
+    "smoke:elevenlabs": "node scripts/smoke_elevenlabs.js",
+    "tts:precache": "node scripts/tts_precache.js",
+    "tts:sample": "node scripts/tts_sample_call.js"
   },
   "keywords": [
     "myinvestor",

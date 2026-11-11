@@ -393,7 +393,7 @@ function analyzeFraudRisk({
       : wpm >= 175
         ? 'ALTA (Compresión de turnos > 175 WPM)'
         : 'NORMAL (Cadencia conversacional)',
-    detector_engine: 'ElevenLabs Scribe (scribe_v1 word-level timestamps) + Detector Semántico',
+    detector_engine: 'ElevenLabs Scribe (marcas de tiempo por palabra) + Detector Semántico',
     scientific_basis: 'Multimodal Vishing Detection (Fusión Semántica + Prosodia de Urgencia, 2025–2026)'
   };
 
