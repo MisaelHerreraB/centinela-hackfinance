@@ -454,11 +454,13 @@ function renderCallVerdict(data) {
   const claudeInfo = data.step_2_verdict.claude_analysis || { used: false };
   const usedClaude = v.analysis_engine === 'RULES+CLAUDE';
   const claudeModelShort = String(claudeInfo.model || '').replace(/^claude-/, '');
-  const claudeFallbackNote = claudeInfo.budget && claudeInfo.budget.exhausted && !usedClaude
-    ? 'límite de llamadas a Claude alcanzado'
-    : v.claude_error
-      ? 'Claude no respondió a tiempo'
-      : '';
+  const claudeFallbackNote = !v.claude_error
+    ? ''
+    : v.claude_error === 'CLAUDE_BUDGET_EXHAUSTED'
+      ? 'límite de llamadas a Claude alcanzado'
+      : /^TIMEOUT/.test(v.claude_error)
+        ? 'Claude no respondió a tiempo'
+        : 'Claude no disponible';
   const engineTag = usedClaude
     ? `<div class="engine-tag" style="display:inline-flex; align-items:center; gap:5px; margin:6px 0; padding:3px 9px; border-radius:999px; font-size:0.66rem; font-weight:700; background:#f5f0ff; color:#5b21b6; border:1px solid #ddd6fe;">
         ✳️ Analizado con Claude${claudeModelShort ? ` (${escapeHtml(claudeModelShort)})` : ''} + reglas${claudeInfo.latency_ms ? ` · ${claudeInfo.latency_ms} ms` : ''}
