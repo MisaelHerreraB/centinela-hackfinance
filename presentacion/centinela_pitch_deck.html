@@ -416,7 +416,7 @@
       <h3>Ingesta Multimodal Configurable</h3>
       <ul>
         <li><strong>🛡️ 2 Niveles de Invasividad:</strong> <em>Nivel 1 (Bajo Demanda)</em> cuando el cliente consulta una oferta; <em>Nivel 2 (Escucha Pasiva en Llamada)</em> con detección automática en segundo plano.</li>
-        <li><strong>📞 Llamada + Prosodia:</strong> <code>ElevenLabs Scribe (scribe_v1)</code> transcribe en vivo y mide presión acústica (<code>WPM</code>).</li>
+        <li><strong>📞 Llamada + Prosodia:</strong> <code>ElevenLabs Scribe (scribe_v2)</code> transcribe en vivo y mide presión acústica (<code>WPM</code>).</li>
         <li><strong>📸 Folleto DFI / SMS:</strong> <code>Claude Vision</code> extrae ISIN, TER, gestión, depósito y liquidez del PDF o captura.</li>
       </ul>
     </div>
@@ -468,9 +468,9 @@
     <div class="card">
       <h3 style="color:var(--accent);">Capa 1 · Percepción Multimodal &amp; Accesibilidad</h3>
       <ul>
-        <li><strong>ElevenLabs Scribe (<code>scribe_v1</code>):</strong> Speech-to-Text con marcas de tiempo por palabra (<em>word-level timestamps</em>) para calcular cadencia vocal (<code>WPM</code>).</li>
+        <li><strong>ElevenLabs Scribe (<code>scribe_v2</code>):</strong> Speech-to-Text con marcas de tiempo por palabra (<em>word-level timestamps</em>) para calcular cadencia vocal (<code>WPM</code>).</li>
         <li><strong>Claude Sonnet 5.5 (Vision + PDF):</strong> Extrae JSON tipado del folleto DFI; las 4 herramientas de Centinela las ejecuta el motor determinista.</li>
-        <li><strong>ElevenLabs TTS (<code>eleven_multilingual_v2</code>):</strong> Locución empática sincronizada con texto.</li>
+        <li><strong>ElevenLabs TTS (<code>eleven_multilingual_v2</code> en las frases de la demo, <code>eleven_flash_v2_5</code> en las respuestas nuevas):</strong> Locución empática sincronizada con texto.</li>
         <li><strong>3 Modos de Accesibilidad:</strong> Estándar (Voz+Texto), <strong>Persona Sorda</strong> (100 % visual) y <strong>Baja Visión</strong> (alto contraste AAA + lectura de IBAN/importes).</li>
       </ul>
     </div>
@@ -545,7 +545,7 @@
       <tr>
         <td><strong>4. Prosodia Acústica &amp; Telemetría In-Call (BioCatch)</strong></td>
         <td>El 80 % del fraude APP ocurre con llamada activa (<em>Off-Hook</em>), pegado de IBAN y habla acelerada <code>&gt;175 WPM</code>.</td>
-        <td>Mide <code>speech_rate_wpm</code> con los timestamps de <code>ElevenLabs Scribe</code> (<code>188 WPM = Presión Alta</code>) y registra la señal <code>in_call_telemetry</code>.</td>
+        <td>Mide <code>speech_rate_wpm</code> con los timestamps de <code>ElevenLabs Scribe</code> (<code>182 WPM medidos en el audio de ejemplo = Presión Alta</code>) y registra la señal <code>in_call_telemetry</code>.</td>
       </tr>
       <tr>
         <td><strong>5. Pregunta Diagnóstica RCT (BIT / FCA Trials)</strong></td>

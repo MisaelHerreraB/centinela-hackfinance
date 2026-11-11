@@ -57,7 +57,7 @@
    - Señala con el cursor en el iPhone de Carmen (izquierda) el selector **`Nivel 2: Escucha Pasiva + Push`**.
    - Pulsa arriba el botón **`🔴 1. Falso Bróker (Estafa 9.000 €)`**.
 2. **Qué dice el Ponente B mientras corre la simulación:**
-   > *"A la izquierda tenéis el iPhone de Carmen con el **Nivel 2 de Escucha Pasiva activo**; a la derecha, el móvil de su hijo Daniel y el motor técnico. Un falso bróker de 'Quantum Ibérica' presiona a Carmen a **188 palabras por minuto** (valor simulado en la demo; con un audio real lo mide `ElevenLabs Scribe`) para transferir **9.000 €** en 15 minutos.*
+   > *"A la izquierda tenéis el iPhone de Carmen con el **Nivel 2 de Escucha Pasiva activo**; a la derecha, el móvil de su hijo Daniel y el motor técnico. Un falso bróker de 'Quantum Ibérica' presiona a Carmen a **182 palabras por minuto** (medidas con las marcas de tiempo de `ElevenLabs Scribe` sobre el audio de ejemplo de la llamada, que es una voz sintética; el botón del Acto 1 es un guion de texto y declara 188 como valor simulado) para transferir **9.000 €** en 15 minutos.*
    >
    > *Mirad la parte superior del móvil de Carmen: salta el **PUSH de la app** y el **Banner Rojo 'Creemos que es una estafa'**. Nuestro motor ha cruzado la entidad con la lista negra de la **CNMV**, ha detectado las **5 etapas de la Kill-Chain del paper PreScam (ACL 2025)** y ha pillado que el IBAN pertenece a una cuenta mula mediante **SEPA Verification of Payee (`NO_MATCH`)**.*
    >

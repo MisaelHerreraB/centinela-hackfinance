@@ -37,7 +37,7 @@ function renderNeedsInput(title, message, extraJson = null) {
   document.getElementById('action-container').innerHTML =
     '<div style="color:var(--muted); font-weight:600;">Escribe el dato en la caja de texto o usa el micrófono para continuar.</div>';
   if (extraJson) document.getElementById('mcp-inspector-box').textContent = JSON.stringify(extraJson, null, 2);
-  speakMessage(message);
+  speakMessage(message, '', { cacheOnly: true }); // un aviso de "falta un dato" no gasta créditos de voz
 }
 
 const PRESET_DOCUMENTS = {
@@ -233,17 +233,33 @@ function switchInspectorTab(tab) {
   auditBox.style.display = tab === 'AUDIT' ? 'block' : 'none';
 }
 
-async function speakMessage(text, extraLowVisionDetails = '') {
+// La voz NUNCA retrasa el veredicto: quien llama a speakMessage no espera a que termine,
+// el resultado ya está pintado y el audio llega y suena en paralelo.
+let currentVoiceAudio = null;
+let voiceRequestSeq = 0;
+
+function setVoiceEngineTag(text) {
+  const tag = document.getElementById('voice-engine-tag');
+  if (tag) tag.textContent = text;
+}
+
+async function speakMessage(text, extraLowVisionDetails = '', { cacheOnly = false } = {}) {
   const fullText =
     currentAccessMode === 'LOW_VISION' && extraLowVisionDetails
       ? `${text} Lectura preventiva de Baja Visión antes de firmar: ${extraLowVisionDetails}`
       : text;
 
   lastSpokenMessage = fullText;
-  document.getElementById('spoken-transcript').innerHTML = `🔊 <strong>Centinela:</strong> "${fullText}"`;
+  const mySeq = ++voiceRequestSeq;
+  if (currentVoiceAudio) {
+    try { currentVoiceAudio.pause(); } catch (e) {}
+    currentVoiceAudio = null;
+  }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  document.getElementById('spoken-transcript').innerHTML =
+    `🔊 <strong>Centinela:</strong> "${fullText}" <span id="voice-engine-tag" style="display:block; margin-top:3px; font-size:0.62rem; color:#64748b; font-weight:600;"></span>`;
 
   if (currentAccessMode === 'DEAF') {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     document.getElementById('deaf-banner').innerHTML = `
       🦻 <strong>MODO PERSONA SORDA (SUBTÍTULO SINCRONIZADO · AUDIO DESACTIVADO):</strong><br/>
       "${fullText}"
@@ -251,24 +267,33 @@ async function speakMessage(text, extraLowVisionDetails = '') {
     return;
   }
 
+  let fallbackNote = '';
   try {
     const res = await fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: fullText })
+      // Los avisos de "falta un dato" o de error no gastan créditos: solo suenan con ElevenLabs si ya están en caché
+      body: JSON.stringify({ text: fullText, ...(cacheOnly ? { cacheOnly: true } : {}) })
     });
+    if (mySeq !== voiceRequestSeq) return; // ya hay un mensaje más reciente
     const contentType = res.headers.get('content-type') || '';
     if (contentType.includes('audio/mpeg')) {
+      const fromCache = res.headers.get('x-centinela-tts-source') === 'CACHE';
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.play();
+      if (mySeq !== voiceRequestSeq) return;
+      const audio = new Audio(URL.createObjectURL(blob));
+      currentVoiceAudio = audio;
+      setVoiceEngineTag(`Voz: ElevenLabs${fromCache ? ' (caché, sin gasto)' : ''}`);
+      audio.play().catch(() => {});
       return;
     }
+    const info = await res.json().catch(() => ({}));
+    if (info.reason === 'ELEVENLABS_BUDGET_EXHAUSTED') fallbackNote = ' · límite de créditos de ElevenLabs alcanzado';
   } catch (e) {}
+  if (mySeq !== voiceRequestSeq) return;
 
+  setVoiceEngineTag(`Voz del navegador${fallbackNote}`);
   if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(fullText);
     utterance.lang = 'es-ES';
     utterance.rate = 1.03;
@@ -925,7 +950,9 @@ async function signTransferInApp(orderId, destination, amountEur) {
 
 function handlePresetSelect(val) {
   if (!val) return;
-  if (val === 'SMISHING_MYINVESTOR') {
+  if (val === 'AUDIO_FALSO_BROKER') {
+    runSampleCallAudio();
+  } else if (val === 'SMISHING_MYINVESTOR') {
     runSmishingQuickCase();
   } else if (val === 'EXTORSION_DESBLOQUEO_IRPF') {
     runUnlockTaxExtortionCase();
@@ -1013,27 +1040,9 @@ async function handleFileUpload(event) {
     };
     reader.readAsDataURL(file);
   } else if (file.type.startsWith('audio/') || /\.(webm|mp3|m4a|wav|ogg|oga|aac|flac|mp4)$/i.test(file.name)) {
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = reader.result;
-      document.getElementById('evidence-content').innerHTML =
-        `🎙️ Transcribiendo audio <strong>${file.name}</strong> con ElevenLabs Scribe (<code>scribe_v1</code>)...`;
-      const sttRes = await fetch('/api/stt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audioBase64: base64, mimeType: file.type })
-      });
-      const sttData = await sttRes.json().catch(() => ({ ok: false, reason: `Error HTTP ${sttRes.status}` }));
-      if (!sttData.ok || !String(sttData.text || '').trim()) {
-        // Sin transcripción real no se analiza nada (antes se usaba un texto de estafa fijo)
-        document.getElementById('evidence-content').textContent = sttData.reason || 'No se ha podido transcribir el audio.';
-        renderNeedsInput('AUDIO SIN TRANSCRIBIR', `${sttData.reason || 'No se ha podido transcribir el audio.'} Puedes usar el micrófono en vivo o escribir el mensaje.`);
-        return;
-      }
-      document.getElementById('evidence-content').textContent = `“${sttData.text}”`;
-      processLiveSpokenInput(sttData.text, sttData.speech_rate_wpm ? { speech_rate_wpm: sttData.speech_rate_wpm, speech_rate_source: 'ELEVENLABS_SCRIBE' } : {});
-    };
-    reader.readAsDataURL(file);
+    const dataUrl = await blobToDataUrl(file);
+    const durationSec = await getAudioDuration(dataUrl);
+    await transcribeAndAnalyze({ dataUrl, mimeType: file.type || 'audio/mpeg', durationSec, label: `el audio ${file.name}` });
   } else if (file.type === 'text/plain' || /\.txt$/i.test(file.name)) {
     // Texto (p. ej. un SMS copiado): se analiza su contenido real
     const reader = new FileReader();
@@ -1048,50 +1057,275 @@ async function handleFileUpload(event) {
   }
 }
 
-function toggleLiveMic() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+// ============================================================================
+// MICRÓFONO EN VIVO: pulsar para hablar -> ElevenLabs Scribe -> reglas + Claude
+// ----------------------------------------------------------------------------
+// Se graba con MediaRecorder y, al soltar (o al volver a pulsar), el audio va a /api/stt (Scribe).
+// A la vez se lanza el reconocimiento del navegador (Web Speech API) como respaldo: si no hay clave de
+// ElevenLabs, se alcanzó el tope de créditos o Scribe falla, se usa su texto. La interfaz dice siempre
+// qué motor ha transcrito.
+// ============================================================================
+const MIC_MAX_SECONDS = 30; // tope por grabación para no gastar créditos de más
+let micSession = null;
+let micPressAt = 0;
+
+function setMicButton(recording) {
   const micBtn = document.getElementById('btn-mic');
+  if (micBtn) micBtn.textContent = recording ? '🔴 Escuchando… (suelta o pulsa para analizar)' : '🎙️ Altavoz en Vivo';
+  isRecordingMic = recording;
+}
 
-  if (!SpeechRecognition) {
-    const manualText = prompt(
-      'Introduce lo que te ofrecen en la llamada o sucursal:',
-      'Te garantizamos un 12% anual sin riesgo si transfieres hoy 9.000 euros a Quantum Ibérica'
+function setTranscriptionEngineTag(engine, detail = '') {
+  const label = engine === 'SCRIBE' ? '🎙️ Transcrito con ElevenLabs Scribe' : '🎙️ Reconocimiento del navegador';
+  document.getElementById('input-source-tag').textContent = `${label}${detail ? ` · ${detail}` : ''}`;
+}
+
+// Reconocimiento del navegador. Con onFinal se usa solo (modo de siempre); sin él, hace de respaldo silencioso.
+function startBrowserRecognition(session, onFinal = null) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+  try {
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-ES';
+    recognition.interimResults = true;
+    recognition.continuous = !onFinal;
+    recognition.onresult = (event) => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) transcript += event.results[i][0].transcript;
+      session.browserTranscript = transcript;
+      document.getElementById('evidence-content').textContent = `“${transcript}”`;
+      if (onFinal && event.results[event.results.length - 1].isFinal) onFinal(transcript);
+    };
+    recognition.onerror = () => {};
+    recognition.onend = () => {
+      if (onFinal) {
+        setMicButton(false);
+        micSession = null;
+      }
+    };
+    recognition.start();
+    return recognition;
+  } catch (e) {
+    return null;
+  }
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Duración de un archivo de audio según sus metadatos (para comprobar el presupuesto antes de gastar).
+function getAudioDuration(url) {
+  return new Promise((resolve) => {
+    try {
+      const probe = new Audio();
+      const done = (value) => resolve(Number.isFinite(value) && value > 0 ? value : null);
+      const timer = setTimeout(() => done(null), 1500);
+      probe.preload = 'metadata';
+      probe.onloadedmetadata = () => { clearTimeout(timer); done(probe.duration); };
+      probe.onerror = () => { clearTimeout(timer); done(null); };
+      probe.src = url;
+    } catch (e) {
+      resolve(null);
+    }
+  });
+}
+
+/**
+ * Transcribe un audio con /api/stt (Scribe) y lo analiza. Si Scribe no está disponible o falla,
+ * usa `browserTranscript` (reconocimiento del navegador) si lo hay. Nunca se inventa un texto.
+ */
+async function transcribeAndAnalyze({ dataUrl, mimeType, durationSec = null, browserTranscript = '', label = 'audio' }) {
+  document.getElementById('evidence-content').innerHTML = `🎙️ Transcribiendo ${escapeHtml(label)} con ElevenLabs Scribe…`;
+  showAnalyzing();
+  let sttData = { ok: false, reason: 'No se ha podido transcribir el audio.' };
+  const t0 = Date.now();
+  try {
+    const sttRes = await fetch('/api/stt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // Se envía solo el base64: el tipo que da el navegador puede llevar parámetros ("audio/webm;codecs=opus")
+      body: JSON.stringify({ audioBase64: String(dataUrl).slice(String(dataUrl).indexOf(',') + 1), mimeType, ...(durationSec ? { durationSec } : {}) })
+    });
+    sttData = await sttRes.json().catch(() => ({ ok: false, reason: `Error HTTP ${sttRes.status}` }));
+  } catch (e) {
+    sttData = { ok: false, reason: 'No se ha podido contactar con el servidor.' };
+  }
+  const sttMs = Date.now() - t0;
+
+  if (sttData.ok && String(sttData.text || '').trim()) {
+    const details = [
+      sttData.speech_rate_wpm ? `${sttData.speech_rate_wpm} palabras/min (medido)` : '',
+      sttData.cached ? 'caché, sin gasto' : `${sttMs} ms`
+    ].filter(Boolean).join(' · ');
+    setTranscriptionEngineTag('SCRIBE', details);
+    document.getElementById('evidence-content').textContent = `“${sttData.text}”`;
+    return processLiveSpokenInput(
+      sttData.text,
+      sttData.speech_rate_wpm ? { speech_rate_wpm: sttData.speech_rate_wpm, speech_rate_source: 'ELEVENLABS_SCRIBE' } : {}
     );
-    if (manualText) processLiveSpokenInput(manualText);
-    return;
   }
 
-  if (isRecordingMic && recognitionInstance) {
-    recognitionInstance.stop();
-    isRecordingMic = false;
-    micBtn.textContent = '🎙️ Altavoz en Vivo';
-    return;
+  const why = sttData.code === 'ELEVENLABS_BUDGET_EXHAUSTED'
+    ? 'límite de créditos de ElevenLabs alcanzado'
+    : sttData.code === 'NO_ELEVENLABS_KEY'
+      ? 'sin clave de ElevenLabs'
+      : 'ElevenLabs no disponible';
+  if (String(browserTranscript || '').trim()) {
+    setTranscriptionEngineTag('BROWSER', why);
+    document.getElementById('evidence-content').textContent = `“${browserTranscript}”`;
+    return processLiveSpokenInput(browserTranscript);
   }
+  // Sin transcripción real no se analiza nada
+  document.getElementById('evidence-content').textContent = sttData.reason || 'No se ha podido transcribir el audio.';
+  renderNeedsInput('AUDIO SIN TRANSCRIBIR', `${sttData.reason || 'No se ha podido transcribir el audio.'} Puedes repetirlo con el micrófono o escribir el mensaje.`);
+}
 
-  recognitionInstance = new SpeechRecognition();
-  recognitionInstance.lang = 'es-ES';
-  recognitionInstance.interimResults = true;
-  isRecordingMic = true;
-  micBtn.textContent = '🔴 Escuchando...';
+// ¿Se puede usar Scribe ahora mismo? Si no, se dice por qué (aviso discreto junto al motor usado).
+async function scribeStatus() {
+  try {
+    const state = await fetch('/api/state').then((r) => r.json());
+    const el = (state.ai_status && state.ai_status.elevenlabs) || {};
+    if (!el.configured) return { available: false, why: 'sin clave de ElevenLabs' };
+    if (el.budget_exhausted) return { available: false, why: 'límite de créditos de ElevenLabs alcanzado' };
+    if (el.stt_mode !== 'on') return { available: false, why: `ElevenLabs en modo ${el.stt_mode}` };
+    return { available: true, why: '' };
+  } catch (e) {
+    return { available: false, why: '' };
+  }
+}
+
+async function startLiveMic() {
+  if (micSession) return;
+  const session = { browserTranscript: '', startedAt: 0, starting: true };
+  micSession = session;
   document.getElementById('evidence-title').innerHTML = '🎙️ <strong>Escuchando altavoz en directo...</strong>';
+  document.getElementById('evidence-content').textContent = '';
 
-  recognitionInstance.onresult = (event) => {
-    let transcript = '';
-    for (let i = 0; i < event.results.length; i++) {
-      transcript += event.results[i][0].transcript;
+  const canRecord = Boolean(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  const scribe = await scribeStatus();
+  const useScribe = canRecord && scribe.available;
+  if (micSession !== session) return;
+
+  if (useScribe) {
+    try {
+      session.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (micSession !== session) {
+        session.stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find((m) => MediaRecorder.isTypeSupported(m)) || '';
+      session.recorder = new MediaRecorder(session.stream, mime ? { mimeType: mime } : undefined);
+      session.chunks = [];
+      session.recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) session.chunks.push(e.data); };
+      session.recorder.onstop = () => finishLiveMic(session);
+      session.recorder.start();
+      session.startedAt = Date.now();
+      session.starting = false;
+      session.timer = setTimeout(() => stopLiveMic(), MIC_MAX_SECONDS * 1000);
+      session.recognition = startBrowserRecognition(session); // respaldo y texto en vivo mientras se habla
+      setMicButton(true);
+      return;
+    } catch (e) {
+      // Sin permiso de micrófono para grabar: se intenta el reconocimiento del navegador
     }
-    document.getElementById('evidence-content').textContent = `“${transcript}”`;
-    if (event.results[event.results.length - 1].isFinal) {
-      processLiveSpokenInput(transcript);
-    }
-  };
+  }
 
-  recognitionInstance.onend = () => {
-    isRecordingMic = false;
-    micBtn.textContent = '🎙️ Altavoz en Vivo';
-  };
+  // Modo de siempre: reconocimiento del navegador (sin clave, sin créditos o sin MediaRecorder)
+  session.starting = false;
+  session.recognition = startBrowserRecognition(session, (transcript) => {
+    setTranscriptionEngineTag('BROWSER', scribe.why);
+    processLiveSpokenInput(transcript);
+  });
+  if (session.recognition) {
+    setMicButton(true);
+    return;
+  }
+  micSession = null;
+  const manualText = prompt(
+    'Introduce lo que te ofrecen en la llamada o sucursal:',
+    'Te garantizamos un 12% anual sin riesgo si transfieres hoy 9.000 euros a Quantum Ibérica'
+  );
+  if (manualText) {
+    document.getElementById('input-source-tag').textContent = '⌨️ Texto escrito';
+    processLiveSpokenInput(manualText);
+  }
+}
 
-  recognitionInstance.start();
+function stopLiveMic() {
+  const session = micSession;
+  if (!session || session.starting) return;
+  clearTimeout(session.timer);
+  if (session.recorder && session.recorder.state !== 'inactive') {
+    session.recorder.stop(); // dispara finishLiveMic
+  } else if (session.recognition) {
+    try { session.recognition.stop(); } catch (e) {}
+    setMicButton(false);
+    micSession = null;
+  }
+}
+
+async function finishLiveMic(session) {
+  const durationSec = (Date.now() - session.startedAt) / 1000;
+  if (session.recognition) { try { session.recognition.stop(); } catch (e) {} }
+  if (session.stream) session.stream.getTracks().forEach((t) => t.stop());
+  setMicButton(false);
+  if (micSession === session) micSession = null;
+  const blob = new Blob(session.chunks || [], { type: (session.recorder && session.recorder.mimeType) || 'audio/webm' });
+  if (durationSec < 0.5 || blob.size === 0) {
+    document.getElementById('evidence-content').textContent = 'No he llegado a oír nada. Mantén pulsado el botón mientras hablas, o púlsalo una vez para empezar y otra para terminar.';
+    return;
+  }
+  // Se da un momento al reconocimiento del navegador para que entregue su último resultado
+  await new Promise((r) => setTimeout(r, 250));
+  const dataUrl = await blobToDataUrl(blob);
+  await transcribeAndAnalyze({ dataUrl, mimeType: blob.type, durationSec, browserTranscript: session.browserTranscript, label: 'lo que has dicho' });
+}
+
+// Pulsación corta: empieza a grabar y se para con otra pulsación. Mantener pulsado: se para al soltar.
+function onMicPointerDown(event) {
+  if (event && event.button !== undefined && event.button !== 0) return;
+  if (micSession) {
+    stopLiveMic();
+  } else {
+    micPressAt = Date.now();
+    startLiveMic();
+  }
+}
+function onMicPointerUp() {
+  if (micSession && !micSession.starting && micPressAt && Date.now() - micPressAt >= 700) stopLiveMic();
+  micPressAt = 0;
+}
+// Teclado (Enter o Espacio sobre el botón) y compatibilidad con llamadas antiguas
+function toggleLiveMic(event) {
+  if (event && event.detail !== 0) return; // los clics de ratón o dedo ya se atienden con pointerdown/pointerup
+  if (micSession) stopLiveMic();
+  else startLiveMic();
+}
+
+// Audio de ejemplo de la demo: llamada del falso bróker generada con una voz de stock de ElevenLabs.
+async function runSampleCallAudio() {
+  setActiveScenarioPill('btn-scenario-1', 'active-scam');
+  document.getElementById('input-source-tag').textContent = '🎧 Audio de ejemplo';
+  document.getElementById('evidence-title').innerHTML =
+    '🎧 <strong>Audio de ejemplo:</strong> llamada del falso bróker <audio controls preload="none" src="/samples/llamada_falso_broker.mp3" style="height:26px; vertical-align:middle; margin-left:6px;"></audio>';
+  let blob = null;
+  try {
+    const res = await fetch('/samples/llamada_falso_broker.mp3');
+    if (res.ok) blob = await res.blob();
+  } catch (e) {}
+  if (!blob || blob.size === 0) {
+    renderNeedsInput('AUDIO DE EJEMPLO SIN GENERAR', 'Todavía no existe public/samples/llamada_falso_broker.mp3. Se genera una sola vez con "npm run tts:sample".');
+    return;
+  }
+  const dataUrl = await blobToDataUrl(blob);
+  const durationSec = await getAudioDuration(dataUrl);
+  await transcribeAndAnalyze({ dataUrl, mimeType: 'audio/mpeg', durationSec, label: 'la llamada de ejemplo' });
 }
 
 async function processLiveSpokenInput(transcript, extra = {}) {

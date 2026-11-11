@@ -60,6 +60,18 @@ cp .env.example .env
 
 Para arrancar sin Claude aunque `.env` tenga clave: `ANTHROPIC_API_KEY= npm start`.
 
+Variables de ElevenLabs (voz, transcripción y micrófono; detalle en el apartado E):
+
+| Variable | Por defecto | Para qué |
+| --- | --- | --- |
+| `ELEVENLABS_API_KEY` | vacío | Sin clave se usa la voz y el reconocimiento del navegador |
+| `ELEVENLABS_MAX_CREDITS` | `3000` | Tope de créditos estimados por arranque. Al alcanzarlo: voz y reconocimiento del navegador, con aviso en la interfaz |
+| `ELEVENLABS_TTS` | `on` | `on` genera voz nueva · `cache_only` solo reproduce lo ya generado (para ensayar sin gastar) · `off` voz del navegador |
+| `ELEVENLABS_STT` | `on` | Igual que el anterior, para la transcripción |
+| `ELEVENLABS_TTS_MODEL` | `eleven_flash_v2_5` | Modelo para las respuestas dinámicas (0,5 créditos por carácter) |
+| `ELEVENLABS_TTS_MODEL_PRECACHE` | `eleven_multilingual_v2` | Modelo para las frases fijas precacheadas (1 crédito por carácter) |
+| `ELEVENLABS_VOICE_ID` | `EXAVITQu4vr4xnSDxMaL` | Voz de Centinela ("Sarah", voz de stock de ElevenLabs) |
+
 ### 3. Ejecución Directa (Recomendada para Demo Rápida)
 ```bash
 npm start
@@ -115,6 +127,50 @@ bash scripts/medir_claude.sh                         # los tres pasos seguidos; 
 ```
 Sin clave, los dos primeros comandos terminan con un mensaje claro y no hacen ninguna llamada.
 
+### E. ElevenLabs: voz, transcripción y micrófono en vivo (con control de gasto)
+- **Voz (Text-to-Speech):** las frases de los botones de la demo se generan una vez con `eleven_multilingual_v2` y quedan en `.cache/elevenlabs/` (fuera de git). Las respuestas nuevas se generan con `eleven_flash_v2_5` y también se guardan. El veredicto se pinta primero; el audio llega y suena en paralelo. Bajo el texto hablado se indica "Voz: ElevenLabs" o "Voz del navegador".
+- **Transcripción (Speech-to-Text):** `/api/stt` usa `scribe_v2` en español y calcula las **palabras por minuto con las marcas de tiempo de cada palabra** (`speech_rate_source: ELEVENLABS_SCRIBE`). El mismo audio no se paga dos veces (caché por hash).
+- **Micrófono en vivo:** mantén pulsado "Altavoz en Vivo" mientras hablas (o pulsa una vez para empezar y otra para terminar; máximo 30 s). El audio va a Scribe y el texto a reglas + Claude. Si no hay clave, se alcanzó el tope o Scribe falla, se usa el reconocimiento del navegador. La interfaz dice cuál ha transcrito.
+- **Audio de ejemplo:** en el selector, "Audio de ejemplo: llamada del falso bróker" transcribe de verdad `public/samples/llamada_falso_broker.mp3` (voz sintética de stock, distinta de la de Centinela) y enseña el ritmo de habla medido.
+
+```bash
+npm run tts:sample        # genera una vez el audio de ejemplo de la llamada (~280 créditos). Pide confirmación
+npm run smoke:elevenlabs  # prueba real mínima: saldo, voz, transcripción del audio de ejemplo (~140 créditos la primera vez). Pide confirmación
+npm run tts:precache -- --list   # enseña las frases de la demo y lo que costaría generarlas (no gasta)
+npm run tts:precache      # genera las frases de los Actos 1, 2 y 3 y de los dos ejemplos de estafa (~1.530 créditos). Pide confirmación
+```
+Todos dicen cuánto van a gastar **antes** de llamar, y lo ya generado no se vuelve a pagar.
+
+**Cuánto se gasta** (verificado en la documentación y la página de precios de ElevenLabs, nov-2026): voz con `eleven_multilingual_v2`, 1 crédito por carácter; con `eleven_flash_v2_5`, 0,5; transcripción con Scribe, unos 330 créditos por minuto de audio (5,5 por segundo). Una frase hablada típica de Centinela (230 caracteres) cuesta unos 115 créditos con Flash; una frase de 8 s al micrófono, unos 45. El gasto estimado de la sesión está en `GET /api/state` → `ai_status.elevenlabs`, y cada llamada de pago queda anotada en `.cache/elevenlabs/ledger.jsonl`.
+
+**Medido con la API real el 11-nov-2026** (`bash scripts/medir_elevenlabs.sh`):
+
+| Operación | Latencia | Créditos estimados |
+| --- | --- | --- |
+| Voz dinámica (`eleven_flash_v2_5`, frase de 51 caracteres) | 0,3 s | 26 |
+| Voz precacheada (`eleven_multilingual_v2`, frases de 50 a 472 caracteres) | 0,4 s a 1,4 s | 1 por carácter (1.532 las seis frases de la demo) |
+| Audio de ejemplo de la llamada (277 caracteres, 17,1 s de audio) | 1,8 s | 277 |
+| Transcripción con `scribe_v2` del audio de ejemplo (17,1 s, 51 palabras) | 1,0 s | 95 |
+
+En la interfaz (mismo día, llamadas y SMS analizados con Claude Sonnet 5.5):
+
+| Flujo | Transcripción | Veredicto en pantalla | Voz tras el veredicto |
+| --- | --- | --- | --- |
+| Acto 1 con voz | no aplica (guion de texto) | 5,9 s tras el guion animado | 0,02 s (caché) |
+| Audio de ejemplo de la llamada | 0,01 s (caché) | 5,3 s | 0,02 s (caché) |
+| Micrófono, frase de estafa de 8 s | 0,8 s (Scribe, 44 créditos) | 5,9 s después de soltar | 0,6 s (Flash, 112 créditos) |
+| Micrófono, frase normal de 3 s | 0,7 s (Scribe, 18 créditos) | 3,9 s después de soltar | 0,4 s (Flash, 61 créditos) |
+
+Casi todo el tiempo hasta el veredicto es el análisis de Claude (2,9 s a 5,8 s); ElevenLabs añade menos de 1 s. Las dos pruebas del micrófono se hicieron inyectando un audio en la página como si fuera el micrófono (grabación real con `MediaRecorder` y transcripción real con Scribe), no con una persona hablando.
+
+Los avisos de "falta un dato" y los mensajes de error no gastan créditos de voz: solo suenan con ElevenLabs si ya estaban generados.
+
+El audio de ejemplo se transcribe sin errores y da **182 palabras por minuto**, medidas con las marcas de tiempo de Scribe (por encima del umbral de 175: "presión acústica alta"). Es una voz sintética generada a un ritmo un 15 % más rápido de lo normal, no una llamada real.
+
+Las consultas de saldo y de voz son opcionales: con una clave restringida a voz y transcripción (sin los permisos `user_read` y `voices_read`) los scripts lo indican como aviso y el saldo hay que mirarlo en la web de ElevenLabs.
+
+**Para ensayar sin gastar:** pon en `.env` `ELEVENLABS_TTS=cache_only` (y, si no quieres gastar al usar el micrófono, `ELEVENLABS_STT=cache_only`). Los botones de la demo y el audio de ejemplo siguen sonando con ElevenLabs desde la caché, también sin red; todo lo demás usa la voz y el reconocimiento del navegador. El día de la demo, vuelve a `on`.
+
 **Medición fuera de muestra** (`src/evals/casos_fuera_de_muestra.txt`, 15 estafas y 12 mensajes legítimos que no están en el benchmark de 30 casos):
 
 | Motor | Aciertos | Estafas detectadas | Legítimos correctos | Latencia media (p95) | Coste estimado por análisis |
@@ -139,8 +195,9 @@ Limitación declarada en el propio archivo: esos casos los redactó Claude a par
 | Catálogo de fondos | MCP de MyInvestor en vivo; si no hay conexión, copia guardada (la app lo indica) |
 | Detección de estafas en llamadas y SMS | Reglas (siempre) + señales de Claude con cita literal validada (con clave). El veredicto lo decide siempre el código. Sin clave o si Claude falla: solo reglas, y la app lo indica |
 | Lectura de folletos | Claude (con clave) para fotos y PDF; sin clave, solo PDF con texto. Si no se encuentra la comisión, la app la pregunta: no la supone |
-| Transcripción de audio | ElevenLabs Scribe (con clave). Sin clave no se transcribe nada |
+| Transcripción de audio | ElevenLabs Scribe `scribe_v2` (con clave), tanto en audios subidos como en el micrófono en vivo. Sin clave, sin créditos o si falla: reconocimiento del navegador en el micrófono (la interfaz lo indica); un audio subido no se transcribe |
+| Voz de Centinela | ElevenLabs (voz de stock "Sarah") con clave; si no, la voz del navegador. La interfaz indica cuál suena |
 | Lista de alertas CNMV e IBAN denunciados | **Ficticios, de demostración** (marcados en la app). En producción: lista oficial de la CNMV y verificación VoP del banco |
-| Velocidad del habla (WPM) | Medida con Scribe en audios reales; en el Acto 1 es un valor **simulado** y declarado |
+| Velocidad del habla (WPM) | Medida con las marcas de tiempo de Scribe en audios reales y en el micrófono. El audio de ejemplo de la llamada es una **voz sintética** (declarado). En el botón del Acto 1 (guion de texto, sin audio) sigue siendo un valor **simulado** y declarado |
 | Telemetría de llamada activa | No se mide en la web (requiere la app nativa) |
 | ISIN de los fondos de ejemplo del banco | Ficticios (`XX0000DEMO01`, `XX0000DEMO02`) |

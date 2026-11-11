@@ -1,17 +1,16 @@
 /**
  * Servicio de IA Frontera: Claude (Anthropic Vision, PDF Document & Tool Use) +
  * [Tarea C] Claude también analiza llamadas y SMS con herramientas de solo lectura (ver analyzeCallWithClaude).
- * ElevenLabs (Scribe v1 STT + Multilingual v2 Streaming TTS)
+ * ElevenLabs (Scribe v2 STT + TTS Flash v2.5 / Multilingual v2; ver elevenLabsService.js)
  * Incluye extractor y transcripción determinista de respaldo para garantizar 0% de fallos en directo.
  */
 
 const { extractPdfText } = require('./pdfText');
 const { AI_SIGNAL_TYPES, checkCnmvWarning, checkIbanStatus } = require('../engine/fraudEngine');
 const { verifyProductExistsInMyInvestor } = require('./mcpClient');
+const elevenLabs = require('./elevenLabsService');
 
 let runtimeAnthropicKey = process.env.ANTHROPIC_API_KEY || '';
-let runtimeElevenLabsKey = process.env.ELEVENLABS_API_KEY || '';
-const DEFAULT_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL';
 // Voz del estafador en el modo escenario: distinta de la de Centinela para que el público no las confunda.
 const SCAMMER_VOICE_ID = process.env.ELEVENLABS_SCAMMER_VOICE_ID || 'pNInz6obpgDQGcFmaJgB';
 // claude-sonnet-4-20250514 se retiró de la API el 15-jun-2026: cualquier llamada con ese id falla.
@@ -209,13 +208,13 @@ const CLAUDE_CENTINELA_TOOLS = [
 
 function setRuntimeKeys({ anthropicKey, elevenLabsKey }) {
   if (typeof anthropicKey === 'string') runtimeAnthropicKey = anthropicKey.trim();
-  if (typeof elevenLabsKey === 'string') runtimeElevenLabsKey = elevenLabsKey.trim();
+  if (typeof elevenLabsKey === 'string') elevenLabs.setApiKey(elevenLabsKey);
 }
 
 function getAiStatus() {
   return {
     claude_configured: Boolean(runtimeAnthropicKey),
-    elevenlabs_configured: Boolean(runtimeElevenLabsKey),
+    elevenlabs_configured: elevenLabs.getStatus().configured,
     claude_model: CLAUDE_MODEL,
     claude_call_model: CLAUDE_CALL_MODEL,
     claude_last_error: lastClaudeError,
@@ -227,9 +226,12 @@ function getAiStatus() {
     // Herramientas que Claude recibe DE VERDAD al analizar llamadas/SMS (solo lectura + salida)
     claude_call_tools: CLAUDE_CALL_TOOLS.map((t) => t.name),
     elevenlabs_models: {
-      stt: 'scribe_v1',
-      tts: 'eleven_multilingual_v2'
-    }
+      stt: elevenLabs.STT_MODEL,
+      tts: elevenLabs.TTS_MODEL,
+      tts_precache: elevenLabs.TTS_MODEL_PRECACHE
+    },
+    // Créditos estimados, tope, interruptores y caché de ElevenLabs
+    elevenlabs: elevenLabs.getStatus()
   };
 }
 
@@ -426,112 +428,23 @@ Texto/Contexto adicional: ${text}`
 }
 
 /**
- * Transcripción de Audio con ElevenLabs Scribe STT (scribe_v1)
+ * ElevenLabs (voz y transcripción) vive en elevenLabsService.js, con control de gasto:
+ * tope de créditos por arranque, caché en disco e interruptores on | cache_only | off.
+ * Aquí solo se mantienen los nombres que ya usaba el servidor.
  */
-async function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'audio/webm' }) {
-  if (!audioBase64) {
-    return { ok: false, provider: 'NO_AUDIO', text: '', reason: 'No se ha recibido audio.' };
-  }
-  if (!runtimeElevenLabsKey) {
-    // Sin clave no hay transcripción: NUNCA se devuelve un texto inventado.
-    return {
-      ok: false,
-      provider: 'NO_ELEVENLABS_KEY',
-      model: 'scribe_v1',
-      text: '',
-      reason: 'Para transcribir audios hace falta la clave de ElevenLabs (botón API Keys).'
-    };
-  }
-
-  try {
-    const cleanBase64 = audioBase64.replace(/^data:[^;]+;base64,/, '');
-    const buffer = Buffer.from(cleanBase64, 'base64');
-    const blob = new Blob([buffer], { type: mimeType });
-    const formData = new FormData();
-    formData.append('file', blob, 'call_audio.webm');
-    formData.append('model_id', 'scribe_v1');
-    formData.append('language_code', 'spa');
-
-    const response = await fetch('https://api.elevenlabs.io/v1/speech-to-text', {
-      method: 'POST',
-      headers: {
-        'xi-api-key': runtimeElevenLabsKey
-      },
-      body: formData
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP_${response.status}`);
-    }
-    const data = await response.json();
-    const words = Array.isArray(data.words) ? data.words.filter((w) => w.type === 'word' || w.text) : [];
-    let speechRateWpm = null;
-    if (words.length >= 2) {
-      const startSec = Number(words[0].start ?? 0);
-      const endSec = Number(words[words.length - 1].end ?? 0);
-      const durationMin = Math.max(0.05, (endSec - startSec) / 60);
-      speechRateWpm = Math.round(words.length / durationMin);
-    }
-    return {
-      ok: true,
-      provider: 'ELEVENLABS_SCRIBE_LIVE_API',
-      model: 'scribe_v1',
-      text: data.text || '',
-      speech_rate_wpm: speechRateWpm,
-      speech_rate_source: speechRateWpm ? 'ELEVENLABS_SCRIBE' : null,
-      word_count: words.length
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      provider: 'FALLBACK_AFTER_ERROR',
-      reason: `No se pudo transcribir el audio (${err.message}).`,
-      text: ''
-    };
-  }
+function transcribeAudioWithElevenLabsScribe({ audioBase64, mimeType = 'audio/webm', durationSec = null } = {}) {
+  return elevenLabs.transcribeAudio({ audioBase64, mimeType, durationSec });
 }
 
 /**
- * Síntesis de voz con ElevenLabs API (devuelve Buffer MP3 si hay API key configurada)
+ * Síntesis de voz con ElevenLabs (caché, tope de créditos y modos on/cache_only/off en elevenLabsService).
+ * options: { cacheOnly, role: 'centinela' | 'estafador', ... }. Por compatibilidad acepta el rol como texto.
  */
-async function synthesizeSpeechElevenLabs(textToSpeak, role = 'centinela') {
-  const voiceId = role === 'estafador' ? SCAMMER_VOICE_ID : DEFAULT_VOICE_ID;
-  if (!runtimeElevenLabsKey) {
-    return { ok: false, reason: 'NO_ELEVENLABS_KEY' };
-  }
-  try {
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'xi-api-key': runtimeElevenLabsKey,
-          'Accept': 'audio/mpeg'
-        },
-        body: JSON.stringify({
-          text: textToSpeak,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.65,
-            similarity_boost: 0.80
-          }
-        })
-      }
-    );
-
-    if (!response.ok) {
-      return { ok: false, reason: `HTTP_${response.status}` };
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    return {
-      ok: true,
-      audioBuffer: Buffer.from(arrayBuffer),
-      contentType: 'audio/mpeg'
-    };
-  } catch (err) {
-    return { ok: false, reason: err.message };
-  }
+function synthesizeSpeechElevenLabs(textToSpeak, options = {}) {
+  const opts = typeof options === 'string' ? { role: options } : { ...options };
+  const { role, ...rest } = opts;
+  if (role === 'estafador' && !rest.voiceId) rest.voiceId = SCAMMER_VOICE_ID;
+  return elevenLabs.synthesizeSpeech(textToSpeak, rest);
 }
 
 // =============================================================================
@@ -657,7 +570,49 @@ function compactAlnum(str = '') {
   return String(str).toUpperCase().replace(/[\s.\-]/g, '');
 }
 
-// El número se saca de la cita con código (no de Claude): "9.000 euros", "5 700 €", "3000,50", "12 mil euros".
+// Números escritos con letra, como los transcribe Scribe al dictar ("nueve mil euros", "dos mil quinientos").
+const SPANISH_NUMBER_WORDS = {
+  un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10,
+  once: 11, doce: 12, trece: 13, catorce: 14, quince: 15, dieciseis: 16, diecisiete: 17, dieciocho: 18, diecinueve: 19,
+  veinte: 20, veintiun: 21, veintiuno: 21, veintiuna: 21, veintidos: 22, veintitres: 23, veinticuatro: 24, veinticinco: 25,
+  veintiseis: 26, veintisiete: 27, veintiocho: 28, veintinueve: 29, treinta: 30, cuarenta: 40, cincuenta: 50, sesenta: 60,
+  setenta: 70, ochenta: 80, noventa: 90, cien: 100, ciento: 100, doscientos: 200, trescientos: 300, cuatrocientos: 400,
+  quinientos: 500, seiscientos: 600, setecientos: 700, ochocientos: 800, novecientos: 900
+};
+function parseSpanishNumberWords(text = '') {
+  const tokens = String(text).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z]+/g) || [];
+  let best = null;
+  let total = 0;
+  let current = 0;
+  let inNumber = false;
+  const close = () => {
+    if (inNumber && total + current > 0 && best === null) best = total + current;
+    total = 0;
+    current = 0;
+    inNumber = false;
+  };
+  for (const token of tokens) {
+    if (SPANISH_NUMBER_WORDS[token] !== undefined) {
+      current += SPANISH_NUMBER_WORDS[token];
+      inNumber = true;
+    } else if (token === 'mil') {
+      total += (current || 1) * 1000;
+      current = 0;
+      inNumber = true;
+    } else if (token === 'y' && inNumber) {
+      continue;
+    } else if (token === 'millon' || token === 'millones') {
+      return null; // fuera del alcance de este lector: mejor no dar cifra que dar una equivocada
+    } else {
+      close();
+    }
+  }
+  close();
+  return best;
+}
+
+// El número se saca de la cita con código (no de Claude): "9.000 euros", "5 700 €", "3000,50", "12 mil euros",
+// "nueve mil euros".
 function parseAmountFromQuote(quote = '') {
   const q = String(quote);
   const mil = q.match(/(\d+(?:[.,]\d+)?)\s*mil\b/i);
@@ -666,7 +621,7 @@ function parseAmountFromQuote(quote = '') {
     return Number.isFinite(n) && n > 0 ? Math.round(n * 1000) : null;
   }
   const m = q.match(/\d{1,3}(?:[.\s]\d{3})+(?:,\d{1,2})?|\d+(?:,\d{1,2})?/);
-  if (!m) return null;
+  if (!m) return parseSpanishNumberWords(q);
   const n = parseFloat(m[0].replace(/[.\s]/g, '').replace(',', '.'));
   return Number.isFinite(n) && n > 0 ? n : null;
 }

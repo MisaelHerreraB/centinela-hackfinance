@@ -151,7 +151,7 @@
             </div>
 
             <div class="trigger-grid">
-              <button id="btn-mic" class="trigger-btn" onclick="toggleLiveMic()">
+              <button id="btn-mic" class="trigger-btn" onpointerdown="onMicPointerDown(event)" onpointerup="onMicPointerUp()" onclick="toggleLiveMic(event)" title="Mantén pulsado mientras hablas, o pulsa una vez para empezar y otra para terminar">
                 🎙️ Altavoz en Vivo
               </button>
               <label class="trigger-btn">
@@ -165,6 +165,7 @@
               <option value="FONDO_RV_180">Folleto DFI: Fondo Sucursal RV Global (TER 1,80%)</option>
               <option value="FONDO_GARANTIZADO_SALIDA">Folleto DFI: Fondo Garantizado (TER 1,45% + 4% Salida)</option>
               <option value="UNIT_LINKED_NO_TRASPASABLE">Póliza: Seguro Unit-Linked (TER 2,10% · No traspasable)</option>
+              <option value="AUDIO_FALSO_BROKER">Audio de ejemplo: llamada del falso bróker (transcripción real con Scribe)</option>
               <option value="SMISHING_MYINVESTOR">SMS Spoofing: "Bloqueo inminente cuenta MyInvestor"</option>
               <option value="EXTORSION_DESBLOQUEO_IRPF">Estafa Fase 4-5: Falsa Tasa Previa de Desbloqueo / IRPF</option>
               <option value="FONDO_LIMPIO_ADELANTE">Folleto DFI: Fidelity MSCI World Index (TER 0,12%)</option>
